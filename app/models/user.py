@@ -1,22 +1,13 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
 
-class UserBase(BaseModel):
-    email: EmailStr
-    username: str
-    
-class UserCreate(UserBase):
-    password: str
-    
-class UserUpdate(UserBase):
-    password: Optional[str] = None
-    
-class User(UserBase):
-    id: str
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        orm_mode = True
+from sqlmodel import SQLModel, Field, func
+
+
+class User(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    username: str = Field(unique=True, index=True)
+    password_hash: str = Field()
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=func.now)
+    updated_at: datetime = Field(default_factory=func.now)
