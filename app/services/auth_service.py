@@ -7,6 +7,7 @@ from app.core.logger import logger
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from app.core.config import settings
+import time
 
 
 class AuthService:
@@ -17,7 +18,6 @@ class AuthService:
         self.api_key_header = APIKeyHeader(name="X-API-Key")
         # 添加token过期时间配置
         self.access_token_expire_minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-
 
     async def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
@@ -59,8 +59,7 @@ class AuthService:
             return None
 
     async def get_current_user(
-        self,
-        token: str = Depends(APIKeyHeader(name="X-API-Key"))
+        self, token: str = Depends(APIKeyHeader(name="X-API-Key"))
     ) -> str:
         """获取当前用户"""
         try:
@@ -72,7 +71,7 @@ class AuthService:
         except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-    async def create_access_token(self, user_id: str) -> str|None:
+    async def create_access_token(self, user_id: str) -> str | None:
         """
         生成访问令牌
         """

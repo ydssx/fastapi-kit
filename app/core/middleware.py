@@ -11,9 +11,6 @@ from app.core.logger import logger
 from app.core.security_config import SECURITY_CONFIG
 
 
-
-
-
 class SecurityMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, redis_client=None, exclude_paths: Set[str] = None):
         super().__init__(app)

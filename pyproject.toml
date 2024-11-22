@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "fastapi-kit"
+version = "0.1.0"
+description = "A production-ready FastAPI microservice"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.5"
+redis = "^5.2.0"
+fastapi-cache2 = "^0.2.2"
+pydantic-settings = "^2.6.1"
+sqlmodel = "^0.0.22"
+python-jose = "^3.3.0"
+psutil = "^6.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
