@@ -1,71 +1,69 @@
-from g4f.client import Client
-from typing import List, Dict, Any, AsyncGenerator
-from app.core.config import settings
+from typing import AsyncGenerator
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, AIMessage
 from app.schemas.chat import ChatMessage, ChatRequest, ChatResponse, ChatStreamResponse
 
 
 class ChatService:
     def __init__(self):
-        self.client = Client()
+        self.client = ChatOllama(
+            model="llama3.2:3b",  # 可以根据需要修改模型名称
+            base_url="http://localhost:11434",  # Ollama默认地址
+        )
 
     async def chat_completion(self, request: ChatRequest) -> ChatResponse:
         """
-        Send a chat completion request to OpenAI API
+        使用Langchain和Ollama进行聊天完成
         """
         try:
-            response = await self.client.chat_completion.create(
-                model=request.model,
-                messages=[
-                    {"role": msg.role, "content": msg.content}
-                    for msg in request.messages
-                ],
-                temperature=request.temperature,
-                max_tokens=request.max_tokens,
-                stream=request.stream,
-            )
+            # 将消息转换为Langchain格式
+            messages = []
+            for msg in request.messages:
+                if msg.role == "user":
+                    messages.append(HumanMessage(content=msg.content))
+                elif msg.role == "assistant":
+                    messages.append(AIMessage(content=msg.content))
 
-            if request.stream:
-                raise ValueError("For streaming responses, use chat_completion_stream instead")
+            # 调用Ollama进行对话
+            response = await self.client.ainvoke(messages)
 
-            # Extract the assistant's message from the response
+            # 构造返回消息
             message = ChatMessage(
-                role="assistant", content=response.choices[0].message.content
+                role="assistant",
+                content=response.content
             )
 
-            return ChatResponse(message=message, usage=response.usage)
+            # 由于Ollama不提供token统计，这里返回None
+            return ChatResponse(message=message, usage=None)
 
         except Exception as e:
-            # Log the error and raise it
-            raise Exception(f"Error in chat completion: {str(e)}")
+            raise Exception(f"聊天完成时出错: {str(e)}")
 
     async def chat_completion_stream(
         self, request: ChatRequest
     ) -> AsyncGenerator[ChatStreamResponse, None]:
         """
-        Stream chat completion responses from OpenAI API
+        流式返回Ollama的聊天响应
         """
         try:
-            response = await self.client.chat.completions.async_create(
-                model=request.model,
-                messages=[
-                    {"role": msg.role, "content": msg.content}
-                    for msg in request.messages
-                ],
-                temperature=request.temperature,
-                max_tokens=request.max_tokens,
-                stream=True,
-            )
+            messages = []
+            for msg in request.messages:
+                if msg.role == "user":
+                    messages.append(HumanMessage(content=msg.content))
+                elif msg.role == "assistant":
+                    messages.append(AIMessage(content=msg.content))
 
-            async for chunk in response:
-                if chunk and chunk.choices and chunk.choices[0].delta.get("content"):
+            # 使用Langchain的流式接口
+            async for chunk in self.client.astream(messages):
+                if chunk.content:
+                    print(chunk.content)
                     yield ChatStreamResponse(
-                        content=chunk.choices[0].delta.content,
-                        finish_reason=chunk.choices[0].finish_reason,
+                        content=chunk.content,
+                        finish_reason=None  # Ollama不提供finish_reason
                     )
 
         except Exception as e:
-            # Log the error and raise it
-            raise Exception(f"Error in chat completion stream: {str(e)}")
+            raise Exception(f"流式聊天完成时出错: {str(e)}")
 
 
 chat_service = ChatService()

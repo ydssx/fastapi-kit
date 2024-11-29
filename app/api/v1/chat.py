@@ -11,12 +11,9 @@ auth_service = AuthService()
 router = APIRouter()
 
 
-
-
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    request: ChatRequest,
-    current_user: User = Depends(auth_service.get_current_user)
+    request: ChatRequest, current_user: User = Depends(auth_service.get_current_user)
 ) -> ChatResponse:
     """
     Chat endpoint that processes messages and returns AI responses
@@ -37,12 +34,15 @@ async def chat(
 @router.post("/chat/stream")
 async def chat_stream(
     request: ChatRequest,
-    current_user: User = Depends(auth_service.get_current_user)
+    # current_user: User = Depends(
+    #     auth_service.get_current_user,
+    # ),
 ) -> StreamingResponse:
     """
     Streaming chat endpoint that returns AI responses as a stream of server-sent events
     """
     try:
+
         async def generate():
             async for chunk in chat_service.chat_completion_stream(request):
                 yield f"data: {json.dumps(chunk.dict())}\n\n"
@@ -50,7 +50,7 @@ async def chat_stream(
 
         return StreamingResponse(
             generate(),
-            media_type="text/event-stream",
+            media_type="text/event-stream; charset=utf-8",
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",

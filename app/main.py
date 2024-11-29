@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     logger.info(f"Starting {settings.PROJECT_NAME}")
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,  # 开发模式下启用热重载
