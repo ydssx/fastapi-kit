@@ -1,11 +1,11 @@
 import json
 from typing import Any, Optional
 
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
 from app.core.config import get_settings
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
 
 settings = get_settings()
 

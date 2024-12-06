@@ -1,8 +1,9 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any
 
-from app.api.v1 import auth, files, health, items, metrics, ws, chat
+from app.api.v1 import auth, chat, files, health, metrics, ws
 from app.core.config import settings
 from app.core.logger import setup_logging
 from app.core.metrics import init_metrics
@@ -12,7 +13,6 @@ from app.core.middlewares.security import (
     RequestLoggingMiddleware,
     ResponseTimeMiddleware,
 )
-
 
 # 设置日志
 logger = setup_logging()
@@ -66,7 +66,6 @@ def configure_routes(app: FastAPI) -> None:
     """
     routers = [
         (auth.router, "auth"),
-        (items.router, "items"),
         (files.router, "files"),
         (ws.router, "websocket"),
         (health.router, "health"),

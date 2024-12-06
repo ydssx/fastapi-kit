@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel import SQLModel, Field, func
+from sqlmodel import Field, SQLModel, func
 
 
 class User(SQLModel, table=True):

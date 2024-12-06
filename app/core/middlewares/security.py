@@ -1,6 +1,6 @@
 import time
-from typing import Callable
 import uuid
+from typing import Callable
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -55,7 +55,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # 记录请求信息
-        logger.info(f"Request: {request.method} {request.url}")
         logger.debug(f"Headers: {request.headers}")
 
         # 处理请求
@@ -66,9 +65,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         # 记录响应信息
         logger.info(
-            f"Response: {request.method} {request.url} "
+            f"{request.method} {request.url} "
             f"Status: {response.status_code} "
-            f"Process Time: {process_time:.3f}s"
+            f"Process-Time: {process_time:.3f}s"
         )
 
         return response

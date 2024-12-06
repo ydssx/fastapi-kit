@@ -1,38 +1,31 @@
-from typing import Generator
-from sqlmodel import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .config import get_settings
-from .logger import logger
-
-settings = get_settings()
+from .config import settings
 
 # 添加数据库连接池配置
-engine = create_engine(
+engine = create_async_engine(
     settings.DATABASE_URL,
     # connect_args={"check_same_thread": False},  # 仅用于SQLite
     pool_pre_ping=True,  # 自动处理断开的连接
     pool_size=5,  # 连接池大小
     max_overflow=10,  # 最大额外连接数
     pool_recycle=3600,  # 连接回收时间(秒)
+    echo=True,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-
-
-def get_db() -> Generator[Session, None, None]:
+async def get_db():
     """
     获取数据库会话的依赖函数
 
     Yields:
-        Session: SQLAlchemy会话实例
+        AsyncSession: SQLAlchemy会话实例
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        logger.info("Closing database connection")
-        db.close()
+    async with AsyncSession(engine) as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            raise e

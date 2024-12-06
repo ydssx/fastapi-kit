@@ -1,7 +1,10 @@
 from typing import AsyncGenerator
+
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, AIMessage
-from app.schemas.chat import ChatMessage, ChatRequest, ChatResponse, ChatStreamResponse
+
+from app.schemas.chat import (ChatMessage, ChatRequest, ChatResponse,
+                              ChatStreamResponse)
 
 
 class ChatService:

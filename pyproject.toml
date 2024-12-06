@@ -19,4 +19,6 @@ dependencies = [
     "psutil>=6.1.0",
     "redis>=5.2.0",
     "prometheus-client>=0.21.0",
+    "litellm>=1.53.1",
+    "aiomysql>=0.2.0",
 ]

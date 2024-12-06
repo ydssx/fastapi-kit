@@ -1,7 +1,6 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from typing import Optional
 
 from app.core.security import get_current_user
 from app.core.storage import storage

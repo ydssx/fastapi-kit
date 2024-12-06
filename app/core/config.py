@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
 
     # 数据库配置
-    DATABASE_URL: str = "sqlite:///./app.db"
+    DATABASE_URL: str = "mysql+aiomysql://root:123456@localhost:3306/kratos-kit"
 
     # Redis配置
     REDIS_HOST: str = "localhost"

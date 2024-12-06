@@ -1,11 +1,13 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+
 from app.api.v1 import auth
 from app.schemas.chat import ChatRequest, ChatResponse, ChatStreamResponse
-from app.services.chat_service import chat_service
-from app.services.auth_service import AuthService
 from app.schemas.user import User
-import json
+from app.services.auth_service import AuthService
+from app.services.chat_service import chat_service
 
 auth_service = AuthService()
 router = APIRouter()
@@ -45,7 +47,7 @@ async def chat_stream(
 
         async def generate():
             async for chunk in chat_service.chat_completion_stream(request):
-                yield f"data: {json.dumps(chunk.dict())}\n\n"
+                yield f"data: {json.dumps(chunk.model_dump())}\n\n"
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(

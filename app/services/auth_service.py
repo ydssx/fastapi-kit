@@ -1,30 +1,35 @@
+import time
 from typing import Optional
+
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyHeader
 from jose import JWTError, jwt
-from app.core.database import get_db
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.core.logger import logger
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
-from app.core.config import settings
-import time
 
 
 class AuthService:
     def __init__(self):
-        self.db = next(get_db())
         self.secret_key = settings.SECRET_KEY
         self.algorithm = "HS256"
         self.api_key_header = APIKeyHeader(name="X-API-Key")
         # 添加token过期时间配置
         self.access_token_expire_minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    async def authenticate_user(
+        self, db: AsyncSession, username: str, password: str
+    ) -> Optional[User]:
         """
         验证用户凭据
         """
         try:
-            user = self.db.query(User).filter(User.username == username).first()
+            user = await db.execute(
+                select(User).where(User.username == username).limit(1)
+            )
             if not user:
                 logger.info(f"User {username} not found")
                 return None
@@ -37,7 +42,7 @@ class AuthService:
             return None
 
     async def create_user(
-        self, username: str, password: str, email: str
+        self, db: AsyncSession, username: str, password: str, email: str
     ) -> Optional[User]:
         """
         创建新用户
@@ -48,18 +53,19 @@ class AuthService:
                 password_hash=get_password_hash(password),
                 email=email,
             )
-            self.db.add(user)
-            self.db.commit()
-            self.db.refresh(user)
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
             logger.info(f"Created new user: {username}")
             return user
         except Exception as e:
-            self.db.rollback()
+            await db.rollback()
             logger.error(f"Error creating user {username}: {str(e)}")
             return None
 
     async def get_current_user(
-        self, token: str = Depends(APIKeyHeader(name="X-API-Key"))
+        self,
+        token: str = Depends(APIKeyHeader(name="X-API-Key"))
     ) -> str:
         """获取当前用户"""
         try:
