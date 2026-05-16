@@ -34,6 +34,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
       REDIS_URL: redis://redis:6379/0
+      LOG_FILE: logs/app.log
+    volumes:
+      - api_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,9 +55,6 @@ services:
       retries: 5
       start_period: 40s
     restart: unless-stopped
-    command: >
-      sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   celery-worker:
     build: .
@@ -63,11 +63,16 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
       REDIS_URL: redis://redis:6379/0
+      LOG_FILE: logs/celery.log
+    volumes:
+      - api_logs:/app/logs
     depends_on:
       api:
         condition: service_healthy
     restart: unless-stopped
-    command: celery -A app.tasks.celery_app worker -l info
+    entrypoint: ["/entrypoint.sh"]
+    command: ["celery", "-A", "app.tasks.celery_app", "worker", "-l", "info"]
 
 volumes:
   postgres_data:
+  api_logs:
