@@ -1,6 +1,7 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, BackgroundTasks, status
 
 from app.api.deps import CurrentUser, DbSession
+from app.core.config import get_settings
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
@@ -11,8 +12,14 @@ from app.schemas.auth import (
 from app.schemas.common import ApiResponse
 from app.schemas.user import UserPublic
 from app.services.auth import AuthService
+from app.tasks.example import send_notification
 
 router = APIRouter()
+
+
+def _queue_welcome_notification(user_id: str) -> None:
+    settings = get_settings()
+    send_notification.delay(user_id, f"Welcome to {settings.app_name}!")
 
 
 @router.post(
@@ -20,8 +27,13 @@ router = APIRouter()
     response_model=ApiResponse[AuthResponse],
     status_code=status.HTTP_201_CREATED,
 )
-async def register(payload: RegisterRequest, db: DbSession) -> ApiResponse[AuthResponse]:
+async def register(
+    payload: RegisterRequest,
+    db: DbSession,
+    background_tasks: BackgroundTasks,
+) -> ApiResponse[AuthResponse]:
     result = await AuthService(db).register(payload)
+    background_tasks.add_task(_queue_welcome_notification, str(result.user.id))
     return ApiResponse(data=result)
 
 
@@ -38,6 +50,5 @@ async def refresh(payload: RefreshRequest, db: DbSession) -> ApiResponse[TokenPa
 
 
 @router.get("/me", response_model=ApiResponse[UserPublic])
-async def me(current_user: CurrentUser, db: DbSession) -> ApiResponse[UserPublic]:
-    result = await AuthService(db).get_current_user_public(current_user.id)
-    return ApiResponse(data=result)
+async def me(current_user: CurrentUser) -> ApiResponse[UserPublic]:
+    return ApiResponse(data=UserPublic.model_validate(current_user))

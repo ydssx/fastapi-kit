@@ -1,8 +1,10 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DEFAULT_JWT_SECRET = "change-me-to-a-long-random-secret-in-production"
 
 
 class Settings(BaseSettings):
@@ -22,7 +24,7 @@ class Settings(BaseSettings):
     )
     redis_url: str = Field(default="redis://localhost:6379/0")
 
-    jwt_secret: str = "change-me-to-a-long-random-secret-in-production"
+    jwt_secret: str = _DEFAULT_JWT_SECRET
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
@@ -41,6 +43,14 @@ class Settings(BaseSettings):
         if isinstance(value, list):
             return [str(item) for item in value]
         return []
+
+    @model_validator(mode="after")
+    def reject_default_jwt_secret_in_production(self) -> "Settings":
+        if self.environment == "prod" and self.jwt_secret == _DEFAULT_JWT_SECRET:
+            raise ValueError(
+                "JWT_SECRET must be set to a strong unique value when ENVIRONMENT=prod"
+            )
+        return self
 
     @property
     def is_production(self) -> bool:

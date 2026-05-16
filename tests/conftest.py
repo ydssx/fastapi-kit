@@ -92,7 +92,7 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture(autouse=True)
 def mock_celery_task(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "app.services.auth.send_notification.delay",
+        "app.tasks.example.send_notification.delay",
         lambda *_args, **_kwargs: None,
     )
 
@@ -115,6 +115,11 @@ async def client(test_settings: Settings, db_engine) -> AsyncGenerator[AsyncClie
 
     app.dependency_overrides[get_settings] = lambda: test_settings
     app.dependency_overrides[get_db] = override_get_db
+
+    # Middleware calls get_settings() directly (not via FastAPI Depends).
+    import app.middleware.rate_limit as rate_limit_middleware
+
+    rate_limit_middleware.get_settings = lambda: test_settings  # type: ignore[method-assign]
 
     await init_redis_pool(test_settings)
 

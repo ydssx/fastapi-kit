@@ -15,7 +15,6 @@ from app.core.security import (
 from app.repositories.user import UserRepository
 from app.schemas.auth import AuthResponse, RegisterRequest, TokenPair
 from app.schemas.user import UserPublic
-from app.tasks.example import send_notification
 
 
 class AuthService:
@@ -25,17 +24,16 @@ class AuthService:
         self.users = UserRepository(session)
 
     async def register(self, payload: RegisterRequest) -> AuthResponse:
-        existing = await self.users.get_by_email(payload.email)
+        email = payload.email.lower()
+        existing = await self.users.get_by_email(email)
         if existing:
             raise AppException("Email already registered", code=40002, status_code=409)
 
         user = await self.users.create(
-            email=payload.email,
+            email=email,
             hashed_password=get_password_hash(payload.password),
         )
         tokens = self._build_tokens(user.id)
-
-        send_notification.delay(str(user.id), f"Welcome to {self.settings.app_name}!")
 
         return AuthResponse(
             user=UserPublic.model_validate(user),
@@ -43,7 +41,7 @@ class AuthService:
         )
 
     async def login(self, email: str, password: str) -> AuthResponse:
-        user = await self.users.get_by_email(email)
+        user = await self.users.get_by_email(email.lower())
         if not user or not verify_password(password, user.hashed_password):
             raise AppException("Invalid email or password", code=40101, status_code=401)
         if not user.is_active:

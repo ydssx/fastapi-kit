@@ -34,7 +34,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     ).model_dump(),
                 )
         except Exception:
-            # If Redis is unavailable, do not block requests.
-            return await call_next(request)
+            return JSONResponse(
+                status_code=503,
+                content=ApiResponse(
+                    code=50301,
+                    message="Rate limiting unavailable",
+                    data=None,
+                ).model_dump(),
+            )
 
         return await call_next(request)
