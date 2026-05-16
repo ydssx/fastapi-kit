@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     app_name: str = "fastapi-kit"
     environment: Literal["dev", "prod", "test"] = "dev"
     log_level: str = "INFO"
+    log_file: str | None = None
+    log_file_max_bytes: int = 10 * 1024 * 1024
+    log_file_backup_count: int = 5
 
     database_url: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/fastapi_kit"

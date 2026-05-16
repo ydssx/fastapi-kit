@@ -1,8 +1,15 @@
 from celery import Celery
+from celery.signals import worker_process_init
 
 from app.core.config import get_settings
+from app.core.logging import setup_logging
 
 settings = get_settings()
+
+
+@worker_process_init.connect
+def configure_worker_logging(**_kwargs: object) -> None:
+    setup_logging(get_settings())
 
 celery_app = Celery(
     "fastapi_kit",

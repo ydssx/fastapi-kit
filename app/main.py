@@ -19,7 +19,7 @@ from app.middleware.request_id import RequestIDMiddleware
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    setup_logging(settings.log_level)
+    setup_logging(settings)
     await init_redis_pool(settings)
     yield
     await close_redis_pool()

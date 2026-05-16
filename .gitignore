@@ -1,4 +1,5 @@
 .env
+logs/
 .venv/
 __pycache__/
 *.py[cod]
@@ -11,3 +12,4 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+.cursor/
