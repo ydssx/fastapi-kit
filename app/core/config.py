@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     celery_timezone: str = "UTC"
     celery_beat_heartbeat_interval_seconds: int = 300
+    celery_beat_schedule_file: str = "logs/celerybeat-schedule"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

@@ -18,6 +18,10 @@ def test_beat_schedule_entries() -> None:
     assert schedule["nightly-maintenance"]["schedule"] == crontab(hour=3, minute=0)
 
 
+def test_beat_schedule_file_under_logs() -> None:
+    assert celery_app.conf.beat_schedule_filename == "logs/celerybeat-schedule"
+
+
 def test_scheduled_tasks_registered() -> None:
     assert "app.tasks.scheduled.heartbeat" in celery_app.tasks
     assert "app.tasks.scheduled.ping_redis" in celery_app.tasks

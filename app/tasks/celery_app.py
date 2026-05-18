@@ -45,4 +45,5 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
     beat_schedule=_beat_schedule(settings),
+    beat_schedule_filename=settings.celery_beat_schedule_file,
 )
