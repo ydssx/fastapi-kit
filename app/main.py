@@ -37,6 +37,8 @@ def create_app() -> FastAPI:
         openapi_url=None if settings.is_production else "/openapi.json",
     )
 
+    # Outermost last: RequestID -> CORS -> RateLimit -> routes (CORS wraps 429/503 short-circuits).
+    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -44,7 +46,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestIDMiddleware)
 
     register_exception_handlers(app)

@@ -17,7 +17,10 @@
 ## 构建、测试与开发命令
 
 - `uv sync --all-extras`：安装全部依赖。
-- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈。
+- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **http://localhost:8000**（经 Caddy 反代，而非直连 `api` 容器）。
+- `SCALE_API=2 bash scripts/start.sh -d` 或 `make up-ha`：启动 **2 个 API 副本**，用于零停机滚动发布。
+- `bash scripts/rolling_update.sh` 或 `make rolling-update`：在 `SCALE_API>=2` 时逐个替换 API 容器（需先 `up-ha`）。
+- `make` / `Makefile`：封装 `dev`、`up`、`up-ha`、`rolling-update`、`check` 等常用目标。
 - `bash scripts/init_dev.sh`：仅启动 PostgreSQL 和 Redis，供本机 API 开发使用。
 - `uv run uvicorn app.main:app --reload`：本机热重载运行 API。
 - `uv run celery -A app.tasks.celery_app worker -l info`：启动 Celery worker。
@@ -44,3 +47,5 @@
 ## 安全与配置提示
 
 不要提交 `.env` 或真实密钥。使用 `.env.example` 记录配置项。生产环境下默认 `JWT_SECRET` 会被拒绝。写库路由如需调度 Celery，应确保数据库提交完成后再调用 `.delay()`；适合时使用 `BackgroundTasks`。
+
+Docker Compose 中 `migrate` 服务在 API 启动前执行 `alembic upgrade head`（多副本不会并行迁移）。经 Caddy 暴露 API 时，在 `api` 服务上设置 `TRUST_PROXY_HEADERS=true`，限流才按真实客户端 IP 计数；本机直连 uvicorn 时保持默认 `false`。

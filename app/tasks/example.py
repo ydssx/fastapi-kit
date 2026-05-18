@@ -6,5 +6,9 @@ logger = get_logger(__name__)
 
 @celery_app.task(name="app.tasks.example.send_notification")  # type: ignore[untyped-decorator]
 def send_notification(user_id: str, message: str) -> dict[str, str]:
-    logger.info("send_notification", user_id=user_id, message=message)
+    logger.info(
+        "send_notification",
+        user_id=user_id,
+        message_length=len(message),
+    )
     return {"status": "sent", "user_id": user_id, "message": message}

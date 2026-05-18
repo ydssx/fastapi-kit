@@ -10,7 +10,6 @@ from app.core.config import Settings
 _THIRD_PARTY_LOGGERS = (
     "uvicorn",
     "uvicorn.error",
-    "uvicorn.access",
     "fastapi",
     "celery",
     "celery.task",
@@ -21,6 +20,9 @@ _THIRD_PARTY_LOGGERS = (
     "httpx",
     "httpcore",
 )
+
+# Access logging is handled by RequestIDMiddleware (request_completed).
+_ACCESS_LOGGERS = ("uvicorn.access",)
 
 
 def _shared_processors() -> list[structlog.types.Processor]:
@@ -36,12 +38,34 @@ def _shared_processors() -> list[structlog.types.Processor]:
     ]
 
 
+def _resolve_log_level(level_name: str) -> int:
+    normalized = level_name.upper()
+    mapping = logging.getLevelNamesMapping()
+    if normalized not in mapping:
+        valid = ", ".join(sorted(mapping))
+        msg = f"Invalid log level {level_name!r}. Choose from: {valid}"
+        raise ValueError(msg)
+    return mapping[normalized]
+
+
+def _close_logger_handlers(logger: logging.Logger) -> None:
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
+
+
 def _configure_third_party_loggers(level: int) -> None:
     for name in _THIRD_PARTY_LOGGERS:
         lib_logger = logging.getLogger(name)
-        lib_logger.handlers.clear()
+        _close_logger_handlers(lib_logger)
         lib_logger.propagate = True
         lib_logger.setLevel(level)
+
+    for name in _ACCESS_LOGGERS:
+        access_logger = logging.getLogger(name)
+        _close_logger_handlers(access_logger)
+        access_logger.propagate = False
+        access_logger.setLevel(logging.WARNING)
 
 
 def setup_logging(settings: Settings | None = None, *, log_level: str | None = None) -> None:
@@ -49,7 +73,7 @@ def setup_logging(settings: Settings | None = None, *, log_level: str | None = N
 
     settings = settings or get_settings()
     level_name = log_level or settings.log_level
-    level = getattr(logging, level_name.upper(), logging.INFO)
+    level = _resolve_log_level(level_name)
 
     shared = _shared_processors()
     formatter = structlog.stdlib.ProcessorFormatter(
@@ -78,7 +102,7 @@ def setup_logging(settings: Settings | None = None, *, log_level: str | None = N
         handlers.append(file_handler)
 
     root = logging.getLogger()
-    root.handlers.clear()
+    _close_logger_handlers(root)
     root.setLevel(level)
     for handler in handlers:
         root.addHandler(handler)

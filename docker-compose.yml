@@ -25,19 +25,35 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/entrypoint.sh"]
+    command: ["alembic", "upgrade", "head"]
+
   api:
     build: .
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
       REDIS_URL: redis://redis:6379/0
       LOG_FILE: logs/app.log
+      TRUST_PROXY_HEADERS: "true"
     volumes:
       - api_logs:/app/logs
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -48,12 +64,30 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
         ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 40s
+    stop_grace_period: 35s
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   celery-worker:
@@ -67,6 +101,8 @@ services:
     volumes:
       - api_logs:/app/logs
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
     restart: unless-stopped
@@ -84,6 +120,8 @@ services:
     volumes:
       - api_logs:/app/logs
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     restart: unless-stopped

@@ -16,7 +16,9 @@ for arg in "$@"; do
       echo "Usage: bash scripts/start.sh [-d|--detach]"
       echo ""
       echo "Starts the full stack via Docker Compose:"
-      echo "  postgres, redis, api (with migrations), celery-worker, celery-beat"
+      echo "  postgres, redis, proxy, api (with migrations), celery-worker, celery-beat"
+      echo ""
+      echo "  SCALE_API=2 bash scripts/start.sh -d   # two API replicas for zero-downtime deploys"
       echo ""
       echo "Options:"
       echo "  -d, --detach   Run in background"
@@ -39,12 +41,14 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-COMPOSE_ARGS=(up --build "${EXTRA_ARGS[@]}")
+SCALE_API="${SCALE_API:-1}"
+
+COMPOSE_ARGS=(up --build --scale "api=${SCALE_API}" "${EXTRA_ARGS[@]}")
 if $DETACHED; then
   COMPOSE_ARGS+=(-d)
 fi
 
-echo "Starting full stack..."
+echo "Starting full stack (api replicas: ${SCALE_API})..."
 docker compose "${COMPOSE_ARGS[@]}"
 
 if $DETACHED; then

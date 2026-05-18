@@ -16,8 +16,8 @@ def ping_redis() -> dict[str, str]:
 
     from app.core.config import get_settings
 
-    client = redis.from_url(str(get_settings().redis_url))
-    client.ping()
+    with redis.from_url(str(get_settings().redis_url)) as client:
+        client.ping()
     logger.info("scheduled_redis_ping", status="ok")
     return {"status": "ok"}
 

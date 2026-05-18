@@ -1,7 +1,6 @@
 from celery.schedules import crontab
 
 import app.tasks.scheduled  # noqa: F401 — register tasks on the Celery app
-
 from app.core.config import Settings
 from app.tasks.celery_app import _beat_schedule, celery_app
 

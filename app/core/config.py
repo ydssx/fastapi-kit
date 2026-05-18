@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
     rate_limit_per_minute: int = 100
+    trust_proxy_headers: bool = False
 
     celery_timezone: str = "UTC"
     celery_beat_heartbeat_interval_seconds: int = 300

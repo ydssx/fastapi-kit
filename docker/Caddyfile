@@ -1,0 +1,12 @@
+# Entry point for zero-downtime API restarts (see scripts/rolling_update.sh).
+# Docker DNS for service "api" returns all replica IPs when scaled.
+:8000 {
+	reverse_proxy api:8000 {
+		resolve_interval 5s
+		health_uri /health
+		health_interval 5s
+		health_timeout 3s
+		fail_duration 15s
+		lb_policy round_robin
+	}
+}

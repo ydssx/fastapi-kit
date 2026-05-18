@@ -2,6 +2,8 @@ import json
 import logging
 from pathlib import Path
 
+import pytest
+
 from app.core.config import Settings
 from app.core.logging import get_logger, setup_logging
 
@@ -30,3 +32,9 @@ def test_setup_logging_writes_to_file(tmp_path: Path) -> None:
     record = json.loads(content.strip().splitlines()[-1])
     assert record["event"] == "file_log_probe"
     assert record["status"] == "ok"
+
+
+def test_setup_logging_rejects_invalid_level() -> None:
+    settings = Settings(environment="test", log_level="NOT_A_LEVEL")
+    with pytest.raises(ValueError, match="Invalid log level"):
+        setup_logging(settings)
