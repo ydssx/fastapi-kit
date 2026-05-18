@@ -1,8 +1,7 @@
-import structlog
-
+from app.core.logging import get_logger
 from app.tasks.celery_app import celery_app
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 @celery_app.task(name="app.tasks.example.send_notification")  # type: ignore[untyped-decorator]

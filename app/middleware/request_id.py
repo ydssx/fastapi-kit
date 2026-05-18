@@ -2,6 +2,8 @@ import time
 import uuid
 
 import structlog
+
+from app.core.logging import get_logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -19,7 +21,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
 
-        logger = structlog.get_logger("http")
+        logger = get_logger("http")
         logger.info(
             "request_completed",
             method=request.method,

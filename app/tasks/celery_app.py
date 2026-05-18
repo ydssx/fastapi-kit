@@ -1,6 +1,6 @@
 from celery import Celery
 from celery.schedules import crontab
-from celery.signals import worker_process_init
+from celery.signals import beat_init, worker_process_init
 
 from app.core.config import Settings, get_settings
 from app.core.logging import setup_logging
@@ -25,6 +25,11 @@ def _beat_schedule(settings: Settings) -> dict[str, dict[str, object]]:
 
 @worker_process_init.connect
 def configure_worker_logging(**_kwargs: object) -> None:
+    setup_logging(get_settings())
+
+
+@beat_init.connect
+def configure_beat_logging(**_kwargs: object) -> None:
     setup_logging(get_settings())
 
 

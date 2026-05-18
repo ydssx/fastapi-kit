@@ -31,6 +31,8 @@
 
 保持分层架构：router 不写 SQL，也不绕过 service/repository。配置统一通过 `app.core.config.Settings` 和 `get_settings()` 读取。API 响应使用 `ApiResponse` 信封，业务错误使用 `AppException`。
 
+日志统一使用 `app.core.logging`：`setup_logging()` 在 API（`create_app`）、Celery worker/beat、Alembic 入口初始化；业务代码用 `get_logger(__name__)` 打结构化 JSON，不要直接使用 `print` 或未配置的 `logging`。
+
 ## 测试指南
 
 测试使用 `pytest`、`pytest-asyncio`、`httpx` 和 testcontainers，并依赖 PostgreSQL 与 Redis。测试文件命名为 `test_*.py`，API 覆盖放在 `tests/api/`。如果本机不能使用 Docker，可先设置 `TEST_DATABASE_URL` 和 `TEST_REDIS_URL` 指向已有服务，再运行 `uv run pytest -v`。
