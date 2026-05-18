@@ -4,7 +4,7 @@ UV := uv
 RUN := $(UV) run
 
 .PHONY: help install sync dev-init dev run worker beat \
-	up up-ha down logs migrate rolling-update \
+	certs up up-ha down logs migrate rolling-update \
 	lint format typecheck test check ci clean
 
 help: ## Show available targets
@@ -29,6 +29,9 @@ worker: ## Run Celery worker
 
 beat: ## Run Celery Beat (single instance in production)
 	$(RUN) celery -A app.tasks.celery_app beat -l info
+
+certs: ## Generate local self-signed TLS certs for Caddy (docker/certs/)
+	bash scripts/gen_dev_certs.sh
 
 up: ## Start full Docker stack (detached, 1 API replica)
 	bash scripts/start.sh -d

@@ -17,7 +17,8 @@
 ## 构建、测试与开发命令
 
 - `uv sync --all-extras`：安装全部依赖。
-- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **http://localhost:8000**（经 Caddy 反代，而非直连 `api` 容器）。
+- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **https://localhost**（本地自签证书，首次由 `scripts/gen_dev_certs.sh` 生成；`http://localhost:8000` 会 301 到 HTTPS）。浏览器会提示不受信任，属正常现象。
+- `bash scripts/gen_dev_certs.sh` 或 `make certs`：单独生成本地 TLS 证书（`docker/certs/`，已 gitignore）。
 - `SCALE_API=2 bash scripts/start.sh -d` 或 `make up-ha`：启动 **2 个 API 副本**，用于零停机滚动发布。
 - `bash scripts/rolling_update.sh` 或 `make rolling-update`：在 `SCALE_API>=2` 时逐个替换 API 容器（需先 `up-ha`）。
 - `make` / `Makefile`：封装 `dev`、`up`、`up-ha`、`rolling-update`、`check` 等常用目标。

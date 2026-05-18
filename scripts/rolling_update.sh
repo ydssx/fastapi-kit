@@ -17,6 +17,11 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
+if [ ! -f docker/certs/cert.pem ] || [ ! -f docker/certs/key.pem ]; then
+  echo "Generating local TLS certs (docker/certs/)..."
+  bash scripts/gen_dev_certs.sh
+fi
+
 count_healthy_api() {
   docker compose ps api --format '{{.Health}}' 2>/dev/null | grep -c '^healthy$' || true
 }
@@ -38,12 +43,12 @@ wait_min_healthy_api() {
 wait_proxy_healthy() {
   local attempt
   for attempt in $(seq 1 45); do
-    if curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+    if curl -k -sf https://localhost/health >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
   done
-  echo "Error: proxy/API health check failed at http://localhost:8000/health"
+  echo "Error: proxy/API health check failed at https://localhost/health"
   return 1
 }
 

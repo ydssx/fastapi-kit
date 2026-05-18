@@ -22,6 +22,12 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Docker is not running. Start Docker Desktop and retry."
 }
 
+if (-not ((Test-Path "docker/certs/cert.pem") -and (Test-Path "docker/certs/key.pem"))) {
+    Write-Host "Generating local TLS certs (docker/certs/)..."
+    bash scripts/gen_dev_certs.sh
+    if ($LASTEXITCODE -ne 0) { throw "gen_dev_certs.sh failed" }
+}
+
 if ($Detached) {
     $ComposeArgs += "-d"
 }
@@ -35,7 +41,15 @@ if ($Detached) {
     $ready = $false
     for ($i = 0; $i -lt 30; $i++) {
         try {
-            $r = Invoke-WebRequest -Uri "http://localhost:8000/health" -UseBasicParsing -TimeoutSec 2
+            $params = @{
+                Uri             = "https://localhost/health"
+                UseBasicParsing = $true
+                TimeoutSec      = 2
+            }
+            if ($PSVersionTable.PSVersion.Major -ge 7) {
+                $params.SkipCertificateCheck = $true
+            }
+            $r = Invoke-WebRequest @params
             if ($r.StatusCode -eq 200) { $ready = $true; break }
         } catch {}
         Start-Sleep -Seconds 2
@@ -43,8 +57,9 @@ if ($Detached) {
     Write-Host ""
     docker compose ps
     Write-Host ""
-    Write-Host "Full stack is up:"
-    Write-Host "  API docs:  http://localhost:8000/docs"
-    Write-Host "  Health:    http://localhost:8000/health"
+    Write-Host "Full stack is up (local self-signed TLS):"
+    Write-Host "  API docs:  https://localhost/docs"
+    Write-Host "  Health:    https://localhost/health"
+    Write-Host "  HTTP :8000 redirects to HTTPS. Trust the cert in the browser to silence warnings."
     Write-Host "  Stop:      docker compose down"
 }

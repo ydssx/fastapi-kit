@@ -41,6 +41,11 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
+if [ ! -f docker/certs/cert.pem ] || [ ! -f docker/certs/key.pem ]; then
+  echo "Generating local TLS certs (docker/certs/)..."
+  bash scripts/gen_dev_certs.sh
+fi
+
 SCALE_API="${SCALE_API:-1}"
 
 COMPOSE_ARGS=(up --build --scale "api=${SCALE_API}" "${EXTRA_ARGS[@]}")
@@ -55,7 +60,7 @@ if $DETACHED; then
   echo ""
   echo "Waiting for API..."
   for _ in $(seq 1 30); do
-    if curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+    if curl -k -sf https://localhost/health >/dev/null 2>&1; then
       break
     fi
     sleep 2
@@ -63,11 +68,12 @@ if $DETACHED; then
   echo ""
   docker compose ps
   echo ""
-  echo "Full stack is up:"
-  echo "  API docs:  http://localhost:8000/docs"
-  echo "  Health:    http://localhost:8000/health"
-  echo "  Ready:     http://localhost:8000/ready"
-  echo "  Metrics:   http://localhost:8000/metrics"
+  echo "Full stack is up (local self-signed TLS):"
+  echo "  API docs:  https://localhost/docs"
+  echo "  Health:    https://localhost/health"
+  echo "  Ready:     https://localhost/ready"
+  echo "  Metrics:   https://localhost/metrics"
+  echo "  HTTP :8000 redirects to HTTPS. Browser warnings are expected until you trust the cert."
   echo ""
   echo "Logs:  docker compose logs -f"
   echo "Stop:  docker compose down"
