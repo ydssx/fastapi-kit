@@ -17,7 +17,7 @@
 ## 构建、测试与开发命令
 
 - `uv sync --all-extras`：安装全部依赖。
-- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **https://localhost**（本地自签证书，首次由 `scripts/gen_dev_certs.sh` 生成；`http://localhost:8000` 会 301 到 HTTPS）。浏览器会提示不受信任，属正常现象。
+- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy，内含构建好的 **admin** 静态资源）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **https://localhost**（管理后台 **https://localhost/admin/**；本地自签证书，首次由 `scripts/gen_dev_certs.sh` 生成；`http://localhost:8000` 会 301 到 HTTPS）。浏览器会提示不受信任，属正常现象。
 - `bash scripts/gen_dev_certs.sh` 或 `make certs`：单独生成本地 TLS 证书（`docker/certs/`，已 gitignore）。
 - `SCALE_API=2 bash scripts/start.sh -d` 或 `make up-ha`：启动 **2 个 API 副本**，用于零停机滚动发布。
 - `bash scripts/rolling_update.sh` 或 `make rolling-update`：在 `SCALE_API>=2` 时逐个替换 API 容器（需先 `up-ha`）。
@@ -28,6 +28,16 @@
 - `uv run celery -A app.tasks.celery_app beat -l info`：启动 Celery Beat（定时调度，仅单实例）。
 - `uv run alembic upgrade head`：执行数据库迁移。
 - `uv run ruff check .`、`uv run mypy app`、`uv run pytest -v`：运行 lint、类型检查和测试。
+
+### 管理后台（`admin/`）
+
+- `make create-admin EMAIL=admin@local.dev PASSWORD=yourpassword` 或 `uv run python scripts/create_admin.py --email ... --password ...`：创建/提升管理员（`role=admin`）。
+- **Docker 一体启动**：`make up` / `bash scripts/start.sh -d` 会在构建 `proxy` 镜像时自动 `npm run build` admin，无需先 `make admin-build`。
+- `make admin-dev`：本机 Vite（`http://localhost:5173/admin/`），`/api` 代理到 `https://localhost`。
+- `make admin-docker-dev` 或 `docker compose --profile admin-dev up -d admin-dev`：Vite 跑在容器内（改代码热重载，API 代理到 compose 里的 `proxy`）。
+- `make admin-build`：仅在本机构建 `admin/dist/`（调试 Caddy 或不用 compose 构建 proxy 时可选）。
+- 管理 API 前缀：`/api/v1/admin/*`（需 Bearer token 且 `role=admin`）。
+- 可选 Flower：`docker compose --profile ops up -d`（内网 Celery 监控，不经过 Caddy 公网暴露）。
 
 ## 编码风格与命名约定
 

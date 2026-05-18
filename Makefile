@@ -5,6 +5,7 @@ RUN := $(UV) run
 
 .PHONY: help install sync dev-init dev run worker beat \
 	certs up up-ha down logs migrate rolling-update \
+	admin-dev admin-docker-dev admin-build create-admin \
 	lint format typecheck test check ci clean
 
 help: ## Show available targets
@@ -50,6 +51,18 @@ logs: ## Follow Docker Compose logs
 
 migrate: ## Apply Alembic migrations
 	$(RUN) alembic upgrade head
+
+create-admin: ## Create or promote an admin user (EMAIL=... PASSWORD=...)
+	$(RUN) python scripts/create_admin.py --email "$(EMAIL)" --password "$(PASSWORD)"
+
+admin-dev: ## Run admin SPA dev server on host (Vite :5173, proxies /api to https://localhost)
+	cd admin && npm run dev
+
+admin-docker-dev: ## Run admin Vite in Docker (requires stack up; profile admin-dev)
+	docker compose --profile admin-dev up -d admin-dev
+
+admin-build: ## Build admin SPA on host (optional; compose rebuilds admin into proxy image)
+	cd admin && npm ci && npm run build
 
 lint: ## Ruff lint
 	$(RUN) ruff check .

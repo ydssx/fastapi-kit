@@ -58,8 +58,12 @@ if ($Detached) {
     docker compose ps
     Write-Host ""
     Write-Host "Full stack is up (local self-signed TLS):"
+    Write-Host "  Admin:     https://localhost/admin/"
     Write-Host "  API docs:  https://localhost/docs"
     Write-Host "  Health:    https://localhost/health"
+    Write-Host ""
+    Write-Host "  Admin hot reload: docker compose --profile admin-dev up -d admin-dev"
+    Write-Host "    then http://localhost:5173/admin/"
     Write-Host "  HTTP :8000 redirects to HTTPS. Trust the cert in the browser to silence warnings."
     Write-Host "  Stop:      docker compose down"
 }

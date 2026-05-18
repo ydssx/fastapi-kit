@@ -1,0 +1,13 @@
+# Caddy reverse proxy with admin SPA baked in (built at image build time).
+FROM node:22-alpine AS admin-builder
+
+WORKDIR /app
+COPY admin/package.json admin/package-lock.json ./
+RUN npm ci
+COPY admin/ ./
+RUN npm run build
+
+FROM caddy:2-alpine
+
+COPY --from=admin-builder /app/dist /srv/admin
+COPY docker/Caddyfile /etc/caddy/Caddyfile

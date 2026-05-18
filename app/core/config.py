@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = [
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:8000",
         "https://localhost",
     ]
@@ -43,6 +44,8 @@ class Settings(BaseSettings):
     celery_timezone: str = "UTC"
     celery_beat_heartbeat_interval_seconds: int = 300
     celery_beat_schedule_file: str = "logs/celerybeat-schedule"
+    celery_inspect_timeout: float = 5.0
+    celery_inspect_overall_timeout: float = 15.0
 
     @field_validator("cors_origins", mode="before")
     @classmethod

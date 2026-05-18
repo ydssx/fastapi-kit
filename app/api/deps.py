@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.cache.redis import get_redis_client
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException
+from app.core.roles import ADMIN
 from app.core.security import get_subject_from_token
 from app.db.session import get_db
 from app.models.user import User
@@ -56,3 +57,16 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def require_admin(current_user: CurrentUser) -> User:
+    if current_user.role != ADMIN:
+        raise AppException(
+            "Admin access required",
+            code=40301,
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+    return current_user
+
+
+AdminUser = Annotated[User, Depends(require_admin)]

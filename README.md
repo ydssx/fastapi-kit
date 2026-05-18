@@ -86,6 +86,33 @@ Scheduled tasks live in `app/tasks/scheduled.py`; intervals are configured in `a
 | POST | `/api/v1/auth/login` | Login |
 | POST | `/api/v1/auth/refresh` | Refresh access token |
 | GET | `/api/v1/auth/me` | Current user (Bearer) |
+| GET | `/api/v1/admin/*` | Admin APIs (admin role + Bearer) |
+
+## Admin dashboard
+
+React SPA in `admin/` (login, users, dashboard, Celery overview, audit logs).
+
+```bash
+# Create first admin
+uv run python scripts/create_admin.py --email admin@local.dev --password 'your-secure-password'
+
+# Full stack (admin SPA is built into the proxy image)
+make up
+# https://localhost/admin/
+
+# Optional: Vite hot reload in Docker
+docker compose --profile admin-dev up -d admin-dev
+# http://localhost:5173/admin/
+
+# Or Vite on the host
+make admin-dev
+```
+
+Optional Celery Flower (ops profile, not exposed on public Caddy):
+
+```bash
+docker compose --profile ops up -d
+```
 
 ## Project layout
 
@@ -101,6 +128,7 @@ app/
   tasks/        # Celery app and tasks
   middleware/   # Request ID, rate limiting
 tests/          # pytest + testcontainers
+admin/          # React admin SPA (Vite)
 ```
 
 ## Environment variables
