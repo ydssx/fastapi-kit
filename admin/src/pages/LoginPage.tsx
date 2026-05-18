@@ -30,8 +30,13 @@ export function LoginPage() {
   return (
     <div className={styles.page}>
       <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>fastapi-kit</h1>
-        <p className={styles.subtitle}>管理后台登录</p>
+        <div className={styles.brandRow}>
+          <span className={styles.brandMark}>FK</span>
+          <div>
+            <h1 className={styles.title}>fastapi-kit</h1>
+            <p className={styles.subtitle}>管理后台登录</p>
+          </div>
+        </div>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <label className={styles.label}>
           邮箱

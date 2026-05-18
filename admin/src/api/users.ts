@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { Paginated, UserPublic } from '../types/api'
+import type { AuditLog, Paginated, PasswordResetResult, UserPublic } from '../types/api'
 
 export interface UserListParams {
   page?: number
@@ -20,6 +20,10 @@ export function fetchUsers(params: UserListParams = {}): Promise<Paginated<UserP
   return apiFetch<Paginated<UserPublic>>(`/api/v1/admin/users${qs ? `?${qs}` : ''}`)
 }
 
+export function fetchUser(id: string): Promise<UserPublic> {
+  return apiFetch<UserPublic>(`/api/v1/admin/users/${id}`)
+}
+
 export function updateUser(
   id: string,
   payload: { is_active?: boolean; role?: string },
@@ -27,5 +31,15 @@ export function updateUser(
   return apiFetch<UserPublic>(`/api/v1/admin/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+  })
+}
+
+export function fetchUserAuditLogs(id: string, limit = 20): Promise<AuditLog[]> {
+  return apiFetch<AuditLog[]>(`/api/v1/admin/users/${id}/audit-logs?limit=${limit}`)
+}
+
+export function resetUserPassword(id: string): Promise<PasswordResetResult> {
+  return apiFetch<PasswordResetResult>(`/api/v1/admin/users/${id}/reset-password`, {
+    method: 'POST',
   })
 }

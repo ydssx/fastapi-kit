@@ -3,8 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Literal
 
 from app.core.config import Settings, get_settings
-from app.schemas.admin import CeleryOverview, CeleryTaskInfo, CeleryWorkerInfo
-from app.tasks.celery_app import celery_app
+from app.schemas.admin import BeatScheduleEntry, CeleryOverview, CeleryTaskInfo, CeleryWorkerInfo
+from app.tasks.celery_app import _beat_schedule, celery_app
 
 InspectMethod = Literal["stats", "active", "scheduled", "reserved"]
 
@@ -30,16 +30,38 @@ def _inspect_broadcast(method: InspectMethod, timeout: float) -> dict[str, Any]:
     return result if isinstance(result, dict) else {}
 
 
+def _format_schedule_value(schedule: object) -> str:
+    return str(schedule)
+
+
+def _build_beat_schedule(settings: Settings) -> list[BeatScheduleEntry]:
+    entries: list[BeatScheduleEntry] = []
+    for name, entry in _beat_schedule(settings).items():
+        entries.append(
+            BeatScheduleEntry(
+                name=name,
+                task=str(entry.get("task", "")),
+                schedule=_format_schedule_value(entry.get("schedule", "")),
+            )
+        )
+    return entries
+
+
 class AdminCeleryService:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
 
     async def get_overview(self) -> CeleryOverview:
         overall_timeout = self.settings.celery_inspect_overall_timeout
+        beat_schedule = _build_beat_schedule(self.settings)
+        flower_url = self.settings.flower_url
         try:
-            return await asyncio.wait_for(
+            overview = await asyncio.wait_for(
                 asyncio.to_thread(self._inspect_sync),
                 timeout=overall_timeout,
+            )
+            return overview.model_copy(
+                update={"beat_schedule": beat_schedule, "flower_url": flower_url}
             )
         except TimeoutError:
             return CeleryOverview(
@@ -47,6 +69,8 @@ class AdminCeleryService:
                 workers=[],
                 active_tasks=[],
                 scheduled_tasks=[],
+                beat_schedule=beat_schedule,
+                flower_url=flower_url,
                 message=(
                     f"Celery inspect timed out after {overall_timeout}s; "
                     "check that celery-worker is running"
@@ -58,6 +82,8 @@ class AdminCeleryService:
                 workers=[],
                 active_tasks=[],
                 scheduled_tasks=[],
+                beat_schedule=beat_schedule,
+                flower_url=flower_url,
                 message=str(exc),
             )
 
@@ -74,16 +100,22 @@ class AdminCeleryService:
                 message="No Celery workers responded to ping; start celery-worker",
             )
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             fut_stats = executor.submit(_inspect_broadcast, "stats", timeout)
             fut_active = executor.submit(_inspect_broadcast, "active", timeout)
             fut_scheduled = executor.submit(_inspect_broadcast, "scheduled", timeout)
+            fut_reserved = executor.submit(_inspect_broadcast, "reserved", timeout)
             stats = _normalize_worker_map(fut_stats.result())
             active = _normalize_worker_map(fut_active.result())
             scheduled = _normalize_worker_map(fut_scheduled.result())
+            reserved = _normalize_worker_map(fut_reserved.result())
 
         worker_names = (
-            set(ping.keys()) | set(stats.keys()) | set(active.keys()) | set(scheduled.keys())
+            set(ping.keys())
+            | set(stats.keys())
+            | set(active.keys())
+            | set(scheduled.keys())
+            | set(reserved.keys())
         )
 
         workers: list[CeleryWorkerInfo] = []
@@ -104,12 +136,21 @@ class AdminCeleryService:
 
         active_tasks = self._parse_tasks(active, scheduled=False)
         scheduled_tasks = self._parse_tasks(scheduled, scheduled=True)
+        reserved_tasks = self._parse_tasks(reserved, scheduled=False)
+
+        status = "ok"
+        message: str | None = None
+        if ping and not stats:
+            status = "degraded"
+            message = "Workers responded to ping but stats inspect returned no data"
 
         return CeleryOverview(
-            status="ok",
+            status=status,
             workers=workers,
             active_tasks=active_tasks,
             scheduled_tasks=scheduled_tasks,
+            reserved_tasks=reserved_tasks,
+            message=message,
         )
 
     @staticmethod

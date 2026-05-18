@@ -6,6 +6,7 @@ import { AuditLogsPage } from './pages/AuditLogsPage'
 import { CeleryPage } from './pages/CeleryPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { UserDetailPage } from './pages/UserDetailPage'
 import { UsersPage } from './pages/UsersPage'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
             <Route element={<AdminLayout />}>
               <Route index element={<DashboardPage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="users/:id" element={<UserDetailPage />} />
               <Route path="celery" element={<CeleryPage />} />
               <Route path="audit" element={<AuditLogsPage />} />
             </Route>

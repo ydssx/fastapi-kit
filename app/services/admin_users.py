@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from typing import Any
 
@@ -5,9 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.core.roles import ADMIN
+from app.core.security import get_password_hash
 from app.models.user import User
+from app.repositories.audit_log import AuditLogRepository
 from app.repositories.user import UserRepository
-from app.schemas.admin import UserAdmin, UserUpdate
+from app.schemas.admin import AuditLogPublic, PasswordResetResult, UserAdmin, UserUpdate
 from app.schemas.pagination import PaginatedResponse
 from app.services.audit import AuditService
 
@@ -83,8 +86,14 @@ class AdminUserService:
         if not changes:
             return UserAdmin.model_validate(user)
 
-        updated = await self.users.update_fields(user, **changes)
+        if await self._active_admin_count_after(user, changes) < 1:
+            raise AppException(
+                "Cannot remove the last active administrator",
+                code=40005,
+                status_code=400,
+            )
 
+        updated = await self.users.update_fields(user, **changes)
         await self.audit.record(
             actor_id=actor.id,
             action="user.update",
@@ -96,3 +105,60 @@ class AdminUserService:
         )
 
         return UserAdmin.model_validate(updated)
+
+    async def _active_admin_count_after(self, user: User, changes: dict[str, Any]) -> int:
+        count = await self.users.count_active_admins()
+        projected_role = changes.get("role", user.role)
+        projected_active = changes.get("is_active", user.is_active)
+        was_active_admin = user.role == ADMIN and user.is_active
+        will_be_active_admin = projected_role == ADMIN and projected_active
+        if was_active_admin and not will_be_active_admin:
+            count -= 1
+        elif not was_active_admin and will_be_active_admin:
+            count += 1
+        return count
+
+    async def list_user_audit_logs(
+        self,
+        user_id: uuid.UUID,
+        *,
+        limit: int = 20,
+    ) -> list[AuditLogPublic]:
+        user = await self.users.get_by_id(user_id)
+        if not user:
+            raise AppException("User not found", code=40401, status_code=404)
+        items, _ = await AuditLogRepository(self.session).list_for_user(
+            user_id=user_id,
+            limit=limit,
+        )
+        return [AuditLogPublic.model_validate(log) for log in items]
+
+    async def reset_password(
+        self,
+        actor: User,
+        user_id: uuid.UUID,
+        *,
+        ip: str | None = None,
+        user_agent: str | None = None,
+    ) -> PasswordResetResult:
+        user = await self.users.get_by_id(user_id)
+        if not user:
+            raise AppException("User not found", code=40401, status_code=404)
+
+        temporary_password = secrets.token_urlsafe(12)
+        await self.users.update_fields(
+            user,
+            hashed_password=get_password_hash(temporary_password),
+        )
+
+        await self.audit.record(
+            actor_id=actor.id,
+            action="user.reset_password",
+            resource_type="user",
+            resource_id=str(user_id),
+            detail=None,
+            ip=ip,
+            user_agent=user_agent,
+        )
+
+        return PasswordResetResult(temporary_password=temporary_password)

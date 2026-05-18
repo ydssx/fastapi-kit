@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.deps import AdminUser, DbSession, RedisClient
+from app.api.deps import AdminUser, DbSession, RedisClient, SettingsDep
 from app.schemas.admin import DashboardStats
 from app.schemas.common import ApiResponse
 from app.services.admin_dashboard import AdminDashboardService
@@ -13,8 +13,9 @@ async def dashboard(
     _admin: AdminUser,
     db: DbSession,
     redis: RedisClient,
+    settings: SettingsDep,
 ) -> ApiResponse[DashboardStats]:
-    result = await AdminDashboardService(db, redis).get_stats()
+    result = await AdminDashboardService(db, redis, settings).get_stats()
     return ApiResponse(data=result)
 
 
@@ -23,6 +24,7 @@ async def metrics_summary(
     _admin: AdminUser,
     db: DbSession,
     redis: RedisClient,
+    settings: SettingsDep,
 ) -> ApiResponse[dict[str, float]]:
-    stats = await AdminDashboardService(db, redis).get_stats()
+    stats = await AdminDashboardService(db, redis, settings).get_stats()
     return ApiResponse(data=stats.metrics_summary)

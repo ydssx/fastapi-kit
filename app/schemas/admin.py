@@ -34,11 +34,28 @@ class ServiceStatus(BaseModel):
     redis: str
 
 
+class SystemOverview(BaseModel):
+    ready_status: str
+    ready_message: str | None = None
+    migration_at_head: bool
+    migration_revision: str | None = None
+    migration_head_revision: str | None = None
+    beat_status: str
+    beat_last_seen: datetime | None = None
+    api_replicas_reported: int | None = None
+    api_replicas_note: str | None = None
+
+
 class DashboardStats(BaseModel):
     user_count: int
     active_user_count: int
     service_status: ServiceStatus
     metrics_summary: dict[str, float]
+    system: SystemOverview
+
+
+class PasswordResetResult(BaseModel):
+    temporary_password: str
 
 
 class CeleryWorkerInfo(BaseModel):
@@ -55,11 +72,20 @@ class CeleryTaskInfo(BaseModel):
     args: list[Any] = Field(default_factory=list)
 
 
+class BeatScheduleEntry(BaseModel):
+    name: str
+    task: str
+    schedule: str
+
+
 class CeleryOverview(BaseModel):
     status: str
     workers: list[CeleryWorkerInfo]
     active_tasks: list[CeleryTaskInfo]
     scheduled_tasks: list[CeleryTaskInfo]
+    reserved_tasks: list[CeleryTaskInfo] = Field(default_factory=list)
+    beat_schedule: list[BeatScheduleEntry] = Field(default_factory=list)
+    flower_url: str | None = None
     message: str | None = None
 
 

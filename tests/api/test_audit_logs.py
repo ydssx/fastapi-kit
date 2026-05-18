@@ -58,3 +58,20 @@ async def test_audit_log_created_on_user_update(client: AsyncClient, db_engine) 
     assert len(items) >= 1
     assert items[0]["action"] == "user.update"
     assert items[0]["resource_type"] == "user"
+
+
+@pytest.mark.asyncio
+async def test_audit_logs_csv_export(client: AsyncClient, db_engine) -> None:
+    admin_email = "export-admin@example.com"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    response = await client.get(
+        "/api/v1/admin/audit-logs/export",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200
+    assert "text/csv" in response.headers.get("content-type", "")
+    body = response.text
+    assert "created_at" in body.splitlines()[0]
+    assert "action" in body.splitlines()[0]

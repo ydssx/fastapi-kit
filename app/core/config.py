@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     celery_inspect_timeout: float = 5.0
     celery_inspect_overall_timeout: float = 15.0
 
+    admin_audit_export_max_rows: int = 5000
+    admin_reported_api_replicas: int | None = None
+    flower_url: str | None = None
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> list[str]:

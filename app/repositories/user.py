@@ -44,6 +44,14 @@ class UserRepository:
         )
         return int(result.scalar_one())
 
+    async def count_active_admins(self) -> int:
+        result = await self.session.execute(
+            select(func.count())
+            .select_from(User)
+            .where(User.is_active.is_(True), User.role == ADMIN)
+        )
+        return int(result.scalar_one())
+
     async def list_paginated(
         self,
         *,

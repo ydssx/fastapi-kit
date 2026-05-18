@@ -14,6 +14,7 @@ const VARIANT_MAP: Record<string, 'ok' | 'warn' | 'error' | 'neutral'> = {
   degraded: 'warn',
   offline: 'warn',
   unknown: 'neutral',
+  stale: 'warn',
 }
 
 export function StatusBadge({ status, variant }: StatusBadgeProps) {

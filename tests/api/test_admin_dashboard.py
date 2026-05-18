@@ -39,6 +39,9 @@ async def test_admin_dashboard(client: AsyncClient, db_engine) -> None:
     assert data["user_count"] >= 1
     assert data["service_status"]["database"] == "ok"
     assert data["service_status"]["redis"] == "ok"
+    assert "system" in data
+    assert "ready_status" in data["system"]
+    assert "beat_status" in data["system"]
 
     metrics = await client.get(
         "/api/v1/admin/metrics/summary",

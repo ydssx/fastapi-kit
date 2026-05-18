@@ -42,6 +42,7 @@ async def test_admin_celery_overview(client: AsyncClient, db_engine) -> None:
         ],
     }
     mock_inspector.scheduled.return_value = {}
+    mock_inspector.reserved.return_value = {}
 
     with (
         patch(
@@ -60,3 +61,4 @@ async def test_admin_celery_overview(client: AsyncClient, db_engine) -> None:
     assert data["status"] == "ok"
     assert len(data["workers"]) == 1
     assert len(data["active_tasks"]) == 1
+    assert len(data["beat_schedule"]) >= 1

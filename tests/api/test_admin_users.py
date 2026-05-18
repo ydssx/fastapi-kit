@@ -89,3 +89,105 @@ async def test_admin_cannot_deactivate_self(client: AsyncClient, db_engine) -> N
     )
     assert response.status_code == 400
     assert response.json()["code"] == 40003
+
+
+@pytest.mark.asyncio
+async def test_admin_cannot_remove_last_active_admin(client: AsyncClient, db_engine) -> None:
+    admin_email = "sole-admin@example.com"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    me = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    other_email = "other-admin@example.com"
+    await _register(client, other_email)
+    await _make_admin(db_engine, other_email)
+
+    sole_id = me.json()["data"]["id"]
+    other_list = await client.get(
+        "/api/v1/admin/users?email=other-admin",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    other_id = other_list.json()["data"]["items"][0]["id"]
+
+    await client.patch(
+        f"/api/v1/admin/users/{other_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"is_active": False},
+    )
+
+    response = await client.patch(
+        f"/api/v1/admin/users/{sole_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"role": "user"},
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == 40004
+
+
+@pytest.mark.asyncio
+async def test_admin_can_demote_when_two_active_admins(client: AsyncClient, db_engine) -> None:
+    admin_email = "keeper@example.com"
+    target_email = "other-admin@example.com"
+
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+    await _register(client, target_email)
+    await _make_admin(db_engine, target_email)
+
+    target_list = await client.get(
+        f"/api/v1/admin/users?email={target_email}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    target_id = target_list.json()["data"]["items"][0]["id"]
+
+    response = await client.patch(
+        f"/api/v1/admin/users/{target_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"role": "user"},
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["role"] == "user"
+
+
+@pytest.mark.asyncio
+async def test_admin_reset_password_and_login(client: AsyncClient, db_engine) -> None:
+    admin_email = "reset-admin@example.com"
+    target_email = "reset-target@example.com"
+
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": target_email, "password": "securepass123"},
+    )
+
+    listed = await client.get(
+        f"/api/v1/admin/users?email={target_email}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    target_id = listed.json()["data"]["items"][0]["id"]
+
+    reset = await client.post(
+        f"/api/v1/admin/users/{target_id}/reset-password",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert reset.status_code == 200
+    temp_password = reset.json()["data"]["temporary_password"]
+    assert len(temp_password) >= 8
+
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": target_email, "password": temp_password},
+    )
+    assert login.status_code == 200
+
+    audits = await client.get(
+        f"/api/v1/admin/users/{target_id}/audit-logs",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert audits.status_code == 200
+    assert any(item["action"] == "user.reset_password" for item in audits.json()["data"])

@@ -49,6 +49,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       LOG_FILE: logs/app.log
       TRUST_PROXY_HEADERS: "true"
+      ADMIN_REPORTED_API_REPLICAS: ${SCALE_API:-1}
     volumes:
       - api_logs:/app/logs
     depends_on:

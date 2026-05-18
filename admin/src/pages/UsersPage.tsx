@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fetchUsers, updateUser } from '../api/users'
 import { DataTable, type Column } from '../components/DataTable'
+import { LoadingBlock } from '../components/LoadingBlock'
+import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
 import type { UserPublic } from '../types/api'
+import shared from '../styles/shared.module.css'
 import styles from './UsersPage.module.css'
 
 export function UsersPage() {
@@ -24,7 +28,15 @@ export function UsersPage() {
   })
 
   const columns: Column<UserPublic>[] = [
-    { key: 'email', header: '邮箱', render: (u) => u.email },
+    {
+      key: 'email',
+      header: '邮箱',
+      render: (u) => (
+        <Link to={`/users/${u.id}`} className={styles.emailLink}>
+          {u.email}
+        </Link>
+      ),
+    },
     {
       key: 'role',
       header: '角色',
@@ -33,8 +45,13 @@ export function UsersPage() {
           className={styles.select}
           value={u.role}
           onChange={(e) => {
-            if (confirm(`将 ${u.email} 的角色改为 ${e.target.value}？`)) {
-              mutation.mutate({ id: u.id, payload: { role: e.target.value } })
+            const next = e.target.value
+            const warn =
+              next === 'user'
+                ? `将 ${u.email} 降为普通用户？若其为最后一名管理员将被拒绝。`
+                : `将 ${u.email} 设为管理员？`
+            if (confirm(warn)) {
+              mutation.mutate({ id: u.id, payload: { role: next } })
             }
           }}
         >
@@ -54,7 +71,7 @@ export function UsersPage() {
             onChange={() => {
               const next = !u.is_active
               const action = next ? '启用' : '禁用'
-              if (confirm(`${action}用户 ${u.email}？`)) {
+              if (confirm(`${action}用户 ${u.email}？禁用最后一名管理员将被拒绝。`)) {
                 mutation.mutate({ id: u.id, payload: { is_active: next } })
               }
             }}
@@ -74,41 +91,39 @@ export function UsersPage() {
   const totalPages = data ? Math.ceil(data.total / data.page_size) : 1
 
   return (
-    <div className={styles.page}>
-      <div className={styles.toolbar}>
-        <h2 className={styles.heading}>用户管理</h2>
-        <form
-          className={styles.search}
-          onSubmit={(e) => {
-            e.preventDefault()
-            setSearch(email)
-            setPage(1)
-          }}
-        >
-          <input
-            type="search"
-            placeholder="按邮箱搜索"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button type="submit">搜索</button>
-        </form>
-      </div>
+    <div className={shared.page}>
+      <PageHeader
+        title="用户管理"
+        description="点击邮箱查看详情与审计记录"
+        actions={
+          <form
+            className={shared.toolbar}
+            onSubmit={(e) => {
+              e.preventDefault()
+              setSearch(email)
+              setPage(1)
+            }}
+          >
+            <input
+              type="search"
+              className={shared.input}
+              placeholder="按邮箱搜索"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button type="submit" className={shared.btnPrimary}>
+              搜索
+            </button>
+          </form>
+        }
+      />
       {isLoading ? (
-        <p className={styles.muted}>加载中…</p>
+        <LoadingBlock />
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            rows={data?.items ?? []}
-            rowKey={(u) => u.id}
-          />
-          <div className={styles.pagination}>
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
+          <DataTable columns={columns} rows={data?.items ?? []} rowKey={(u) => u.id} />
+          <div className={shared.pagination}>
+            <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               上一页
             </button>
             <span>

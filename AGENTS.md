@@ -17,7 +17,7 @@
 ## 构建、测试与开发命令
 
 - `uv sync --all-extras`：安装全部依赖。
-- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy，内含构建好的 **admin** 静态资源）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **https://localhost**（管理后台 **https://localhost/admin/**；本地自签证书，首次由 `scripts/gen_dev_certs.sh` 生成；`http://localhost:8000` 会 301 到 HTTPS）。浏览器会提示不受信任，属正常现象。
+- `bash scripts/start.sh -d` 或 `.\scripts\start.ps1 -d`：启动完整 Docker 栈（`postgres`、`redis`、`migrate` 一次性迁移、`proxy`（Caddy，内含构建好的 **admin** 静态资源）、`api`、`celery-worker`、`celery-beat`）。对外入口为 **https://localhost**（管理后台 **https://localhost/admin/**；访问 `/admin` 会自动 301 到 `/admin/`；本地自签证书，首次由 `scripts/gen_dev_certs.sh` 生成；`http://localhost:8000` 会 301 到 HTTPS）。浏览器会提示不受信任，属正常现象。
 - `bash scripts/gen_dev_certs.sh` 或 `make certs`：单独生成本地 TLS 证书（`docker/certs/`，已 gitignore）。
 - `SCALE_API=2 bash scripts/start.sh -d` 或 `make up-ha`：启动 **2 个 API 副本**，用于零停机滚动发布。
 - `bash scripts/rolling_update.sh` 或 `make rolling-update`：在 `SCALE_API>=2` 时逐个替换 API 容器（需先 `up-ha`）。
@@ -31,6 +31,7 @@
 
 ### 管理后台（`admin/`）
 
+- 前端开发规范见 `admin/FRONTEND.md`（目录结构、设计 token、页面骨架、API 约定）。
 - `make create-admin EMAIL=admin@local.dev PASSWORD=yourpassword` 或 `uv run python scripts/create_admin.py --email ... --password ...`：创建/提升管理员（`role=admin`）。
 - **Docker 一体启动**：`make up` / `bash scripts/start.sh -d` 会在构建 `proxy` 镜像时自动 `npm run build` admin，无需先 `make admin-build`。
 - `make admin-dev`：本机 Vite（`http://localhost:5173/admin/`），`/api` 代理到 `https://localhost`。

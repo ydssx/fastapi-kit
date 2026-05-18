@@ -30,6 +30,18 @@ export interface AuthResponse {
   tokens: TokenPair
 }
 
+export interface SystemOverview {
+  ready_status: string
+  ready_message: string | null
+  migration_at_head: boolean
+  migration_revision: string | null
+  migration_head_revision: string | null
+  beat_status: string
+  beat_last_seen: string | null
+  api_replicas_reported: number | null
+  api_replicas_note: string | null
+}
+
 export interface DashboardStats {
   user_count: number
   active_user_count: number
@@ -38,6 +50,7 @@ export interface DashboardStats {
     redis: string
   }
   metrics_summary: Record<string, number>
+  system: SystemOverview
 }
 
 export interface CeleryWorkerInfo {
@@ -54,12 +67,25 @@ export interface CeleryTaskInfo {
   args: unknown[]
 }
 
+export interface BeatScheduleEntry {
+  name: string
+  task: string
+  schedule: string
+}
+
 export interface CeleryOverview {
   status: string
   workers: CeleryWorkerInfo[]
   active_tasks: CeleryTaskInfo[]
   scheduled_tasks: CeleryTaskInfo[]
+  reserved_tasks: CeleryTaskInfo[]
+  beat_schedule: BeatScheduleEntry[]
+  flower_url: string | null
   message: string | null
+}
+
+export interface PasswordResetResult {
+  temporary_password: string
 }
 
 export interface AuditLog {
