@@ -21,6 +21,7 @@
 - `bash scripts/init_dev.sh`：仅启动 PostgreSQL 和 Redis，供本机 API 开发使用。
 - `uv run uvicorn app.main:app --reload`：本机热重载运行 API。
 - `uv run celery -A app.tasks.celery_app worker -l info`：启动 Celery worker。
+- `uv run celery -A app.tasks.celery_app beat -l info`：启动 Celery Beat（定时调度，仅单实例）。
 - `uv run alembic upgrade head`：执行数据库迁移。
 - `uv run ruff check .`、`uv run mypy app`、`uv run pytest -v`：运行 lint、类型检查和测试。
 

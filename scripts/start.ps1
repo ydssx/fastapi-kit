@@ -1,4 +1,4 @@
-# One command: start full stack (postgres, redis, api, celery-worker)
+# One command: start full stack (postgres, redis, api, celery-worker, celery-beat)
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 

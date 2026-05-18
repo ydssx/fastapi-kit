@@ -73,6 +73,23 @@ services:
     entrypoint: ["/entrypoint.sh"]
     command: ["celery", "-A", "app.tasks.celery_app", "worker", "-l", "info"]
 
+  celery-beat:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
+      REDIS_URL: redis://redis:6379/0
+      LOG_FILE: logs/celery-beat.log
+    volumes:
+      - api_logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["/entrypoint.sh"]
+    command: ["celery", "-A", "app.tasks.celery_app", "beat", "-l", "info"]
+
 volumes:
   postgres_data:
   api_logs:

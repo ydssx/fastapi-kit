@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
     rate_limit_per_minute: int = 100
 
+    celery_timezone: str = "UTC"
+    celery_beat_heartbeat_interval_seconds: int = 300
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> list[str]:

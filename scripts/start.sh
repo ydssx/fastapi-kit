@@ -16,7 +16,7 @@ for arg in "$@"; do
       echo "Usage: bash scripts/start.sh [-d|--detach]"
       echo ""
       echo "Starts the full stack via Docker Compose:"
-      echo "  postgres, redis, api (with migrations), celery-worker"
+      echo "  postgres, redis, api (with migrations), celery-worker, celery-beat"
       echo ""
       echo "Options:"
       echo "  -d, --detach   Run in background"

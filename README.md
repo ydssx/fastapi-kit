@@ -8,12 +8,12 @@ Production-grade FastAPI backend template with async PostgreSQL, JWT auth, Redis
 - PostgreSQL + SQLAlchemy 2.0 async + Alembic migrations
 - JWT authentication (register, login, refresh, `/me`)
 - Redis cache utilities and per-IP rate limiting
-- Celery background tasks (example welcome notification)
+- Celery background tasks and Beat scheduled jobs (heartbeat, Redis ping, nightly maintenance)
 - structlog JSON logging with `X-Request-ID`
 - Prometheus metrics at `/metrics`
 - Health checks: `/health`, `/ready`
 - Unified API response envelope and global exception handlers
-- Docker Compose stack (API, Postgres, Redis, Celery worker)
+- Docker Compose stack (API, Postgres, Redis, Celery worker, Celery Beat)
 - GitHub Actions CI (ruff, mypy, pytest)
 
 ## Quick start
@@ -26,7 +26,7 @@ Production-grade FastAPI backend template with async PostgreSQL, JWT auth, Redis
 
 ### One command — full stack (recommended)
 
-Starts **Postgres, Redis, API** (with migrations), and **Celery worker**:
+Starts **Postgres, Redis, API** (with migrations), **Celery worker**, and **Celery Beat**:
 
 ```bash
 bash scripts/start.sh -d
@@ -66,11 +66,14 @@ bash scripts/init_dev.sh
 uv run uvicorn app.main:app --reload
 ```
 
-Celery (optional, second terminal):
+Celery (optional, separate terminals):
 
 ```bash
 uv run celery -A app.tasks.celery_app worker -l info
+uv run celery -A app.tasks.celery_app beat -l info
 ```
+
+Scheduled tasks live in `app/tasks/scheduled.py`; intervals are configured in `app/tasks/celery_app.py` (`beat_schedule`). Run **one** Beat instance in production.
 
 ## API overview
 
