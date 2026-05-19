@@ -51,6 +51,18 @@ class Settings(BaseSettings):
     admin_reported_api_replicas: int | None = None
     flower_url: str | None = None
 
+    alert_webhook_url: str | None = None
+    alert_webhook_secret: str | None = None
+    alert_webhook_timeout_seconds: float = 10.0
+    alert_dedupe_seconds: int = 300
+    alert_check_interval_seconds: int = 120
+    alert_worker_zero_enabled: bool = False
+    alert_worker_zero_duration_seconds: int = 300
+
+    loki_url: str | None = None
+    loki_query_timeout_seconds: float = 15.0
+    loki_max_lines: int = 500
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> list[str]:

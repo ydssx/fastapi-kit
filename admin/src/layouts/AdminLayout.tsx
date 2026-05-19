@@ -8,6 +8,8 @@ const NAV = [
   { to: '/users', label: '用户管理' },
   { to: '/celery', label: 'Celery' },
   { to: '/audit', label: '审计日志' },
+  { to: '/alerts', label: '告警' },
+  { to: '/logs', label: '日志' },
 ]
 
 export function AdminLayout() {

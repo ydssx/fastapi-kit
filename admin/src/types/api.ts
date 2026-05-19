@@ -99,3 +99,40 @@ export interface AuditLog {
   user_agent: string | null
   created_at: string
 }
+
+export interface AlertSettings {
+  webhook_url: string | null
+  webhook_secret_configured: boolean
+  recovery_notifications_enabled: boolean
+  webhook_enabled: boolean
+}
+
+export interface AlertDelivery {
+  id: string
+  event_type: string
+  success: boolean
+  http_status: number | null
+  created_at: string
+}
+
+export interface AlertTestResult {
+  sent: boolean
+  http_status: number | null
+  message: string
+}
+
+export interface LogEntry {
+  timestamp: string
+  level: string | null
+  message: string | null
+  request_id: string | null
+  raw: Record<string, unknown>
+}
+
+export interface LogQueryResult {
+  items: LogEntry[]
+  total: number
+  page: number
+  page_size: number
+  loki_available: boolean
+}

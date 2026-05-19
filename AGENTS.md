@@ -10,6 +10,7 @@
 - `app/models/`：ORM 模型。
 - `app/schemas/`：Pydantic 请求与响应模型。
 - `app/core/`：配置、安全、日志、异常。
+- `app/db/`：异步 SQLAlchemy session 与数据库基础设施。
 - `app/cache/`、`app/tasks/`、`app/middleware/`：Redis、Celery 与 HTTP 中间件。
 
 迁移文件在 `alembic/`。测试在 `tests/`，API 测试放在 `tests/api/`。脚本在 `scripts/`，Docker 相关文件在仓库根目录和 `docker/`。`docs/solutions/` 按类别归档过往方案与模式（bugs、架构决策等），YAML frontmatter 含 `module`、`tags`、`problem_type`；在实现或排查已记录领域时可供检索。
@@ -22,12 +23,14 @@
 - `SCALE_API=2 bash scripts/start.sh -d` 或 `make up-ha`：启动 **2 个 API 副本**，用于零停机滚动发布。
 - `bash scripts/rolling_update.sh` 或 `make rolling-update`：在 `SCALE_API>=2` 时逐个替换 API 容器（需先 `up-ha`）。
 - `make` / `Makefile`：封装 `dev`、`up`、`up-ha`、`rolling-update`、`check` 等常用目标。
-- `bash scripts/init_dev.sh`：仅启动 PostgreSQL 和 Redis，供本机 API 开发使用。
+- `bash scripts/init_dev.sh` 或 `make dev-init`：仅启动 PostgreSQL 和 Redis，供本机 API 开发使用。
+- `bash scripts/stop.sh` 或 `make down`：停止 Docker 栈。
+- `docker compose logs -f` 或 `make logs`：跟随查看 Compose 日志。
 - `uv run uvicorn app.main:app --reload`：本机热重载运行 API。
 - `uv run celery -A app.tasks.celery_app worker -l info`：启动 Celery worker。
 - `uv run celery -A app.tasks.celery_app beat -l info`：启动 Celery Beat（定时调度，仅单实例）。
 - `uv run alembic upgrade head`：执行数据库迁移。
-- `uv run ruff check .`、`uv run mypy app`、`uv run pytest -v`：运行 lint、类型检查和测试。
+- `uv run ruff check .`、`uv run ruff format .`、`uv run mypy app`、`uv run pytest -v`：运行 lint、格式化、类型检查和测试。
 
 ### 管理后台（`admin/`）
 
@@ -38,7 +41,7 @@
 - `make admin-docker-dev` 或 `docker compose --profile admin-dev up -d admin-dev`：Vite 跑在容器内（改代码热重载，API 代理到 compose 里的 `proxy`）。
 - `make admin-build`：仅在本机构建 `admin/dist/`（调试 Caddy 或不用 compose 构建 proxy 时可选）。
 - 管理 API 前缀：`/api/v1/admin/*`（需 Bearer token 且 `role=admin`）。
-- 可选 Flower：`docker compose --profile ops up -d`（内网 Celery 监控，不经过 Caddy 公网暴露）。
+- 可选 **ops profile**（Flower、Loki、Promtail）：`docker compose --profile ops up -d`（内网用途，不经 Caddy 公网暴露）。日志查询需在 API 设置 `LOKI_URL=http://loki:3100`；告警 Webhook 可在 admin **告警** 页配置，或通过 `ALERT_WEBHOOK_URL` 种子。对接说明见 `docs/admin-alert-webhook.md`。
 
 ## 编码风格与命名约定
 

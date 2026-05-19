@@ -601,6 +601,7 @@ dependencies = [
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "flower" },
+    { name = "httpx" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "prometheus-fastapi-instrumentator" },
     { name = "pydantic-settings" },
@@ -613,7 +614,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -630,7 +630,7 @@ requires-dist = [
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "flower", specifier = ">=2.0.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.0" },
+    { name = "httpx", specifier = ">=0.28.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "prometheus-fastapi-instrumentator", specifier = ">=7.0.0" },

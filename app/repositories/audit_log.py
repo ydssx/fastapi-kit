@@ -96,9 +96,7 @@ class AuditLogRepository:
         total_result = await self.session.execute(count_query)
         total = int(total_result.scalar_one())
 
-        result = await self.session.execute(
-            query.order_by(AuditLog.created_at.desc()).limit(limit)
-        )
+        result = await self.session.execute(query.order_by(AuditLog.created_at.desc()).limit(limit))
         return list(result.scalars().all()), total
 
     async def iter_for_export(

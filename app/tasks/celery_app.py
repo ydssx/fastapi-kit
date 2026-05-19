@@ -20,6 +20,10 @@ def _beat_schedule(settings: Settings) -> dict[str, dict[str, object]]:
             "task": "app.tasks.scheduled.nightly_maintenance",
             "schedule": crontab(hour=3, minute=0),
         },
+        "alert-health-check": {
+            "task": "app.tasks.scheduled.check_and_send_alerts",
+            "schedule": settings.alert_check_interval_seconds,
+        },
     }
 
 

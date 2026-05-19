@@ -90,7 +90,7 @@ Scheduled tasks live in `app/tasks/scheduled.py`; intervals are configured in `a
 
 ## Admin dashboard
 
-React SPA in `admin/` (login, users, dashboard, Celery overview, audit logs).
+React SPA in `admin/` (login, users, dashboard, Celery overview, audit logs, alert webhooks, log search).
 
 ```bash
 # Create first admin
@@ -108,11 +108,14 @@ docker compose --profile admin-dev up -d admin-dev
 make admin-dev
 ```
 
-Optional Celery Flower (ops profile, not exposed on public Caddy):
+Optional ops profile (Flower, Loki, Promtail — not exposed on public Caddy):
 
 ```bash
-docker compose --profile ops up -d
+docker compose --profile ops up -d loki promtail flower
+# Set LOKI_URL=http://loki:3100 on the API service for admin log search
 ```
+
+Configure outbound health alerts in **Admin → 告警**, or seed `ALERT_WEBHOOK_URL`. See [docs/admin-alert-webhook.md](docs/admin-alert-webhook.md).
 
 ## Project layout
 
