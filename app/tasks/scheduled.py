@@ -53,7 +53,7 @@ def check_and_send_alerts() -> dict[str, str]:
 
     from app.cache.redis import close_redis_pool, init_redis_pool
     from app.core.config import get_settings
-    from app.db.session import get_session_factory
+    from app.db.session import dispose_engine, get_session_factory
     from app.services.alert_monitor import AlertMonitorService
 
     async def _run() -> None:
@@ -68,6 +68,7 @@ def check_and_send_alerts() -> dict[str, str]:
                 await session.commit()
         finally:
             await close_redis_pool()
+            await dispose_engine()
 
     try:
         asyncio.run(_run())

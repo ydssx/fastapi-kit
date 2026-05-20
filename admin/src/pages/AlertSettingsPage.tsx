@@ -6,9 +6,10 @@ import {
   sendAlertTest,
   updateAlertSettings,
 } from '../api/alerts'
-import { DataTable, type Column } from '../components/DataTable'
+import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationBar } from '../components/PaginationBar'
 import { StatusBadge } from '../components/StatusBadge'
 import type { AlertDelivery } from '../types/api'
 import shared from '../styles/shared.module.css'
@@ -55,7 +56,15 @@ export function AlertSettingsPage() {
 
   const { data: deliveries, isLoading: deliveriesLoading } = useQuery({
     queryKey: ['alert-deliveries', deliveryPage],
-    queryFn: () => fetchAlertDeliveries(deliveryPage, 20),
+    queryFn: async () => {
+      const result = await fetchAlertDeliveries(deliveryPage, 20)
+      const tp = Math.max(1, Math.ceil(result.total / result.page_size))
+      if (deliveryPage > tp) {
+        setDeliveryPage(tp)
+        return fetchAlertDeliveries(tp, 20)
+      }
+      return result
+    },
   })
 
   const saveMutation = useMutation({
@@ -82,6 +91,11 @@ export function AlertSettingsPage() {
     onError: (err: Error) => setMessage(err.message),
   })
 
+  const deliveryTotalPages = deliveries
+    ? Math.max(1, Math.ceil(deliveries.total / deliveries.page_size))
+    : 1
+  const currentDeliveryPage = Math.min(deliveryPage, deliveryTotalPages)
+
   if (isLoading) {
     return (
       <div className={shared.page}>
@@ -90,8 +104,6 @@ export function AlertSettingsPage() {
       </div>
     )
   }
-
-  const deliveryTotalPages = deliveries ? Math.ceil(deliveries.total / deliveries.page_size) : 1
 
   return (
     <div className={shared.page}>
@@ -158,7 +170,7 @@ export function AlertSettingsPage() {
       </form>
 
       <section className={shared.section}>
-        <h2 className={shared.sectionTitle}>最近发送记录</h2>
+        <h3 className={shared.sectionTitle}>最近发送记录</h3>
         {deliveriesLoading ? (
           <LoadingBlock />
         ) : (
@@ -167,28 +179,14 @@ export function AlertSettingsPage() {
               columns={deliveryColumns}
               rows={deliveries?.items ?? []}
               rowKey={(d) => d.id}
+              scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
             />
-            {deliveryTotalPages > 1 && (
-              <div className={shared.pagination}>
-                <button
-                  type="button"
-                  disabled={deliveryPage <= 1}
-                  onClick={() => setDeliveryPage((p) => p - 1)}
-                >
-                  上一页
-                </button>
-                <span>
-                  {deliveryPage} / {deliveryTotalPages}
-                </span>
-                <button
-                  type="button"
-                  disabled={deliveryPage >= deliveryTotalPages}
-                  onClick={() => setDeliveryPage((p) => p + 1)}
-                >
-                  下一页
-                </button>
-              </div>
-            )}
+            <PaginationBar
+              page={currentDeliveryPage}
+              totalPages={deliveryTotalPages}
+              total={deliveries?.total ?? 0}
+              onPageChange={setDeliveryPage}
+            />
           </>
         )}
       </section>

@@ -1,16 +1,22 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { NavIcon } from '../components/NavIcon'
 import styles from './AdminLayout.module.css'
 
 const NAV = [
-  { to: '/', label: '仪表盘', end: true },
-  { to: '/users', label: '用户管理' },
-  { to: '/celery', label: 'Celery' },
-  { to: '/audit', label: '审计日志' },
-  { to: '/alerts', label: '告警' },
-  { to: '/logs', label: '日志' },
+  { to: '/', label: '仪表盘', end: true, icon: 'dashboard' as const },
+  { to: '/users', label: '用户管理', icon: 'users' as const },
+  { to: '/celery', label: 'Celery', icon: 'celery' as const },
+  { to: '/audit', label: '审计日志', icon: 'audit' as const },
+  { to: '/alerts', label: '告警', icon: 'alerts' as const },
+  { to: '/logs', label: '日志', icon: 'logs' as const },
 ]
+
+function userInitial(email: string | undefined) {
+  if (!email) return '?'
+  return email.charAt(0).toUpperCase()
+}
 
 export function AdminLayout() {
   const { user, logout } = useAuth()
@@ -33,7 +39,8 @@ export function AdminLayout() {
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
             >
-              {item.label}
+              <NavIcon name={item.icon} />
+              {!collapsed && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
@@ -50,8 +57,24 @@ export function AdminLayout() {
         <header className={styles.header}>
           <h1 className={styles.headerTitle}>管理后台</h1>
           <div className={styles.headerRight}>
-            <span className={styles.email}>{user?.email}</span>
+            <span className={styles.userChip}>
+              <span className={styles.avatar} aria-hidden>
+                {userInitial(user?.email)}
+              </span>
+              {user?.email}
+            </span>
             <button type="button" className={styles.logoutBtn} onClick={logout}>
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
               退出
             </button>
           </div>

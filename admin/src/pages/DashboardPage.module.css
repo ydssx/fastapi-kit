@@ -1,26 +1,57 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.85rem;
 }
 
 .gridNarrow {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.85rem;
-  max-width: 32rem;
+  max-width: 36rem;
 }
 
 .statCard {
-  padding: 1.1rem 1.2rem;
+  padding: 1rem 1.15rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  align-items: flex-start;
+  gap: 0.85rem;
   animation: fadeUp 0.45s ease both;
+}
+
+.statBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.statIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.statIcon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.statIconSuccess {
+  background: var(--success-icon-bg);
+  color: var(--success-icon-fg);
+}
+
+.statIconAccent {
+  background: var(--accent-icon-bg);
+  color: var(--accent);
 }
 
 .statLabel {
@@ -33,6 +64,7 @@
   font-size: 2rem;
   font-weight: 600;
   line-height: 1;
+  color: var(--accent-stat);
 }
 
 .statHint {

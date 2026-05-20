@@ -6,7 +6,7 @@ import {
   resetUserPassword,
   updateUser,
 } from '../api/users'
-import { DataTable, type Column } from '../components/DataTable'
+import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
@@ -62,6 +62,7 @@ export function UserDetailPage() {
   if (isLoading) {
     return (
       <div className={shared.page}>
+        <PageHeader title="用户详情" description="加载中…" />
         <LoadingBlock />
       </div>
     )
@@ -139,7 +140,7 @@ export function UserDetailPage() {
         </dl>
         <button
           type="button"
-          className={styles.dangerBtn}
+          className={shared.btnDanger}
           onClick={() => {
             if (
               confirm(`为 ${user.email} 生成新的临时密码？旧密码将立即失效。`)
@@ -159,6 +160,7 @@ export function UserDetailPage() {
           rows={audits ?? []}
           rowKey={(l) => l.id}
           emptyMessage="暂无审计记录"
+          scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
         />
       </section>
     </div>

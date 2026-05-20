@@ -52,11 +52,21 @@
 }
 
 .navLink {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius);
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+.navLink svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .navLink:hover {
@@ -65,9 +75,13 @@
 }
 
 .navLink.active {
-  background: rgba(79, 70, 229, 0.28);
+  background: var(--accent);
   color: #fff;
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: none;
+}
+
+.navLink.active svg {
+  opacity: 1;
 }
 
 .collapseBtn {
@@ -112,12 +126,31 @@
   gap: 1rem;
 }
 
-.email {
+.userChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--accent-icon-bg);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.45rem 0.9rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);

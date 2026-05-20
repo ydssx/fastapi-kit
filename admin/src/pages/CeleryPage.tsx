@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchCeleryOverview } from '../api/celery'
-import { DataTable, type Column } from '../components/DataTable'
+import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
@@ -60,7 +60,7 @@ export function CeleryPage() {
         title="Celery 监控"
         description="Worker、Beat 调度与队列任务"
         actions={
-          <div className={shared.toolbar}>
+          <>
             <StatusBadge status={data.status} />
             {data.flower_url && (
               <a
@@ -75,7 +75,7 @@ export function CeleryPage() {
             <button type="button" className={shared.btnSecondary} onClick={() => void refetch()}>
               刷新
             </button>
-          </div>
+          </>
         }
       />
       {data.message && <p className={shared.notice}>{data.message}</p>}
@@ -97,6 +97,7 @@ export function CeleryPage() {
           rows={data.workers}
           rowKey={(w) => w.name}
           emptyMessage="没有在线的 Worker"
+          scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
         />
       </section>
 
@@ -107,6 +108,7 @@ export function CeleryPage() {
           rows={data.active_tasks}
           rowKey={(t) => t.task_id}
           emptyMessage="当前无活跃任务"
+          scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
         />
       </section>
 
@@ -117,6 +119,7 @@ export function CeleryPage() {
           rows={data.scheduled_tasks}
           rowKey={(t) => `${t.worker}-${t.task_id}`}
           emptyMessage="当前无预定任务"
+          scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
         />
       </section>
 
@@ -127,6 +130,7 @@ export function CeleryPage() {
           rows={data.reserved_tasks ?? []}
           rowKey={(t) => `${t.worker}-${t.task_id}`}
           emptyMessage="当前无预留任务"
+          scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
         />
       </section>
     </div>

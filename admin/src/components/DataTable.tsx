@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import styles from './DataTable.module.css'
 
+/** Default max height for scrollable list tables (sticky header). */
+export const TABLE_SCROLL_MAX_HEIGHT = 'min(52vh, 24rem)' as const
+
 export interface Column<T> {
   key: string
   header: string
@@ -13,6 +16,8 @@ interface DataTableProps<T> {
   rows: T[]
   rowKey: (row: T) => string
   emptyMessage?: string
+  /** Cap table body height; header stays sticky while scrolling rows. */
+  scrollMaxHeight?: string
 }
 
 export function DataTable<T>({
@@ -20,13 +25,17 @@ export function DataTable<T>({
   rows,
   rowKey,
   emptyMessage = '暂无数据',
+  scrollMaxHeight,
 }: DataTableProps<T>) {
   if (rows.length === 0) {
     return <p className={styles.empty}>{emptyMessage}</p>
   }
 
   return (
-    <div className={styles.wrap}>
+    <div
+      className={scrollMaxHeight ? `${styles.wrap} ${styles.wrapScroll}` : styles.wrap}
+      style={scrollMaxHeight ? { maxHeight: scrollMaxHeight } : undefined}
+    >
       <table className={styles.table}>
         <thead>
           <tr>

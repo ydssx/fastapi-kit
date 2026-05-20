@@ -2,14 +2,42 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { ApiError } from '../api/client'
 import { fetchLogs } from '../api/logs'
-import { DataTable, type Column } from '../components/DataTable'
+import { CopyJsonButton } from '../components/CopyJsonButton'
+import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
+import { DetailMeta } from '../components/DetailMeta'
+import { JsonPreview } from '../components/JsonPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
+import { Modal } from '../components/Modal'
 import { PageHeader } from '../components/PageHeader'
+import { PaginationBar } from '../components/PaginationBar'
+import { StatusBadge } from '../components/StatusBadge'
 import type { LogEntry } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './LogsPage.module.css'
 
 const LOKI_UNAVAILABLE = 50301
+
+const LEVEL_OPTIONS = [
+  { value: '', label: '全部' },
+  { value: 'error', label: 'ERROR' },
+  { value: 'warn', label: 'WARN' },
+  { value: 'info', label: 'INFO' },
+  { value: 'debug', label: 'DEBUG' },
+]
+
+function logLevelVariant(level: string | null): 'ok' | 'warn' | 'error' | 'neutral' {
+  const normalized = (level ?? '').toLowerCase()
+  if (normalized === 'error' || normalized === 'critical' || normalized === 'fatal') {
+    return 'error'
+  }
+  if (normalized === 'warn' || normalized === 'warning') {
+    return 'warn'
+  }
+  if (normalized === 'info' || normalized === 'debug') {
+    return 'ok'
+  }
+  return 'neutral'
+}
 
 export function LogsPage() {
   const [page, setPage] = useState(1)
@@ -35,7 +63,16 @@ export function LogsPage() {
         mono: true,
         render: (e) => new Date(e.timestamp).toLocaleString('zh-CN'),
       },
-      { key: 'level', header: '级别', render: (e) => e.level ?? '—' },
+      {
+        key: 'level',
+        header: '级别',
+        render: (e) =>
+          e.level ? (
+            <StatusBadge status={e.level.toUpperCase()} variant={logLevelVariant(e.level)} />
+          ) : (
+            '—'
+          ),
+      },
       {
         key: 'request_id',
         header: 'Request ID',
@@ -45,9 +82,9 @@ export function LogsPage() {
       { key: 'message', header: '消息', render: (e) => e.message ?? '—' },
       {
         key: 'view',
-        header: '',
+        header: '操作',
         render: (e) => (
-          <button type="button" className={shared.btnSecondary} onClick={() => setSelected(e)}>
+          <button type="button" className={shared.btnLink} onClick={() => setSelected(e)}>
             详情
           </button>
         ),
@@ -56,31 +93,55 @@ export function LogsPage() {
     [],
   )
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['logs', page, filters],
-    queryFn: () =>
-      fetchLogs({
+    queryFn: async () => {
+      const params = {
         page,
-        page_size: 50,
+        page_size: 20,
         request_id: filters.request_id || undefined,
         level: filters.level || undefined,
         q: filters.q || undefined,
         since: filters.since || undefined,
         until: filters.until || undefined,
-      }),
+      }
+      const result = await fetchLogs(params)
+      const tp = Math.max(1, Math.ceil(result.total / result.page_size))
+      if (page > tp) {
+        setPage(tp)
+        return fetchLogs({ ...params, page: tp })
+      }
+      return result
+    },
     retry: false,
+    refetchInterval: (query) => {
+      const err = query.state.error
+      if (err instanceof ApiError && err.code === LOKI_UNAVAILABLE) return false
+      return 30_000
+    },
   })
 
   const lokiUnavailable =
     error instanceof ApiError && error.code === LOKI_UNAVAILABLE
 
-  const totalPages = data ? Math.ceil(data.total / data.page_size) : 1
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
+  const currentPage = Math.min(page, totalPages)
 
   return (
     <div className={shared.page}>
       <PageHeader
         title="应用日志"
-        description="只读查询；需启用 ops profile 启动 Loki 与 Promtail"
+        description="只读查询；每 30 秒自动刷新；需启用 ops profile 启动 Loki 与 Promtail"
+        actions={
+          <button
+            type="button"
+            className={shared.btnSecondary}
+            disabled={lokiUnavailable || isFetching}
+            onClick={() => void refetch()}
+          >
+            {isFetching ? '刷新中…' : '刷新'}
+          </button>
+        }
       />
 
       {lokiUnavailable && (
@@ -92,7 +153,7 @@ export function LogsPage() {
       )}
 
       <form
-        className={styles.filters}
+        className={shared.toolbar}
         onSubmit={(e) => {
           e.preventDefault()
           setFilters({
@@ -105,39 +166,58 @@ export function LogsPage() {
           setPage(1)
         }}
       >
-        <input
-          type="text"
-          className={shared.input}
-          placeholder="request_id"
-          value={requestId}
-          onChange={(e) => setRequestId(e.target.value)}
-        />
-        <input
-          type="text"
-          className={shared.input}
-          placeholder="level"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-        />
-        <input
-          type="text"
-          className={shared.input}
-          placeholder="关键字"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <input
-          type="datetime-local"
-          className={shared.input}
-          value={since}
-          onChange={(e) => setSince(e.target.value)}
-        />
-        <input
-          type="datetime-local"
-          className={shared.input}
-          value={until}
-          onChange={(e) => setUntil(e.target.value)}
-        />
+        <label className={shared.filterField}>
+          Request ID
+          <input
+            type="text"
+            className={shared.input}
+            placeholder="request_id"
+            value={requestId}
+            onChange={(e) => setRequestId(e.target.value)}
+          />
+        </label>
+        <label className={shared.filterField}>
+          级别
+          <select
+            className={shared.select}
+            value={level}
+            onChange={(e) => setLevel(e.target.value)}
+          >
+            {LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.value || 'all'} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={shared.filterField}>
+          关键字
+          <input
+            type="text"
+            className={shared.input}
+            placeholder="关键字"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </label>
+        <label className={shared.filterField}>
+          开始时间
+          <input
+            type="datetime-local"
+            className={shared.input}
+            value={since}
+            onChange={(e) => setSince(e.target.value)}
+          />
+        </label>
+        <label className={shared.filterField}>
+          结束时间
+          <input
+            type="datetime-local"
+            className={shared.input}
+            value={until}
+            onChange={(e) => setUntil(e.target.value)}
+          />
+        </label>
         <button type="submit" className={shared.btnPrimary} disabled={lokiUnavailable}>
           查询
         </button>
@@ -146,51 +226,66 @@ export function LogsPage() {
       {isLoading ? (
         <LoadingBlock />
       ) : error && !lokiUnavailable ? (
-        <p className={shared.errorText}>加载失败：{(error as Error).message}</p>
+        <p className={shared.errorText} role="alert">
+          加载失败：{(error as Error).message}
+        </p>
       ) : data ? (
         <>
           <DataTable
             columns={columns}
             rows={data.items}
             rowKey={(e) => `${e.timestamp}-${e.request_id ?? ''}-${e.message ?? ''}`}
+            scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}
           />
-          {totalPages > 1 && (
-            <div className={shared.pagination}>
-              <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                上一页
-              </button>
-              <span>
-                {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                下一页
-              </button>
-            </div>
-          )}
+          <PaginationBar
+            page={currentPage}
+            totalPages={totalPages}
+            total={data.total}
+            onPageChange={setPage}
+          />
         </>
       ) : null}
 
       {selected && (
-        <div className={styles.modalBackdrop} onClick={() => setSelected(null)} role="presentation">
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-labelledby="log-detail-title"
-          >
-            <h2 id="log-detail-title" className={styles.modalTitle}>
-              日志详情
-            </h2>
-            <pre className={styles.json}>{JSON.stringify(selected.raw, null, 2)}</pre>
+        <Modal
+          title="日志详情"
+          titleId="log-detail-title"
+          wide
+          onClose={() => setSelected(null)}
+          headerActions={<CopyJsonButton key={selected.timestamp} value={selected.raw} />}
+        >
+          <DetailMeta
+            items={[
+              {
+                label: '时间',
+                value: new Date(selected.timestamp).toLocaleString('zh-CN'),
+              },
+              {
+                label: '级别',
+                value: selected.level ? (
+                  <StatusBadge
+                    status={selected.level.toUpperCase()}
+                    variant={logLevelVariant(selected.level)}
+                  />
+                ) : (
+                  '—'
+                ),
+              },
+              {
+                label: 'Request ID',
+                value: <span className={styles.code}>{selected.request_id ?? '—'}</span>,
+              },
+              { label: '消息', value: selected.message ?? '—' },
+            ]}
+          />
+          <p className={shared.detailSectionLabel}>详情</p>
+          <JsonPreview value={selected.raw} />
+          <div className={shared.modalActions}>
             <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
               关闭
             </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

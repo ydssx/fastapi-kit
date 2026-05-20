@@ -20,6 +20,10 @@
   --danger-border: #fecaca;
   --warn-bg: rgba(214, 158, 46, 0.1);
   --warn-border: rgba(214, 158, 46, 0.35);
+  --success-icon-bg: #dcfce7;
+  --success-icon-fg: #16a34a;
+  --accent-icon-bg: #e0e7ff;
+  --accent-stat: #4f46e5;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;

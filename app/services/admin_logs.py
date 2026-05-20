@@ -46,7 +46,7 @@ class AdminLogsService:
         start = since or datetime.fromtimestamp(end.timestamp() - 3600, tz=UTC)
 
         logql = self._build_logql(request_id=request_id, level=level, q=q)
-        limit = min(page_size, self.settings.loki_max_lines)
+        limit = self.settings.loki_max_lines
         params: dict[str, str | int] = {
             "query": logql,
             "start": int(start.timestamp() * 1e9),

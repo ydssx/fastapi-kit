@@ -1,24 +1,7 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .back {
   color: var(--accent);
   text-decoration: none;
   font-size: 0.9rem;
-}
-
-.heading {
-  margin: 0;
-  font-size: 1.25rem;
 }
 
 .card {
@@ -54,6 +37,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
+  background: var(--surface);
 }
 
 .toggle {
@@ -63,21 +47,6 @@
   cursor: pointer;
 }
 
-.dangerBtn {
-  align-self: flex-start;
-  padding: 0.5rem 1rem;
-  border: 1px solid #c53030;
-  border-radius: var(--radius);
-  background: transparent;
-  color: #c53030;
-  cursor: pointer;
-  font: inherit;
-}
-
-.muted {
-  color: var(--text-muted);
-}
-
-.error {
-  color: #c53030;
+.toggle input {
+  accent-color: var(--accent);
 }

@@ -1,0 +1,12 @@
+.block {
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--surface-hover);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: min(50vh, 28rem);
+}

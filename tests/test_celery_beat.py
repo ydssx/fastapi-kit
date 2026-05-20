@@ -25,6 +25,7 @@ def test_scheduled_tasks_registered() -> None:
     assert "app.tasks.scheduled.heartbeat" in celery_app.tasks
     assert "app.tasks.scheduled.ping_redis" in celery_app.tasks
     assert "app.tasks.scheduled.nightly_maintenance" in celery_app.tasks
+    assert "app.tasks.scheduled.check_and_send_alerts" in celery_app.tasks
 
 
 def test_heartbeat_task() -> None:

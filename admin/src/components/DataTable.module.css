@@ -6,6 +6,16 @@
   box-shadow: var(--shadow-sm);
 }
 
+.wrapScroll {
+  overflow-y: auto;
+}
+
+.wrapScroll .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -35,7 +35,7 @@ admin/
 │   ├── components/     # 可复用 UI（DataTable、PageHeader…）
 │   ├── layouts/        # AdminLayout（侧栏 + 顶栏）
 │   ├── pages/          # 路由级页面 + 同名 *.module.css
-│   ├── styles/         # 跨页共享样式模块（shared.module.css）
+│   ├── styles/         # 跨页共享样式（shared.module.css、codeBlock.module.css）
 │   └── types/          # api.ts：与后端响应对齐的 TS 类型
 └── FRONTEND.md         # 本文档
 ```
@@ -84,7 +84,8 @@ admin/
 | `.pageHeader` / `.pageTitle` / `.pageDesc` | 与 `PageHeader` 组件配合 |
 | `.toolbar` | 筛选区、按钮组 |
 | `.input` | 文本、搜索、datetime 输入 |
-| `.btnPrimary` / `.btnSecondary` | 主操作 / 次操作 |
+| `.btnPrimary` / `.btnSecondary` / `.btnDanger` | 主操作 / 次操作 / 破坏性操作 |
+| `.modalActions` | 弹层底部按钮行（右对齐） |
 | `.section` / `.sectionTitle` | 内容分区（全大写小节标题） |
 | `.notice` | 黄底提示条 |
 | `.loading` / `.spinner` | 加载态 |
@@ -97,9 +98,12 @@ admin/
 
 | 组件 | 职责 |
 |------|------|
-| `PageHeader` | 标题、可选描述、右侧 `actions` 插槽 |
+| `PageHeader` | 标题、可选描述、右侧 `actions` 插槽（已包一层 `toolbar`，子节点不要再套 `toolbar`） |
 | `LoadingBlock` | 统一加载指示（`role="status"`） |
-| `DataTable` | 列配置 + 空状态文案 |
+| `DataTable` | 列配置 + 空状态；`scrollMaxHeight` 限制表体高度（表头 sticky） |
+| `Modal` | `createPortal` 到 `document.body` 的详情弹层；`Escape` 关闭、锁 body 滚动 |
+| `JsonPreview` | 弹层内 JSON `<pre>` 展示（`codeBlock.module.css`） |
+| `CopyJsonButton` | 弹层标题栏复制 JSON |
 | `StatusBadge` | 状态 pill（ok / degraded / error / active…） |
 | `ProtectedRoute` | 未登录跳转 `/login` |
 | `AdminLayout` | 侧栏导航 + 顶栏 + `<Outlet />` |
@@ -157,7 +161,9 @@ export function ExamplePage() {
 
 - `useQuery` 的 `queryKey` 包含**所有筛选维度**（页码、关键字、日期等）
 - 筛选提交时重置 `page` 为 1
-- 表格用 `DataTable`；分页用 `shared.pagination`
+- **布局**：`PageHeader` 的 `actions` 仅放刷新、导出、外链等；筛选表单放在 header 下方独立一行 `shared.toolbar`（或 `form` + `toolbar` 类）
+- 表格用 `DataTable`；长列表传 `scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}`（默认 `min(52vh, 24rem)`）
+- 分页用 `PaginationBar`（或 `shared.pagination`）；文案统一为「第 x / y 页（共 z 条）」；`totalPages` 用 `Math.max(1, …)`。当 `page` 超出 `totalPages` 时，在 `queryFn` 内请求合法页并 `setPage(tp)` 同步 state，避免 `queryKey` 与展示页码不一致
 - 破坏性操作（改角色、停用、重置密码）必须 **`confirm()`** 二次确认
 - 错误信息展示 API 返回的 `message`（`ApiError`）
 
@@ -169,7 +175,8 @@ export function ExamplePage() {
 
 ### 4.4 弹层与导出
 
-- 详情弹层：遮罩 + `role="dialog"` + 点击遮罩关闭；样式可参考 `AuditLogsPage.module.css`
+- 详情弹层：使用 `Modal`（Portal 到 `body`，避免 `.page` 的 `transform` 导致 `position: fixed` 错位）
+- 内容：`JsonPreview` + `CopyJsonButton`（`headerActions`）+ `shared.modalActions` 内关闭按钮
 - **CSV 等非 JSON 下载**：使用 `fetch` + `Blob`，见 `api/audit.ts` 的 `downloadAuditExport`；不要走 `apiFetch`
 
 ---
@@ -316,4 +323,5 @@ make admin-docker-dev
 
 | 日期 | 说明 |
 |------|------|
+| 2026-05-19 | 全站一致性：`Modal`/`JsonPreview`/`CopyJsonButton`、列表筛选布局、`TABLE_SCROLL_MAX_HEIGHT`、`btnDanger` |
 | 2026-05-18 | 初版：基于二期 admin 打磨后的目录与 shared 样式约定 |
