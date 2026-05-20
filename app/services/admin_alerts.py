@@ -41,6 +41,7 @@ class AdminAlertsService:
         actor_id: uuid.UUID,
         ip: str | None,
         user_agent: str | None,
+        request_id: str | None = None,
     ) -> AlertSettingsPublic:
         row = await self._ensure_settings_row()
 
@@ -72,6 +73,7 @@ class AdminAlertsService:
             },
             ip=ip,
             user_agent=user_agent,
+            request_id=request_id,
         )
         return self._to_public(row)
 
@@ -98,6 +100,7 @@ class AdminAlertsService:
         actor_id: uuid.UUID,
         ip: str | None,
         user_agent: str | None,
+        request_id: str | None = None,
     ) -> AlertTestResult:
         row = await self._ensure_settings_row()
         if not row.webhook_url:
@@ -128,6 +131,7 @@ class AdminAlertsService:
             detail={"success": success, "http_status": http_status},
             ip=ip,
             user_agent=user_agent,
+            request_id=request_id,
         )
         message = "Test alert sent" if success else "Test alert delivery failed"
         return AlertTestResult(sent=success, http_status=http_status, message=message)

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query, Request
 
 from app.api.deps import AdminUser, DbSession, SettingsDep
 from app.middleware.client_ip import get_client_ip
+from app.middleware.request_id import get_request_id
 from app.schemas.admin_alerts import (
     AlertDeliveryPublic,
     AlertSettingsPublic,
@@ -38,6 +39,7 @@ async def update_alert_settings(
         actor_id=admin.id,
         ip=get_client_ip(request, trust_proxy_headers=settings.trust_proxy_headers),
         user_agent=request.headers.get("user-agent"),
+        request_id=get_request_id(),
     )
     return ApiResponse(data=data)
 
@@ -68,5 +70,6 @@ async def test_alert_webhook(
         actor_id=admin.id,
         ip=get_client_ip(request, trust_proxy_headers=settings.trust_proxy_headers),
         user_agent=request.headers.get("user-agent"),
+        request_id=get_request_id(),
     )
     return ApiResponse(data=data)

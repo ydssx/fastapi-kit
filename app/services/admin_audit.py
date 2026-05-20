@@ -29,7 +29,16 @@ class AdminAuditService:
         buffer = io.StringIO()
         writer = csv.writer(buffer)
         writer.writerow(
-            ["created_at", "action", "actor_id", "resource_type", "resource_id", "ip", "detail"]
+            [
+                "created_at",
+                "action",
+                "actor_id",
+                "resource_type",
+                "resource_id",
+                "ip",
+                "request_id",
+                "detail",
+            ]
         )
         yield buffer.getvalue()
         buffer.seek(0)
@@ -52,6 +61,7 @@ class AdminAuditService:
                     log.resource_type,
                     log.resource_id or "",
                     log.ip or "",
+                    log.request_id or "",
                     str(log.detail) if log.detail else "",
                 ]
             )

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, Request
 
 from app.api.deps import AdminUser, DbSession, SettingsDep
 from app.middleware.client_ip import get_client_ip
+from app.middleware.request_id import get_request_id
 from app.schemas.admin import AuditLogPublic, PasswordResetResult, UserAdmin, UserUpdate
 from app.schemas.common import ApiResponse
 from app.schemas.pagination import PaginatedResponse
@@ -59,6 +60,7 @@ async def update_user(
         payload,
         ip=client_ip,
         user_agent=user_agent,
+        request_id=get_request_id(),
     )
     return ApiResponse(data=result)
 
@@ -95,5 +97,6 @@ async def reset_user_password(
         user_id,
         ip=client_ip,
         user_agent=user_agent,
+        request_id=get_request_id(),
     )
     return ApiResponse(data=result)

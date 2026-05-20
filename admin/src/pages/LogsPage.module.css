@@ -5,3 +5,9 @@
   background: var(--surface-hover);
   border-radius: 4px;
 }
+
+.requestIdCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

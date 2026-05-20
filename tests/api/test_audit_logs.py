@@ -43,11 +43,14 @@ async def test_audit_log_created_on_user_update(client: AsyncClient, db_engine) 
     )
     target_id = listed.json()["data"]["items"][0]["id"]
 
-    await client.patch(
+    patch_response = await client.patch(
         f"/api/v1/admin/users/{target_id}",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"is_active": False},
     )
+    assert patch_response.status_code == 200
+    response_request_id = patch_response.headers.get("X-Request-ID")
+    assert response_request_id
 
     logs = await client.get(
         "/api/v1/admin/audit-logs?action=user.update",
@@ -58,6 +61,7 @@ async def test_audit_log_created_on_user_update(client: AsyncClient, db_engine) 
     assert len(items) >= 1
     assert items[0]["action"] == "user.update"
     assert items[0]["resource_type"] == "user"
+    assert items[0]["request_id"] == response_request_id
 
 
 @pytest.mark.asyncio
@@ -73,5 +77,7 @@ async def test_audit_logs_csv_export(client: AsyncClient, db_engine) -> None:
     assert response.status_code == 200
     assert "text/csv" in response.headers.get("content-type", "")
     body = response.text
-    assert "created_at" in body.splitlines()[0]
-    assert "action" in body.splitlines()[0]
+    header = body.splitlines()[0]
+    assert "created_at" in header
+    assert "action" in header
+    assert "request_id" in header

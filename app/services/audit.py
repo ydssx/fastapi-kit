@@ -22,6 +22,7 @@ class AuditService:
         detail: dict[str, Any] | None = None,
         ip: str | None = None,
         user_agent: str | None = None,
+        request_id: str | None = None,
     ) -> AuditLog:
         log = AuditLog(
             actor_id=actor_id,
@@ -31,5 +32,6 @@ class AuditService:
             detail=detail,
             ip=ip,
             user_agent=user_agent,
+            request_id=request_id,
         )
         return await self.logs.create(log)

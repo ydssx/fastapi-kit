@@ -28,6 +28,13 @@ def normalize_request_id(raw: str | None) -> str:
     return candidate
 
 
+def get_request_id() -> str | None:
+    value = structlog.contextvars.get_contextvars().get("request_id")
+    if value is None:
+        return None
+    return str(value)
+
+
 def apply_request_id_header(response: _ResponseT) -> _ResponseT:
     request_id = structlog.contextvars.get_contextvars().get("request_id")
     if request_id is not None:

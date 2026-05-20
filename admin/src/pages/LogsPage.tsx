@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { fetchLogs } from '../api/logs'
 import { CopyJsonButton } from '../components/CopyJsonButton'
+import { CopyTextButton } from '../components/CopyTextButton'
 import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
 import { DetailMeta } from '../components/DetailMeta'
 import { JsonPreview } from '../components/JsonPreview'
@@ -14,14 +16,14 @@ import { StatusBadge } from '../components/StatusBadge'
 import type { LogEntry } from '../types/api'
 import {
   dateTimeLocalToIso,
-  defaultTodayRangeIso,
   defaultTodayRangeLocal,
+  isoToDateTimeLocal,
 } from '../lib/datetime'
+import { buildLogsSearchParams } from '../lib/traceLinks'
 import shared from '../styles/shared.module.css'
 import styles from './LogsPage.module.css'
 
 const TODAY_LOCAL = defaultTodayRangeLocal()
-const TODAY_ISO = defaultTodayRangeIso()
 
 const LOKI_UNAVAILABLE = 50301
 
@@ -32,6 +34,46 @@ const LEVEL_OPTIONS = [
   { value: 'info', label: 'INFO' },
   { value: 'debug', label: 'DEBUG' },
 ]
+
+type LogFilters = {
+  request_id: string
+  level: string
+  q: string
+  since: string
+  until: string
+}
+
+function parseIsoToFilter(iso: string | null, fallbackLocal: string): string {
+  if (!iso || Number.isNaN(new Date(iso).getTime())) {
+    return dateTimeLocalToIso(fallbackLocal)
+  }
+  return new Date(iso).toISOString()
+}
+
+function parseLogsFiltersFromSearchParams(searchParams: URLSearchParams): {
+  draft: { requestId: string; level: string; q: string; since: string; until: string }
+  filters: LogFilters
+} {
+  const request_id = searchParams.get('request_id') ?? ''
+  const level = searchParams.get('level') ?? ''
+  const q = searchParams.get('q') ?? ''
+  const sinceIso = searchParams.get('since')
+  const untilIso = searchParams.get('until')
+
+  const sinceLocal = sinceIso ? isoToDateTimeLocal(sinceIso) : TODAY_LOCAL.since
+  const untilLocal = untilIso ? isoToDateTimeLocal(untilIso) : TODAY_LOCAL.until
+
+  return {
+    draft: { requestId: request_id, level, q, since: sinceLocal, until: untilLocal },
+    filters: {
+      request_id,
+      level,
+      q,
+      since: parseIsoToFilter(sinceIso, sinceLocal),
+      until: parseIsoToFilter(untilIso, untilLocal),
+    },
+  }
+}
 
 function logLevelVariant(level: string | null): 'ok' | 'warn' | 'error' | 'neutral' {
   const normalized = (level ?? '').toLowerCase()
@@ -47,21 +89,55 @@ function logLevelVariant(level: string | null): 'ok' | 'warn' | 'error' | 'neutr
   return 'neutral'
 }
 
+function RequestIdCell({ requestId }: { requestId: string | null }) {
+  if (!requestId) return '—'
+  return (
+    <span className={styles.requestIdCell}>
+      <span className={styles.code}>{requestId}</span>
+      <CopyTextButton value={requestId} label="复制 Request ID" />
+    </span>
+  )
+}
+
 export function LogsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialParse = useRef<ReturnType<typeof parseLogsFiltersFromSearchParams> | null>(null)
+  if (initialParse.current === null) {
+    initialParse.current = parseLogsFiltersFromSearchParams(searchParams)
+  }
+  const initial = initialParse.current
+
   const [page, setPage] = useState(1)
-  const [requestId, setRequestId] = useState('')
-  const [level, setLevel] = useState('')
-  const [q, setQ] = useState('')
-  const [since, setSince] = useState(TODAY_LOCAL.since)
-  const [until, setUntil] = useState(TODAY_LOCAL.until)
-  const [filters, setFilters] = useState({
-    request_id: '',
-    level: '',
-    q: '',
-    since: TODAY_ISO.since,
-    until: TODAY_ISO.until,
-  })
+  const [requestId, setRequestId] = useState(initial.draft.requestId)
+  const [level, setLevel] = useState(initial.draft.level)
+  const [q, setQ] = useState(initial.draft.q)
+  const [since, setSince] = useState(initial.draft.since)
+  const [until, setUntil] = useState(initial.draft.until)
+  const [filters, setFilters] = useState<LogFilters>(initial.filters)
   const [selected, setSelected] = useState<LogEntry | null>(null)
+
+  const syncSearchParams = useCallback(
+    (next: LogFilters) => {
+      const params = buildLogsSearchParams({
+        request_id: next.request_id || undefined,
+        since: next.since || undefined,
+        until: next.until || undefined,
+        level: next.level || undefined,
+        q: next.q || undefined,
+      })
+      setSearchParams(params, { replace: true })
+    },
+    [setSearchParams],
+  )
+
+  const applyFilters = useCallback(
+    (next: LogFilters) => {
+      setFilters(next)
+      setPage(1)
+      syncSearchParams(next)
+    },
+    [syncSearchParams],
+  )
 
   const columns: Column<LogEntry>[] = useMemo(
     () => [
@@ -85,7 +161,7 @@ export function LogsPage() {
         key: 'request_id',
         header: 'Request ID',
         mono: true,
-        render: (e) => e.request_id ?? '—',
+        render: (e) => <RequestIdCell requestId={e.request_id} />,
       },
       { key: 'message', header: '消息', render: (e) => e.message ?? '—' },
       {
@@ -164,14 +240,13 @@ export function LogsPage() {
         className={shared.toolbar}
         onSubmit={(e) => {
           e.preventDefault()
-          setFilters({
+          applyFilters({
             request_id: requestId.trim(),
             level: level.trim(),
             q: q.trim(),
             since: dateTimeLocalToIso(since),
             until: dateTimeLocalToIso(until),
           })
-          setPage(1)
         }}
       >
         <label className={shared.filterField}>
@@ -281,7 +356,14 @@ export function LogsPage() {
               },
               {
                 label: 'Request ID',
-                value: <span className={styles.code}>{selected.request_id ?? '—'}</span>,
+                value: selected.request_id ? (
+                  <span className={styles.requestIdCell}>
+                    <span className={styles.code}>{selected.request_id}</span>
+                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
+                  </span>
+                ) : (
+                  '—'
+                ),
               },
               { label: '消息', value: selected.message ?? '—' },
             ]}

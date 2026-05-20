@@ -100,4 +100,5 @@ class AuditLogPublic(BaseModel):
     detail: dict[str, Any] | None
     ip: str | None
     user_agent: str | None
+    request_id: str | None = None
     created_at: datetime

@@ -229,6 +229,23 @@ await apiFetch<UserPublic>(`/api/v1/admin/users/${id}`, {
 - 路由路径**不要**写 `/admin` 前缀（已由 `basename` 处理），例如 `to="/users"` 而非 `to="/admin/users"`
 - 对外访问 URL：**`https://localhost/admin/`**（无尾斜杠的 `/admin` 由 Caddy 301 到 `/admin/`）
 
+### 6.1 URL 深链（排障串联）
+
+**日志页**（`/logs`）支持查询参数，与 API 字段名一致：
+
+| 参数 | 说明 |
+|------|------|
+| `request_id` | 请求 ID |
+| `since` / `until` | ISO 8601（与 API 相同，非 `datetime-local`） |
+| `level` | 日志级别 |
+| `q` | 关键字 |
+
+- 挂载时若 URL 含上述参数，自动填入已提交筛选并查询
+- 点击「查询」后，用 `setSearchParams(..., { replace: true })` 同步 URL（仅已提交条件，不含草稿）
+- 工具函数：`admin/src/lib/traceLinks.ts`（审计详情「查日志」：`buildLogsPathFromAudit`，操作时间 ±15 分钟）
+
+**审计页**：`actor_id` 链至 `/users/:id`；详情有 `request_id` 时显示「查日志」链至日志页。
+
 ---
 
 ## 7. 文案与可访问性
@@ -328,6 +345,7 @@ make admin-docker-dev
 
 | 日期 | 说明 |
 |------|------|
+| 2026-05-20 | 排障串联：日志 URL 深链、`traceLinks.ts`、审计 `request_id` 与「查日志」/用户跳转 |
 | 2026-05-20 | 列表筛选：草稿/`filters` 分离、`lib/datetime.ts` 日期范围约定 |
 | 2026-05-19 | 全站一致性：`Modal`/`JsonPreview`/`CopyJsonButton`、列表筛选布局、`TABLE_SCROLL_MAX_HEIGHT`、`btnDanger` |
 | 2026-05-18 | 初版：基于二期 admin 打磨后的目录与 shared 样式约定 |

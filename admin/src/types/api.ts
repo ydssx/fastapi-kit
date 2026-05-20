@@ -97,6 +97,7 @@ export interface AuditLog {
   detail: Record<string, unknown> | null
   ip: string | null
   user_agent: string | null
+  request_id: string | null
   created_at: string
 }
 

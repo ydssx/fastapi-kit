@@ -58,6 +58,7 @@ class AdminUserService:
         *,
         ip: str | None = None,
         user_agent: str | None = None,
+        request_id: str | None = None,
     ) -> UserAdmin:
         user = await self.users.get_by_id(user_id)
         if not user:
@@ -102,6 +103,7 @@ class AdminUserService:
             detail=changes,
             ip=ip,
             user_agent=user_agent,
+            request_id=request_id,
         )
 
         return UserAdmin.model_validate(updated)
@@ -140,6 +142,7 @@ class AdminUserService:
         *,
         ip: str | None = None,
         user_agent: str | None = None,
+        request_id: str | None = None,
     ) -> PasswordResetResult:
         user = await self.users.get_by_id(user_id)
         if not user:
@@ -159,6 +162,7 @@ class AdminUserService:
             detail=None,
             ip=ip,
             user_agent=user_agent,
+            request_id=request_id,
         )
 
         return PasswordResetResult(temporary_password=temporary_password)

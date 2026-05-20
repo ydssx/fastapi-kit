@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { downloadAuditExport, fetchAuditLogs } from '../api/audit'
 import { CopyJsonButton } from '../components/CopyJsonButton'
+import { CopyTextButton } from '../components/CopyTextButton'
 import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
 import { DetailMeta } from '../components/DetailMeta'
 import { JsonPreview } from '../components/JsonPreview'
@@ -15,10 +17,25 @@ import {
   defaultTodayRangeIso,
   defaultTodayRangeLocal,
 } from '../lib/datetime'
+import { buildLogsPathFromAudit } from '../lib/traceLinks'
 import shared from '../styles/shared.module.css'
+import styles from './AuditLogsPage.module.css'
 
 const TODAY_LOCAL = defaultTodayRangeLocal()
 const TODAY_ISO = defaultTodayRangeIso()
+
+function ActorLink({ actorId }: { actorId: string | null }) {
+  if (!actorId) return <>—</>
+  return (
+    <Link
+      to={`/users/${actorId}`}
+      className={shared.btnLink}
+      title={actorId}
+    >
+      {actorId.slice(0, 8)}…
+    </Link>
+  )
+}
 
 export function AuditLogsPage() {
   const [page, setPage] = useState(1)
@@ -50,7 +67,7 @@ export function AuditLogsPage() {
         key: 'actor',
         header: '操作者',
         mono: true,
-        render: (l) => l.actor_id?.slice(0, 8) ?? '—',
+        render: (l) => <ActorLink actorId={l.actor_id} />,
       },
       { key: 'ip', header: 'IP', mono: true, render: (l) => l.ip ?? '—' },
       {
@@ -198,13 +215,39 @@ export function AuditLogsPage() {
                 label: '资源',
                 value: `${selected.resource_type}:${selected.resource_id ?? '—'}`,
               },
-              { label: '操作者', value: selected.actor_id ?? '—' },
+              {
+                label: '操作者',
+                value: selected.actor_id ? (
+                  <ActorLink actorId={selected.actor_id} />
+                ) : (
+                  '—'
+                ),
+              },
+              {
+                label: 'Request ID',
+                value: selected.request_id ? (
+                  <span className={styles.requestIdCell}>
+                    <span className={styles.mono}>{selected.request_id}</span>
+                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
+                  </span>
+                ) : (
+                  '—'
+                ),
+              },
               { label: 'IP', value: selected.ip ?? '—' },
             ]}
           />
           <p className={shared.detailSectionLabel}>详情</p>
           <JsonPreview value={selected} />
           <div className={shared.modalActions}>
+            {selected.request_id && (
+              <Link
+                to={buildLogsPathFromAudit(selected.created_at, selected.request_id)}
+                className={shared.btnPrimary}
+              >
+                查日志
+              </Link>
+            )}
             <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
               关闭
             </button>
