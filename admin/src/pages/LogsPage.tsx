@@ -12,8 +12,16 @@ import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import { StatusBadge } from '../components/StatusBadge'
 import type { LogEntry } from '../types/api'
+import {
+  dateTimeLocalToIso,
+  defaultTodayRangeIso,
+  defaultTodayRangeLocal,
+} from '../lib/datetime'
 import shared from '../styles/shared.module.css'
 import styles from './LogsPage.module.css'
+
+const TODAY_LOCAL = defaultTodayRangeLocal()
+const TODAY_ISO = defaultTodayRangeIso()
 
 const LOKI_UNAVAILABLE = 50301
 
@@ -44,14 +52,14 @@ export function LogsPage() {
   const [requestId, setRequestId] = useState('')
   const [level, setLevel] = useState('')
   const [q, setQ] = useState('')
-  const [since, setSince] = useState('')
-  const [until, setUntil] = useState('')
+  const [since, setSince] = useState(TODAY_LOCAL.since)
+  const [until, setUntil] = useState(TODAY_LOCAL.until)
   const [filters, setFilters] = useState({
     request_id: '',
     level: '',
     q: '',
-    since: '',
-    until: '',
+    since: TODAY_ISO.since,
+    until: TODAY_ISO.until,
   })
   const [selected, setSelected] = useState<LogEntry | null>(null)
 
@@ -160,8 +168,8 @@ export function LogsPage() {
             request_id: requestId.trim(),
             level: level.trim(),
             q: q.trim(),
-            since: since ? new Date(since).toISOString() : '',
-            until: until ? new Date(until).toISOString() : '',
+            since: dateTimeLocalToIso(since),
+            until: dateTimeLocalToIso(until),
           })
           setPage(1)
         }}

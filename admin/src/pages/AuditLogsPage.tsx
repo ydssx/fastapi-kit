@@ -10,14 +10,26 @@ import { Modal } from '../components/Modal'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import type { AuditLog } from '../types/api'
+import {
+  dateTimeLocalToIso,
+  defaultTodayRangeIso,
+  defaultTodayRangeLocal,
+} from '../lib/datetime'
 import shared from '../styles/shared.module.css'
+
+const TODAY_LOCAL = defaultTodayRangeLocal()
+const TODAY_ISO = defaultTodayRangeIso()
 
 export function AuditLogsPage() {
   const [page, setPage] = useState(1)
   const [action, setAction] = useState('')
-  const [since, setSince] = useState('')
-  const [until, setUntil] = useState('')
-  const [filters, setFilters] = useState({ action: '', since: '', until: '' })
+  const [since, setSince] = useState(TODAY_LOCAL.since)
+  const [until, setUntil] = useState(TODAY_LOCAL.until)
+  const [filters, setFilters] = useState({
+    action: '',
+    since: TODAY_ISO.since,
+    until: TODAY_ISO.until,
+  })
   const [selected, setSelected] = useState<AuditLog | null>(null)
 
   const columns: Column<AuditLog>[] = useMemo(
@@ -105,8 +117,8 @@ export function AuditLogsPage() {
           e.preventDefault()
           setFilters({
             action: action.trim(),
-            since: since ? new Date(since).toISOString() : '',
-            until: until ? new Date(until).toISOString() : '',
+            since: dateTimeLocalToIso(since),
+            until: dateTimeLocalToIso(until),
           })
           setPage(1)
         }}

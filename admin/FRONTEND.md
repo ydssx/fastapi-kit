@@ -149,8 +149,9 @@ export function ExamplePage() {
       <PageHeader
         title="页面标题"
         description="如：每 30 秒自动刷新"
-        actions={/* 筛选表单或按钮 */}
+        actions={/* 仅刷新、导出 CSV、外链等；筛选见 §4.2 */}
       />
+      {/* 筛选表单：独立 shared.toolbar，见 §4.2 */}
       {/* 分区：shared.section + shared.sectionTitle */}
     </div>
   )
@@ -161,7 +162,9 @@ export function ExamplePage() {
 
 - `useQuery` 的 `queryKey` 包含**所有筛选维度**（页码、关键字、日期等）
 - 筛选提交时重置 `page` 为 1
+- **草稿 vs 已提交**：文本/下拉/`datetime-local` 绑草稿 state；`useQuery` 的 `queryKey` 与请求参数只用已提交的 `filters`（`onSubmit` 里 `trim`、`dateTimeLocalToIso` 后 `setFilters` + `setPage(1)`）。参考 `AuditLogsPage.tsx`、`LogsPage.tsx`
 - **布局**：`PageHeader` 的 `actions` 仅放刷新、导出、外链等；筛选表单放在 header 下方独立一行 `shared.toolbar`（或 `form` + `toolbar` 类）
+- **日期范围**：控件值用 `src/lib/datetime.ts`（`defaultTodayRangeLocal` / `defaultTodayRangeIso`）；提交 API 的 `since`/`until` 必须为 ISO（`dateTimeLocalToIso`），勿把 `datetime-local` 字符串直接传给后端
 - 表格用 `DataTable`；长列表传 `scrollMaxHeight={TABLE_SCROLL_MAX_HEIGHT}`（默认 `min(52vh, 24rem)`）
 - 分页用 `PaginationBar`（或 `shared.pagination`）；文案统一为「第 x / y 页（共 z 条）」；`totalPages` 用 `Math.max(1, …)`。当 `page` 超出 `totalPages` 时，在 `queryFn` 内请求合法页并 `setPage(tp)` 同步 state，避免 `queryKey` 与展示页码不一致
 - 破坏性操作（改角色、停用、重置密码）必须 **`confirm()`** 二次确认
@@ -308,6 +311,8 @@ make admin-docker-dev
 | 管理操作无确认 | `confirm()` 或后续统一 Modal |
 | 新增页不进侧栏、不注册路由 | 按 checklist 补全 |
 | 随意新增 UI 库 / CSS 框架 | 保持 CSS Modules + token 一致 |
+| `queryKey` 绑草稿输入或未提交的日期 | 仅 `filters` 驱动查询；日期双状态 + ISO 转换 |
+| 用当前页表格行拼 CSV | `api/*` 调 export 端点 + `fetch`/`Blob`（见 `audit.ts`） |
 
 ---
 
@@ -323,5 +328,6 @@ make admin-docker-dev
 
 | 日期 | 说明 |
 |------|------|
+| 2026-05-20 | 列表筛选：草稿/`filters` 分离、`lib/datetime.ts` 日期范围约定 |
 | 2026-05-19 | 全站一致性：`Modal`/`JsonPreview`/`CopyJsonButton`、列表筛选布局、`TABLE_SCROLL_MAX_HEIGHT`、`btnDanger` |
 | 2026-05-18 | 初版：基于二期 admin 打磨后的目录与 shared 样式约定 |
