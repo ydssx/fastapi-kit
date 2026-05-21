@@ -65,6 +65,83 @@ async def test_audit_log_created_on_user_update(client: AsyncClient, db_engine) 
 
 
 @pytest.mark.asyncio
+async def test_audit_log_request_id_on_alert_settings_update(
+    client: AsyncClient,
+    db_engine,
+) -> None:
+    admin_email = "audit-alert-settings@example.com"
+    trace_id = "alert-settings-trace-001"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    patch_response = await client.patch(
+        "/api/v1/admin/alerts/settings",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Request-ID": trace_id,
+        },
+        json={"recovery_notifications_enabled": False},
+    )
+    assert patch_response.status_code == 200
+    assert patch_response.headers.get("X-Request-ID") == trace_id
+
+    logs = await client.get(
+        "/api/v1/admin/audit-logs?action=alert.settings_update",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert logs.status_code == 200
+    items = logs.json()["data"]["items"]
+    assert len(items) >= 1
+    assert items[0]["action"] == "alert.settings_update"
+    assert items[0]["request_id"] == trace_id
+
+
+@pytest.mark.asyncio
+async def test_audit_log_request_id_on_alert_test_send(
+    client: AsyncClient,
+    db_engine,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admin_email = "audit-alert-test@example.com"
+    trace_id = "alert-test-trace-002"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    async def fake_post(
+        *, url: str, payload: dict, secret: str | None, timeout: float = 10.0
+    ) -> int:
+        return 200
+
+    monkeypatch.setattr("app.services.admin_alerts.post_webhook", fake_post)
+
+    await client.patch(
+        "/api/v1/admin/alerts/settings",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"webhook_url": "https://example.com/hook"},
+    )
+
+    test_response = await client.post(
+        "/api/v1/admin/alerts/test",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Request-ID": trace_id,
+        },
+    )
+    assert test_response.status_code == 200
+    assert test_response.headers.get("X-Request-ID") == trace_id
+
+    logs = await client.get(
+        "/api/v1/admin/audit-logs?action=alert.test_send",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert logs.status_code == 200
+    items = logs.json()["data"]["items"]
+    assert len(items) >= 1
+    assert items[0]["action"] == "alert.test_send"
+    assert items[0]["request_id"] == trace_id
+
+
+@pytest.mark.asyncio
 async def test_audit_logs_csv_export(client: AsyncClient, db_engine) -> None:
     admin_email = "export-admin@example.com"
     admin_token = await _register(client, admin_email)

@@ -1,9 +1,10 @@
 import uuid
 
 import pytest
+import structlog
 from httpx import AsyncClient
 
-from app.middleware.request_id import REQUEST_ID_MAX_LEN, normalize_request_id
+from app.middleware.request_id import REQUEST_ID_MAX_LEN, get_request_id, normalize_request_id
 
 
 def test_normalize_request_id_generates_uuid_when_missing() -> None:
@@ -14,6 +15,16 @@ def test_normalize_request_id_generates_uuid_when_missing() -> None:
 def test_normalize_request_id_accepts_valid_client_id() -> None:
     client_id = "550e8400-e29b-41d4-a716-446655440000"
     assert normalize_request_id(client_id) == client_id
+
+
+def test_get_request_id_returns_bound_context_value() -> None:
+    structlog.contextvars.clear_contextvars()
+    try:
+        assert get_request_id() is None
+        structlog.contextvars.bind_contextvars(request_id="trace-abc")
+        assert get_request_id() == "trace-abc"
+    finally:
+        structlog.contextvars.clear_contextvars()
 
 
 @pytest.mark.parametrize(
