@@ -246,11 +246,11 @@ async def test_admin_update_user_empty_payload_is_noop(
 
 
 @pytest.mark.asyncio
-async def test_cannot_remove_last_active_admin_when_demoting_other(
+async def test_can_demote_inactive_admin_when_one_active_admin_remains(
     client: AsyncClient,
     db_engine,
 ) -> None:
-    """When only one active admin remains, demoting another inactive admin must not drop below one."""
+    """Demoting an already-inactive admin is allowed; self-demotion still returns 40004."""
     keeper_email = "keeper-last@example.com"
     inactive_admin_email = "inactive-admin@example.com"
 
