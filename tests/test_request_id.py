@@ -3,8 +3,15 @@ import uuid
 import pytest
 import structlog
 from httpx import AsyncClient
+from starlette.responses import Response
 
-from app.middleware.request_id import REQUEST_ID_MAX_LEN, get_request_id, normalize_request_id
+from app.middleware.request_id import (
+    REQUEST_ID_HEADER,
+    REQUEST_ID_MAX_LEN,
+    apply_request_id_header,
+    get_request_id,
+    normalize_request_id,
+)
 
 
 def test_normalize_request_id_generates_uuid_when_missing() -> None:
@@ -25,6 +32,25 @@ def test_get_request_id_returns_bound_context_value() -> None:
         assert get_request_id() == "trace-abc"
     finally:
         structlog.contextvars.clear_contextvars()
+
+
+def test_apply_request_id_header_sets_header_from_context() -> None:
+    structlog.contextvars.clear_contextvars()
+    try:
+        response = Response()
+        assert REQUEST_ID_HEADER not in response.headers
+        structlog.contextvars.bind_contextvars(request_id="trace-header-1")
+        apply_request_id_header(response)
+        assert response.headers[REQUEST_ID_HEADER] == "trace-header-1"
+    finally:
+        structlog.contextvars.clear_contextvars()
+
+
+def test_apply_request_id_header_noop_without_context() -> None:
+    structlog.contextvars.clear_contextvars()
+    response = Response()
+    apply_request_id_header(response)
+    assert REQUEST_ID_HEADER not in response.headers
 
 
 @pytest.mark.parametrize(
