@@ -1,3 +1,4 @@
+from app.core.config import Settings
 from app.services.admin_logs import AdminLogsService
 
 
@@ -33,3 +34,36 @@ def test_parse_log_line_plain_text_fallback() -> None:
     assert entry is not None
     assert entry.message == "plain log line"
     assert entry.raw == {"event": "plain log line"}
+
+
+def test_build_logql_includes_level_filter() -> None:
+    logql = AdminLogsService._build_logql(request_id=None, level="error", q=None)
+    assert ' |= "error"' in logql
+
+
+def test_parse_loki_response_sorts_newest_first_and_caps() -> None:
+    settings = Settings(
+        environment="test",
+        database_url="postgresql+asyncpg://unused",
+        redis_url="redis://unused",
+        jwt_secret="test-secret-key-for-jwt-signing-32chars",
+        loki_max_lines=2,
+    )
+    service = AdminLogsService(settings)
+    payload = {
+        "data": {
+            "result": [
+                {
+                    "values": [
+                        ("1000000000", '{"event":"old","level":"info"}'),
+                        ("3000000000", '{"event":"new","level":"info"}'),
+                        ("2000000000", '{"event":"mid","level":"info"}'),
+                    ]
+                }
+            ]
+        }
+    }
+    entries = service._parse_loki_response(payload)
+    assert len(entries) == 2
+    assert entries[0].message == "new"
+    assert entries[1].message == "mid"
