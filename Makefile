@@ -6,6 +6,7 @@ RUN := $(UV) run
 .PHONY: help install sync dev-init dev run worker beat \
 	certs up up-ha down logs migrate rolling-update \
 	admin-dev admin-docker-dev admin-build create-admin \
+	creator-dev creator-build promote-creator-pro \
 	lint format typecheck test check ci clean
 
 help: ## Show available targets
@@ -63,6 +64,15 @@ admin-docker-dev: ## Run admin Vite in Docker (requires stack up; profile admin-
 
 admin-build: ## Build admin SPA on host (optional; compose rebuilds admin into proxy image)
 	cd admin && npm ci && npm run build
+
+creator-dev: ## Run creator SPA dev server (:5174, proxies /api to https://localhost)
+	cd creator && npm run dev
+
+creator-build: ## Build creator SPA on host (optional; compose rebuilds into proxy image)
+	cd creator && npm ci && npm run build
+
+promote-creator-pro: ## Set users.plan=pro (EMAIL=...)
+	$(RUN) python scripts/promote_creator_pro.py --email "$(EMAIL)"
 
 lint: ## Ruff lint
 	$(RUN) ruff check .

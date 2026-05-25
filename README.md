@@ -92,6 +92,10 @@ Scheduled tasks live in `app/tasks/scheduled.py`; intervals are configured in `a
 
 React SPA in `admin/` (login, users, dashboard, Celery overview, audit logs, alert webhooks, log search).
 
+## Creator workspace (C-end)
+
+React SPA in `creator/` — multi-platform content pipelines (short video / long article), brand profile, publish checklist, optional step AI (`LLM_API_KEY`). Served at **https://localhost/creator/** with `make up`; dev: `make creator-dev`.
+
 ```bash
 # Create first admin
 uv run python scripts/create_admin.py --email admin@local.dev --password 'your-secure-password'

@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:8000",
         "https://localhost",
     ]
@@ -62,6 +63,15 @@ class Settings(BaseSettings):
     loki_url: str | None = None
     loki_query_timeout_seconds: float = 15.0
     loki_max_lines: int = 500
+
+    llm_api_key: str | None = None
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = 60.0
+
+    creator_free_completed_projects_per_month: int = 2
+    creator_free_ai_calls_per_month: int = 50
+    creator_pro_multiplier: int = 10
 
     @field_validator("cors_origins", mode="before")
     @classmethod

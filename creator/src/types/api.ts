@@ -1,0 +1,81 @@
+export interface ApiResponse<T> {
+  code: number
+  message: string
+  data: T | null
+}
+
+export interface UserPublic {
+  id: string
+  email: string
+  role: string
+}
+
+export interface TokenPair {
+  access_token: string
+  refresh_token: string
+}
+
+export interface AuthResponse {
+  user: UserPublic
+  tokens: TokenPair
+}
+
+export interface PipelineStep {
+  key: string
+  title: string
+  description: string
+  ai_enabled: boolean
+}
+
+export interface Pipeline {
+  id: string
+  title: string
+  description: string
+  steps: PipelineStep[]
+}
+
+export interface StepArtifact {
+  step_key: string
+  content: string
+  version: number
+  confirmed_at: string
+}
+
+export interface Project {
+  id: string
+  pipeline_id: string
+  title: string
+  status: string
+  current_step_key: string
+  target_platforms: string[]
+  draft_content: Record<string, string>
+  publish_checklist_state: Record<string, boolean>
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+  artifacts: StepArtifact[]
+}
+
+export interface PublishChecklistItem {
+  platform: string
+  platform_label: string
+  item_key: string
+  label: string
+  checked: boolean
+}
+
+export interface Usage {
+  year_month: string
+  completed_projects: number
+  completed_projects_limit: number
+  ai_calls: number
+  ai_calls_limit: number
+  plan: string
+}
+
+export interface BrandProfile {
+  tone: string
+  audience: string
+  taboos: string
+  structure_notes: string
+}

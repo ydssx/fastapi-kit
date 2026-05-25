@@ -1,0 +1,89 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.create {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create h2 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.create input,
+.create select {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.platforms label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.create button {
+  align-self: flex-start;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list a {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+}
+
+.list a:hover {
+  border-color: var(--accent);
+}
+
+.list span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.empty,
+.error {
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--danger);
+}

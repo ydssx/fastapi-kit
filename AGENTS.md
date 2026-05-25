@@ -43,6 +43,15 @@
 - 管理 API 前缀：`/api/v1/admin/*`（需 Bearer token 且 `role=admin`）。
 - 可选 **ops profile**（Flower、Loki、Promtail）：`docker compose --profile ops up -d`（内网用途，不经 Caddy 公网暴露）。日志查询需在 API 设置 `LOKI_URL=http://loki:3100`；告警 Webhook 可在 admin **告警** 页配置，或通过 `ALERT_WEBHOOK_URL` 种子。对接说明见 `docs/admin-alert-webhook.md`。
 
+### 创作者工作台（`creator/`）
+
+- 前端规范见 `creator/FRONTEND.md`；C 端 API 前缀 `/api/v1/creator/*`（JWT，数据按用户隔离）。
+- **Docker 一体启动**：`make up` 会在 proxy 镜像中同时构建 admin 与 creator；访问 **https://localhost/creator/**。
+- `make creator-dev`：本机 Vite（`http://localhost:5174/creator/`），`/api` 代理到 `https://localhost`。
+- `make creator-build`：仅本机构建 `creator/dist/`。
+- `uv run python scripts/promote_creator_pro.py --email ...`：验证期手动提升 Pro 额度；埋点汇总 `GET /api/v1/admin/creator-metrics/summary`。
+- 验证访谈见 `docs/creator-validation-playbook.md`；配置 `LLM_API_KEY` 后可用步骤 AI 建议。
+
 ## 编码风格与命名约定
 
 目标 Python 版本为 3.11。Ruff 负责导入和常见规则检查，行宽 100。Mypy 对 `app/` 使用 strict 模式。使用 4 空格缩进、带类型标注的异步函数，并在 API 边界使用明确的 Pydantic schema。

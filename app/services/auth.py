@@ -47,10 +47,12 @@ class AuthService:
         if not user.is_active:
             raise AppException("User is inactive", code=40102, status_code=403)
 
-        return AuthResponse(
+        response = AuthResponse(
             user=UserPublic.model_validate(user),
             tokens=self._build_tokens(user.id),
         )
+        await self._record_creator_session(user.id)
+        return response
 
     async def refresh(self, refresh_token: str) -> TokenPair:
         try:
@@ -75,4 +77,12 @@ class AuthService:
         return TokenPair(
             access_token=create_access_token(user_id, self.settings),
             refresh_token=create_refresh_token(user_id, self.settings),
+        )
+
+    async def _record_creator_session(self, user_id: uuid.UUID) -> None:
+        from app.services.creator_events import CreatorEventService
+
+        await CreatorEventService(self.session).record(
+            user_id=user_id,
+            event_type="user.session",
         )
