@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
 import { fetchUsage } from '../api/creator'
+import { QuotaDisplay } from '../components/QuotaDisplay'
 import styles from './CreatorLayout.module.css'
 
 const NAV = [
@@ -12,14 +14,19 @@ const NAV = [
 export function CreatorLayout() {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
   const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: fetchUsage })
 
-  const projectPct = usage
-    ? Math.min(100, (usage.completed_projects / usage.completed_projects_limit) * 100)
-    : 0
-  const aiPct = usage
-    ? Math.min(100, (usage.ai_calls / usage.ai_calls_limit) * 100)
-    : 0
+  function navClass(to: string) {
+    const active =
+      location.pathname === to ||
+      (to === '/' && location.pathname.startsWith('/projects'))
+    return active ? styles.navActive : undefined
+  }
+
+  function closeMenu() {
+    setMenuOpen(false)
+  }
 
   return (
     <div className={styles.shell}>
@@ -33,44 +40,51 @@ export function CreatorLayout() {
             <span className={styles.brandTag}>流水线</span>
           </div>
         </div>
+
+        <button
+          type="button"
+          className={styles.menuBtn}
+          aria-expanded={menuOpen}
+          aria-controls="creator-mobile-panel"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? '关闭' : '菜单'}
+        </button>
+
         <nav className={styles.nav} aria-label="主导航">
-          {NAV.map((item) => {
-            const active =
-              location.pathname === item.to ||
-              (item.to === '/' && location.pathname.startsWith('/projects'))
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={active ? styles.navActive : undefined}
-              >
-                {item.label}
-              </Link>
-            )
-          })}
+          {NAV.map((item) => (
+            <Link key={item.to} to={item.to} className={navClass(item.to)} onClick={closeMenu}>
+              {item.label}
+            </Link>
+          ))}
         </nav>
+
         <div className={styles.meta}>
-          {usage && (
-            <div className={styles.quota} title="本月用量">
-              <div className={styles.quotaRow}>
-                <span>完成 {usage.completed_projects}/{usage.completed_projects_limit}</span>
-                <div className={styles.quotaBar}>
-                  <span style={{ width: `${projectPct}%` }} />
-                </div>
-              </div>
-              <div className={styles.quotaRow}>
-                <span>AI {usage.ai_calls}/{usage.ai_calls_limit}</span>
-                <div className={styles.quotaBar}>
-                  <span style={{ width: `${aiPct}%` }} />
-                </div>
-              </div>
-            </div>
-          )}
+          {usage && <QuotaDisplay usage={usage} />}
           <span className={styles.email}>{user?.email}</span>
           <button type="button" className={styles.logout} onClick={logout}>
             退出
           </button>
         </div>
+
+        {menuOpen && (
+          <div id="creator-mobile-panel" className={styles.mobilePanel}>
+            <nav className={styles.mobileNav} aria-label="主导航">
+              {NAV.map((item) => (
+                <Link key={item.to} to={item.to} className={navClass(item.to)} onClick={closeMenu}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            {usage && <QuotaDisplay usage={usage} compact />}
+            <div className={styles.mobileMeta}>
+              <span className={styles.emailMobile}>{user?.email}</span>
+              <button type="button" className={styles.logout} onClick={logout}>
+                退出
+              </button>
+            </div>
+          </div>
+        )}
       </header>
       <main className={styles.main}>
         <Outlet />

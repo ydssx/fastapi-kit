@@ -12,6 +12,8 @@
   --accent-muted: color-mix(in srgb, var(--accent) 18%, transparent);
   --success: #4ade80;
   --danger: #f87171;
+  --warn: #fbbf24;
+  --quota-high: color-mix(in srgb, var(--warn) 22%, transparent);
   --radius: 10px;
   --radius-lg: 14px;
   --font: 'DM Sans', system-ui, sans-serif;
@@ -90,4 +92,10 @@ select:focus-visible {
 
 .animateIn {
   animation: fadeUp 0.35s ease-out both;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

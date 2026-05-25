@@ -9,17 +9,10 @@
   gap: var(--space-md);
 }
 
-.field {
-  padding: var(--space-md);
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-}
-
-.fieldHint {
-  font-size: 0.75rem;
+.footerNote {
+  margin: 0;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  opacity: 0.85;
 }
 
 .ok {

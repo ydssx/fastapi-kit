@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { fetchBrand, updateBrand } from '../api/creator'
 import type { BrandProfile } from '../types/api'
+import { BrandField } from '../components/BrandField'
+import { PageHeader } from '../components/PageHeader'
 import shared from '../styles/shared.module.css'
 import styles from './BrandPage.module.css'
 
@@ -13,10 +15,10 @@ const empty: BrandProfile = {
 }
 
 const FIELDS: { key: keyof BrandProfile; label: string; hint: string; rows: number }[] = [
-  { key: 'tone', label: '语气', hint: '例如：口语化、专业但不生硬', rows: 2 },
-  { key: 'audience', label: '受众', hint: '例如：25–35 岁都市女性', rows: 2 },
-  { key: 'taboos', label: '禁忌表述', hint: '不要出现的词或承诺', rows: 2 },
-  { key: 'structure_notes', label: '结构偏好', hint: '例如：三段式、先结论后论证', rows: 3 },
+  { key: 'tone', label: '语气', hint: '例如：专业、友好、简洁、有鼓励感', rows: 3 },
+  { key: 'audience', label: '受众', hint: '例如：职场新人、内容创作者、学生群体', rows: 3 },
+  { key: 'taboos', label: '禁忌表述', hint: '例如：避免绝对化用语、避免涉及政治话题', rows: 3 },
+  { key: 'structure_notes', label: '结构偏好', hint: '例如：总-分-总结构、分点论述、结尾行动建议', rows: 3 },
 ]
 
 export function BrandPage() {
@@ -36,26 +38,26 @@ export function BrandPage() {
   })
 
   return (
-    <div className={`${styles.page} animateIn`}>
-      <header className={shared.pageHeader}>
-        <h1 className={shared.pageTitle}>品牌档案</h1>
-        <p className={shared.pageSubtitle}>AI 生成各步骤时会自动引用以下约束，保持内容风格一致。</p>
-      </header>
+    <div className={`${shared.page} ${styles.page}`}>
+      <PageHeader
+        title="品牌档案"
+        description="完善品牌档案，帮助 AI 更好理解你的创作边界与表达偏好。"
+      />
 
       <div className={styles.grid}>
         {FIELDS.map((field) => (
-          <label key={field.key} className={`${shared.fieldLabel} ${styles.field}`}>
-            {field.label}
-            <span className={styles.fieldHint}>{field.hint}</span>
-            <textarea
-              className={shared.textarea}
-              rows={field.rows}
-              value={form[field.key]}
-              onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-            />
-          </label>
+          <BrandField
+            key={field.key}
+            label={field.label}
+            hint={field.hint}
+            rows={field.rows}
+            value={form[field.key]}
+            onChange={(value) => setForm({ ...form, [field.key]: value })}
+          />
         ))}
       </div>
+
+      <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>
 
       <div className={shared.btnRow}>
         <button

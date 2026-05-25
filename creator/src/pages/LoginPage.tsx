@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { IconInput, LockIcon, MailIcon } from '../components/IconInput'
 import shared from '../styles/shared.module.css'
 import styles from './LoginPage.module.css'
 
@@ -54,38 +55,41 @@ export function LoginPage() {
         )}
         <label className={shared.fieldLabel}>
           邮箱
-          <input
-            className={shared.input}
+          <IconInput
+            icon={<MailIcon />}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="请输入邮箱地址"
           />
         </label>
         <label className={shared.fieldLabel}>
           密码
-          <input
-            className={shared.input}
+          <IconInput
+            icon={<LockIcon />}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            placeholder="至少 8 位"
+            placeholder="请输入密码"
           />
         </label>
         <button type="submit" className={shared.btnPrimary} disabled={submitting}>
           {submitting ? '处理中…' : mode === 'login' ? '登录' : '创建账号'}
         </button>
-        <button
-          type="button"
-          className={styles.switch}
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-        >
-          {mode === 'login' ? '没有账号？注册' : '已有账号？登录'}
-        </button>
+        <p className={styles.switchRow}>
+          {mode === 'login' ? '没有账号？' : '已有账号？'}
+          <button
+            type="button"
+            className={styles.switchLink}
+            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+          >
+            {mode === 'login' ? '注册' : '登录'}
+          </button>
+        </p>
       </form>
     </div>
   )

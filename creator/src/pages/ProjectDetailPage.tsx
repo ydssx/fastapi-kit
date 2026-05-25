@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ApiError } from '../api/client'
 import {
   aiSuggest,
   completeProject,
@@ -11,14 +12,25 @@ import {
   saveDraft,
   updatePublishChecklist,
 } from '../api/creator'
+import { AiLoadingOverlay } from '../components/AiLoadingOverlay'
+import { CompletedBanner } from '../components/CompletedBanner'
+import { ConfirmedStepsHistory } from '../components/ConfirmedStepsHistory'
+import { LoadingBlock } from '../components/LoadingBlock'
+import { PipelineThumbnail } from '../components/PipelineThumbnail'
+import { PublishChecklist } from '../components/PublishChecklist'
+import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
+import { StepEditorPanel } from '../components/StepEditorPanel'
 import { StepProgress } from '../components/StepProgress'
-import { pipelineLabel, statusLabel } from '../lib/labels'
-import type { Project } from '../types/api'
+import { useAuth } from '../auth/AuthContext'
+import { formatProjectDate } from '../lib/format'
+import { pipelineLabel, platformLabels, statusLabel } from '../lib/labels'
+import type { Project, PublishChecklistItem } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -37,6 +49,9 @@ export function ProjectDetailPage() {
   })
 
   const [content, setContent] = useState('')
+  const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
   const pipeline = pipelines.find((p) => p.id === project?.pipeline_id)
   const step = pipeline?.steps.find((s) => s.key === project?.current_step_key)
   const stepIndex = pipeline?.steps.findIndex((s) => s.key === project?.current_step_key) ?? 0
@@ -47,6 +62,10 @@ export function ProjectDetailPage() {
     }
   }, [project?.id, project?.current_step_key, project?.draft_content])
 
+  function stepTitle(key: string) {
+    return pipeline?.steps.find((s) => s.key === key)?.title ?? key
+  }
+
   function applyProjectUpdate(updated: Project) {
     queryClient.setQueryData(['project', id], updated)
     setContent(updated.draft_content[updated.current_step_key] ?? '')
@@ -54,27 +73,56 @@ export function ProjectDetailPage() {
     void queryClient.invalidateQueries({ queryKey: ['usage'] })
   }
 
+  function handleApiError(err: unknown) {
+    if (err instanceof ApiError) {
+      const kind = quotaLimitKindFromCode(err.code)
+      if (kind) {
+        setQuotaError(kind)
+        setActionError(null)
+        return
+      }
+    }
+    setActionError(err instanceof Error ? err.message : '操作失败')
+  }
+
   const draftMut = useMutation({
     mutationFn: () => saveDraft(id!, project!.current_step_key, content),
-    onSuccess: (updated) => applyProjectUpdate(updated),
+    onSuccess: (updated) => {
+      setActionError(null)
+      applyProjectUpdate(updated)
+    },
+    onError: handleApiError,
   })
 
   const confirmMut = useMutation({
     mutationFn: () => confirmStep(id!, project!.current_step_key, content),
-    onSuccess: (updated) => applyProjectUpdate(updated),
+    onSuccess: (updated) => {
+      setQuotaError(null)
+      setActionError(null)
+      applyProjectUpdate(updated)
+    },
+    onError: handleApiError,
   })
 
   const aiMut = useMutation({
     mutationFn: () => aiSuggest(id!, project!.current_step_key),
     onSuccess: (data) => {
+      setQuotaError(null)
+      setActionError(null)
       setContent(data.suggestion)
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
     },
+    onError: handleApiError,
   })
 
   const completeMut = useMutation({
     mutationFn: () => completeProject(id!),
-    onSuccess: (updated) => applyProjectUpdate(updated),
+    onSuccess: (updated) => {
+      setQuotaError(null)
+      setActionError(null)
+      applyProjectUpdate(updated)
+    },
+    onError: handleApiError,
   })
 
   const checklistMut = useMutation({
@@ -85,56 +133,30 @@ export function ProjectDetailPage() {
   })
 
   if (isLoading || !project) {
-    return <p className={styles.loading}>加载中…</p>
-  }
-
-  if (project.status === 'completed') {
     return (
-      <div className={`${styles.page} animateIn`}>
-        <Link to="/" className={shared.backLink}>
-          ← 返回列表
-        </Link>
-        <div className={styles.completedBanner}>
-          <span className={styles.completedIcon} aria-hidden>
-            ✓
-          </span>
-          <div>
-            <h1 className={shared.pageTitle}>{project.title}</h1>
-            <p className={styles.done}>流水线已完成，内容已归档。</p>
-          </div>
-        </div>
-        {project.artifacts.length > 0 && (
-          <section className={styles.history}>
-            <h2 className={shared.panelTitle}>已确认步骤</h2>
-            <ul className={styles.historyList}>
-              {project.artifacts.map((a) => {
-                const stepTitle =
-                  pipeline?.steps.find((s) => s.key === a.step_key)?.title ?? a.step_key
-                return (
-                  <li key={`${a.step_key}-${a.version}`} className={styles.historyItem}>
-                    <div className={styles.historyHead}>
-                      <strong>{stepTitle}</strong>
-                      <span>v{a.version}</span>
-                    </div>
-                    <p>
-                      {a.content.slice(0, 200)}
-                      {a.content.length > 200 ? '…' : ''}
-                    </p>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        )}
+      <div className={styles.loadingWrap}>
+        <LoadingBlock />
       </div>
     )
   }
 
-  function checklistKey(item: { platform: string; item_key: string }) {
+  if (project.status === 'completed') {
+    return (
+      <div className={`${shared.page} ${styles.page}`}>
+        <Link to="/" className={shared.backLink}>
+          ← 返回列表
+        </Link>
+        <CompletedBanner title={project.title} />
+        <ConfirmedStepsHistory artifacts={project.artifacts} stepTitle={stepTitle} />
+      </div>
+    )
+  }
+
+  function checklistKey(item: PublishChecklistItem) {
     return `${item.platform}:${item.item_key}`
   }
 
-  function toggleCheck(item: { platform: string; item_key: string; checked: boolean }) {
+  function toggleCheck(item: PublishChecklistItem) {
     const key = checklistKey(item)
     const current = checklist.filter((c) => c.checked).map(checklistKey)
     const next = item.checked ? current.filter((k) => k !== key) : [...current, key]
@@ -142,19 +164,50 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <div className={`${styles.page} animateIn`}>
+    <div className={`${shared.page} ${styles.page}`}>
       <Link to="/" className={shared.backLink}>
         ← 返回列表
       </Link>
 
       <header className={styles.hero}>
-        <div>
-          <p className={styles.meta}>
-            {pipelineLabel(project.pipeline_id)}
-            <span className={styles.metaDot}>·</span>
-            {statusLabel(project.status)}
-          </p>
+        <PipelineThumbnail pipelineId={project.pipeline_id} className={styles.heroThumb} />
+        <div className={styles.heroBody}>
+          <div className={styles.heroTop}>
+            <p className={styles.meta}>
+              {pipelineLabel(project.pipeline_id)}
+              {project.target_platforms.length > 0 && (
+                <>
+                  <span className={styles.metaDot}>·</span>
+                  {platformLabels(project.target_platforms)}
+                </>
+              )}
+            </p>
+            <span
+              className={
+                project.status === 'completed' ? shared.badgeDone : shared.badgeProgress
+              }
+            >
+              {statusLabel(project.status)}
+            </span>
+          </div>
           <h1 className={shared.pageTitle}>{project.title}</h1>
+          {step?.description && <p className={styles.heroDesc}>{step.description}</p>}
+          <dl className={styles.heroStats}>
+            <div>
+              <dt>创建</dt>
+              <dd>{formatProjectDate(project.created_at)}</dd>
+            </div>
+            <div>
+              <dt>更新</dt>
+              <dd>{formatProjectDate(project.updated_at)}</dd>
+            </div>
+            {user?.email && (
+              <div>
+                <dt>创作者</dt>
+                <dd>{user.email}</dd>
+              </div>
+            )}
+          </dl>
           <p className={styles.stepHint}>
             步骤 {stepIndex + 1}/{pipeline?.steps.length ?? 0} · {step?.title ?? project.current_step_key}
           </p>
@@ -164,110 +217,38 @@ export function ProjectDetailPage() {
       {pipeline && <StepProgress steps={pipeline.steps} currentStepKey={project.current_step_key} />}
 
       {isPublish ? (
-        <section className={shared.panel}>
-          <h2 className={shared.panelTitle}>发布核对</h2>
-          <p className={styles.hint}>勾选各平台发布项，全部完成后可结束项目。</p>
-          <ul className={styles.checklist}>
-            {checklist.map((item) => (
-              <li key={checklistKey(item)}>
-                <label className={styles.checkItem}>
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={() => toggleCheck(item)}
-                  />
-                  <span>
-                    <strong>{item.platform_label}</strong>
-                    {item.label}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-          <div className={shared.btnRow}>
-            <button
-              type="button"
-              className={shared.btnPrimary}
-              disabled={completeMut.isPending}
-              onClick={() => completeMut.mutate()}
-            >
-              {completeMut.isPending ? '提交中…' : '完成项目'}
-            </button>
-          </div>
-          {completeMut.isError && (
-            <p className={shared.error}>{(completeMut.error as Error).message}</p>
-          )}
-        </section>
-      ) : (
-        <section className={shared.panel}>
-          <h2 className={shared.panelTitle}>{step?.title}</h2>
-          <p className={styles.hint}>{step?.description}</p>
-          <textarea
-            className={shared.textarea}
-            rows={12}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={`撰写「${step?.title}」…`}
+        <>
+          <PublishChecklist
+            items={checklist}
+            onToggle={toggleCheck}
+            onComplete={() => completeMut.mutate()}
+            completing={completeMut.isPending}
           />
-          <div className={shared.btnRow}>
-            <button
-              type="button"
-              className={shared.btnGhost}
-              onClick={() => draftMut.mutate()}
-              disabled={draftMut.isPending}
-            >
-              {draftMut.isPending ? '保存中…' : '暂存草稿'}
-            </button>
-            {step?.ai_enabled && (
-              <button
-                type="button"
-                className={shared.btn}
-                onClick={() => aiMut.mutate()}
-                disabled={aiMut.isPending}
-              >
-                {aiMut.isPending ? 'AI 生成中…' : 'AI 建议'}
-              </button>
-            )}
-            <button
-              type="button"
-              className={shared.btnPrimary}
-              onClick={() => confirmMut.mutate()}
-              disabled={confirmMut.isPending || !content.trim()}
-            >
-              {confirmMut.isPending ? '确认中…' : '确认并下一步 →'}
-            </button>
-          </div>
-          {(confirmMut.isError || aiMut.isError) && (
-            <p className={shared.error}>
-              {((confirmMut.error || aiMut.error) as Error).message}
-            </p>
-          )}
-        </section>
+          {quotaError && <QuotaLimitNotice kind={quotaError} />}
+          {actionError && <p className={shared.error}>{actionError}</p>}
+        </>
+      ) : (
+        <>
+          <StepEditorPanel
+            title={step?.title ?? project.current_step_key}
+            content={content}
+            onContentChange={setContent}
+            aiEnabled={step?.ai_enabled ?? false}
+            onSaveDraft={() => draftMut.mutate()}
+            onAiSuggest={() => aiMut.mutate()}
+            onConfirm={() => confirmMut.mutate()}
+            savingDraft={draftMut.isPending}
+            aiPending={aiMut.isPending}
+            confirming={confirmMut.isPending}
+          />
+          {quotaError && <QuotaLimitNotice kind={quotaError} />}
+          {actionError && <p className={shared.error}>{actionError}</p>}
+        </>
       )}
 
-      {project.artifacts.length > 0 && (
-        <section className={styles.history}>
-          <h2 className={shared.panelTitle}>已确认步骤</h2>
-          <ul className={styles.historyList}>
-            {project.artifacts.map((a) => {
-              const stepTitle =
-                pipeline?.steps.find((s) => s.key === a.step_key)?.title ?? a.step_key
-              return (
-                <li key={`${a.step_key}-${a.version}`} className={styles.historyItem}>
-                  <div className={styles.historyHead}>
-                    <strong>{stepTitle}</strong>
-                    <span>v{a.version}</span>
-                  </div>
-                  <p>
-                    {a.content.slice(0, 200)}
-                    {a.content.length > 200 ? '…' : ''}
-                  </p>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      )}
+      <AiLoadingOverlay active={aiMut.isPending} />
+
+      <ConfirmedStepsHistory artifacts={project.artifacts} stepTitle={stepTitle} />
     </div>
   )
 }

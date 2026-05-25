@@ -1,23 +1,6 @@
-.loading {
+.wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   min-height: 100vh;
-  color: var(--text-muted);
-}
-
-.spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

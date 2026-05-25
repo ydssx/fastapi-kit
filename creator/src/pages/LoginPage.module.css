@@ -80,16 +80,24 @@
   font-size: 0.875rem;
 }
 
-.switch {
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 0.875rem;
-  padding: var(--space-sm) 0 0;
+.switchRow {
+  margin: var(--space-sm) 0 0;
   text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
 }
 
-.switch:hover {
+.switchLink {
+  margin-left: 4px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+
+.switchLink:hover {
   color: var(--accent-hover);
 }
 

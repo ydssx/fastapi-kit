@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { LoadingBlock } from './LoadingBlock'
 import styles from './ProtectedRoute.module.css'
 
 export function ProtectedRoute() {
@@ -11,9 +12,8 @@ export function ProtectedRoute() {
 
 export function ProtectedRouteLoading() {
   return (
-    <div className={styles.loading}>
-      <span className={styles.spinner} aria-hidden />
-      加载中…
+    <div className={styles.wrap}>
+      <LoadingBlock />
     </div>
   )
 }

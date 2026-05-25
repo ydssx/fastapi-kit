@@ -1,16 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ApiError } from '../api/client'
 import { createProject, fetchPipelines, fetchProjects } from '../api/creator'
-import { pipelineLabel, statusLabel } from '../lib/labels'
+import { EmptyState } from '../components/EmptyState'
+import { PageHeader } from '../components/PageHeader'
+import { PlatformPicker } from '../components/PlatformPicker'
+import { ProjectCard } from '../components/ProjectCard'
+import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
 const PLATFORMS = [
-  { key: 'douyin', label: '抖音' },
-  { key: 'xiaohongshu', label: '小红书' },
-  { key: 'wechat', label: '公众号' },
-  { key: 'bilibili', label: 'B站' },
+  { key: 'douyin', label: '抖音', emoji: '🎵' },
+  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
+  { key: 'wechat', label: '公众号', emoji: '💬' },
+  { key: 'bilibili', label: 'B站', emoji: '📺' },
 ]
 
 export function ProjectsPage() {
@@ -28,6 +33,19 @@ export function ProjectsPage() {
   const [title, setTitle] = useState('')
   const [pipelineId, setPipelineId] = useState('short_video')
   const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
+  const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
+
+  const activeProjects = useMemo(
+    () =>
+      projects
+        .filter((p) => p.status !== 'completed')
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    [projects],
+  )
+  const completedProjects = useMemo(
+    () => projects.filter((p) => p.status === 'completed'),
+    [projects],
+  )
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -37,127 +55,116 @@ export function ProjectsPage() {
         target_platform_keys: platforms,
       }),
     onSuccess: (project) => {
+      setQuotaError(null)
       void queryClient.invalidateQueries({ queryKey: ['projects'] })
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
       setTitle('')
       navigate(`/projects/${project.id}`)
     },
+    onError: (err) => {
+      if (err instanceof ApiError) {
+        setQuotaError(quotaLimitKindFromCode(err.code))
+      }
+    },
   })
-
-  function togglePlatform(key: string) {
-    setPlatforms((prev) =>
-      prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key],
-    )
-  }
 
   const canCreate = title.trim().length > 0 && platforms.length > 0 && !createMut.isPending
 
+  function renderProjectCards(items: typeof projects) {
+    return items.map((p) => {
+      const pipeline = pipelines.find((pl) => pl.id === p.pipeline_id)
+      const stepTitle =
+        pipeline?.steps.find((s) => s.key === p.current_step_key)?.title ?? p.current_step_key
+      const stepNum = (pipeline?.steps.findIndex((s) => s.key === p.current_step_key) ?? 0) + 1
+      const total = pipeline?.steps.length ?? 0
+      return (
+        <ProjectCard
+          key={p.id}
+          project={p}
+          pipelineTitle={pipeline?.title}
+          stepTitle={stepTitle}
+          stepNum={stepNum}
+          totalSteps={total}
+        />
+      )
+    })
+  }
+
   return (
-    <div className={`${styles.page} animateIn`}>
-      <header className={shared.pageHeader}>
-        <h1 className={shared.pageTitle}>内容项目</h1>
-        <p className={shared.pageSubtitle}>从选题到发布，按流水线推进每一条内容。</p>
-      </header>
+    <div className={`${shared.page} ${styles.page}`}>
+      <PageHeader
+        title="内容项目"
+        description="通过流水线式的创作流程，高效完成优质内容的策划与制作。"
+      />
 
       <section className={styles.create}>
         <h2 className={shared.panelTitle}>新建项目</h2>
-        <label className={shared.fieldLabel}>
-          选题 / 灵感
-          <input
-            className={shared.input}
-            placeholder="例如：初夏通勤穿搭 3 件套"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </label>
-        <label className={shared.fieldLabel}>
-          流水线类型
-          <select
-            className={shared.select}
-            value={pipelineId}
-            onChange={(e) => setPipelineId(e.target.value)}
-          >
-            {pipelines.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset className={styles.platformFieldset}>
-          <legend className={shared.fieldLabel}>目标平台</legend>
-          <div className={styles.platforms}>
-            {PLATFORMS.map((p) => {
-              const active = platforms.includes(p.key)
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  className={`${styles.platformPill} ${active ? styles.platformPillActive : ''}`}
-                  onClick={() => togglePlatform(p.key)}
-                  aria-pressed={active}
-                >
-                  {p.label}
-                </button>
-              )
-            })}
+        <div className={styles.createGrid}>
+          <label className={shared.fieldLabel}>
+            项目主题
+            <input
+              className={shared.input}
+              placeholder="例如：初夏通勤穿搭 3 件套"
+              value={title}
+              onChange={(e) => {
+                setQuotaError(null)
+                setTitle(e.target.value)
+              }}
+            />
+          </label>
+          <label className={shared.fieldLabel}>
+            选择流水线
+            <select
+              className={shared.select}
+              value={pipelineId}
+              onChange={(e) => setPipelineId(e.target.value)}
+            >
+              {pipelines.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className={styles.createSpan2}>
+            <PlatformPicker options={PLATFORMS} value={platforms} onChange={setPlatforms} legend="发布平台" />
           </div>
-        </fieldset>
-        <button
-          type="button"
-          className={shared.btnPrimary}
-          disabled={!canCreate}
-          onClick={() => createMut.mutate()}
-        >
-          {createMut.isPending ? '创建中…' : '开始创作 →'}
-        </button>
-        {createMut.isError && (
+          <div className={styles.createActions}>
+            <button
+              type="button"
+              className={shared.btnPrimary}
+              disabled={!canCreate}
+              onClick={() => createMut.mutate()}
+            >
+              {createMut.isPending ? '创建中…' : '开始创作 →'}
+            </button>
+          </div>
+        </div>
+        {quotaError && <QuotaLimitNotice kind={quotaError} />}
+        {createMut.isError && !quotaError && (
           <p className={shared.error}>{(createMut.error as Error).message}</p>
         )}
       </section>
 
       <section>
         <h2 className={shared.panelTitle}>进行中的项目</h2>
-        {isLoading && <p className={styles.muted}>加载中…</p>}
-        <ul className={styles.list}>
-          {projects.map((p) => {
-            const pipeline = pipelines.find((pl) => pl.id === p.pipeline_id)
-            const stepTitle =
-              pipeline?.steps.find((s) => s.key === p.current_step_key)?.title ??
-              p.current_step_key
-            const stepNum =
-              (pipeline?.steps.findIndex((s) => s.key === p.current_step_key) ?? 0) + 1
-            const total = pipeline?.steps.length ?? 0
-            return (
-              <li key={p.id}>
-                <Link to={`/projects/${p.id}`} className={styles.card}>
-                  <div className={styles.cardTop}>
-                    <strong>{p.title}</strong>
-                    <span
-                      className={
-                        p.status === 'completed' ? shared.badgeDone : shared.badgeProgress
-                      }
-                    >
-                      {statusLabel(p.status)}
-                    </span>
-                  </div>
-                  <span className={styles.cardMeta}>
-                    {pipelineLabel(p.pipeline_id)} · 第 {stepNum}/{total} 步 · {stepTitle}
-                  </span>
-                  {total > 0 && p.status !== 'completed' && (
-                    <div className={styles.progressBar} aria-hidden>
-                      <span style={{ width: `${(stepNum / total) * 100}%` }} />
-                    </div>
-                  )}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-        {!isLoading && projects.length === 0 && (
-          <p className={styles.empty}>还没有项目。填写上方表单，创建你的第一条流水线。</p>
+        {isLoading && <p className={shared.muted}>加载中…</p>}
+        {!isLoading && activeProjects.length === 0 && (
+          <EmptyState
+            icon="✦"
+            title="还没有项目"
+            description="填写上方表单，创建你的第一条流水线。从选题到发布，按步骤推进即可。"
+          />
         )}
+        <ul className={styles.list}>{renderProjectCards(activeProjects)}</ul>
       </section>
+
+      {!isLoading && completedProjects.length > 0 && (
+        <section className={styles.completedSection}>
+          <h2 className={shared.panelTitle}>已完成</h2>
+          <ul className={styles.list}>{renderProjectCards(completedProjects)}</ul>
+        </section>
+      )}
     </div>
   )
 }
