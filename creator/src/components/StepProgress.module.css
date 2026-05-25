@@ -1,0 +1,70 @@
+.track {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.step {
+  flex: 1;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: var(--radius);
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.step.done,
+.step.active {
+  opacity: 1;
+}
+
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
+}
+
+.step.done .dot {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+}
+
+.step.active .dot {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+  transform: scale(1.08);
+}
+
+.label {
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.step.active .label {
+  color: var(--text);
+  font-weight: 500;
+}

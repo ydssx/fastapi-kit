@@ -2,81 +2,163 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
+    var(--bg);
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: var(--space-lg);
+  padding: 12px var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.brandName {
+  display: block;
   font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.brandTag {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #c4841a);
   display: grid;
   place-items: center;
-  font-size: 14px;
+  font-size: 16px;
+  color: #0c0e12;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .nav {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .nav a {
-  padding: 6px 12px;
+  padding: 7px 14px;
   border-radius: var(--radius);
   color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.nav a:hover {
+  color: var(--text);
+  background: var(--surface-elevated);
 }
 
 .navActive {
-  background: var(--surface-elevated);
-  color: var(--text) !important;
+  background: var(--accent-muted) !important;
+  color: var(--accent) !important;
 }
 
 .meta {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 13px;
+  gap: var(--space-md);
+  font-size: 12px;
   color: var(--text-muted);
 }
 
-.usage {
-  padding: 4px 10px;
-  background: var(--surface-elevated);
+.quota {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.quotaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quotaBar {
+  height: 3px;
   border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.quotaBar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.email {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .logout {
   border: 1px solid var(--border);
   background: transparent;
-  color: var(--text);
+  color: var(--text-muted);
   padding: 6px 12px;
   border-radius: var(--radius);
+  font-size: 0.85rem;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .logout:hover {
   border-color: var(--accent);
+  color: var(--text);
 }
 
 .main {
   flex: 1;
-  padding: 24px;
-  max-width: 960px;
+  padding: var(--space-lg);
+  max-width: 720px;
   width: 100%;
   margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .meta {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .email {
+    display: none;
+  }
 }

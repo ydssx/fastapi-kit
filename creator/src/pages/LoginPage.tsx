@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import shared from '../styles/shared.module.css'
 import styles from './LoginPage.module.css'
 
 export function LoginPage() {
@@ -34,36 +35,49 @@ export function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.hero}>
+        <p className={styles.kicker}>多平台创作</p>
+        <h1 className={styles.heroTitle}>把选题到发布<br />串成一条流水线</h1>
+        <ul className={styles.features}>
+          <li>短视频 / 长图文固定流程</li>
+          <li>品牌记忆注入 AI 步骤</li>
+          <li>发布 checklist，不漏平台</li>
+        </ul>
+      </div>
       <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>创作者工作台</h1>
-        <p className={styles.subtitle}>多平台内容流水线 · AI 辅助</p>
+        <h2 className={styles.cardTitle}>{mode === 'login' ? '登录' : '注册'}</h2>
+        <p className={styles.cardSubtitle}>进入创作者工作台</p>
         {error && (
-          <p className={styles.error} role="alert">
+          <p className={shared.error} role="alert">
             {error}
           </p>
         )}
-        <label className={styles.label}>
+        <label className={shared.fieldLabel}>
           邮箱
           <input
+            className={shared.input}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
+            placeholder="you@example.com"
           />
         </label>
-        <label className={styles.label}>
+        <label className={shared.fieldLabel}>
           密码
           <input
+            className={shared.input}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            placeholder="至少 8 位"
           />
         </label>
-        <button type="submit" className={styles.submit} disabled={submitting}>
-          {submitting ? '处理中…' : mode === 'login' ? '登录' : '注册'}
+        <button type="submit" className={shared.btnPrimary} disabled={submitting}>
+          {submitting ? '处理中…' : mode === 'login' ? '登录' : '创建账号'}
         </button>
         <button
           type="button"
