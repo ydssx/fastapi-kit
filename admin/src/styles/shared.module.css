@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.35rem;
   animation: pageIn 0.35s ease both;
 }
 
@@ -11,11 +11,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  padding-bottom: 0.15rem;
 }
 
 .pageTitle {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -34,7 +35,7 @@
 }
 
 .input {
-  padding: 0.5rem 0.75rem;
+  padding: 0.58rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
@@ -44,15 +45,18 @@
 
 .input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+  outline: none;
 }
 
 .btn {
+  min-height: 2.35rem;
   padding: 0.5rem 1rem;
   border-radius: var(--radius);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn:disabled {
@@ -65,6 +69,7 @@
   border: none;
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
 }
 
 .btnPrimary:hover:not(:disabled) {
@@ -126,7 +131,7 @@
 }
 
 .select {
-  padding: 0.5rem 0.75rem;
+  padding: 0.58rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
@@ -136,6 +141,8 @@
 
 .select:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+  outline: none;
 }
 
 .btnLink {

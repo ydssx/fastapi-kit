@@ -2,9 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
-    var(--bg);
+  background: transparent;
 }
 
 .header {
@@ -14,9 +12,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  padding: 12px var(--space-lg);
+  padding: 12px clamp(16px, 3vw, 32px);
   border-bottom: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -30,7 +28,7 @@
   display: block;
   font-weight: 600;
   font-size: 0.95rem;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .brandTag {
@@ -56,11 +54,15 @@
 .nav {
   display: flex;
   gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
 .nav a {
   padding: 7px 14px;
-  border-radius: var(--radius);
+  border-radius: calc(var(--radius) - 2px);
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
@@ -91,8 +93,12 @@
 .quota {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 120px;
+  gap: 5px;
+  min-width: 148px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
 }
 
 .quotaRow {
@@ -102,7 +108,7 @@
 }
 
 .quotaBar {
-  height: 3px;
+  height: 4px;
   border-radius: 999px;
   background: var(--border-subtle);
   overflow: hidden;
@@ -127,7 +133,7 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  padding: 6px 12px;
+  padding: 7px 12px;
   border-radius: var(--radius);
   font-size: 0.85rem;
   transition:
@@ -142,8 +148,8 @@
 
 .main {
   flex: 1;
-  padding: var(--space-lg);
-  max-width: 720px;
+  padding: clamp(18px, 3vw, 32px);
+  max-width: 880px;
   width: 100%;
   margin: 0 auto;
 }
@@ -151,6 +157,17 @@
 @media (max-width: 720px) {
   .header {
     flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .nav a {
+    flex: 1;
+    text-align: center;
   }
 
   .meta {

@@ -6,7 +6,8 @@
   align-items: center;
   padding: var(--space-xl);
   background:
-    radial-gradient(ellipse 60% 80% at 20% 50%, color-mix(in srgb, var(--accent) 12%, transparent), transparent),
+    radial-gradient(ellipse 60% 80% at 20% 50%, color-mix(in srgb, var(--accent) 16%, transparent), transparent),
+    radial-gradient(circle at 90% 20%, rgba(74, 222, 128, 0.08), transparent 24rem),
     var(--bg);
 }
 
@@ -28,7 +29,7 @@
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .features {

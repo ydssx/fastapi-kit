@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.85rem;
 }
 
@@ -12,11 +12,12 @@
 }
 
 .statCard {
-  padding: 1rem 1.15rem;
+  min-height: 6.75rem;
+  padding: 1rem 1.1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
@@ -31,9 +32,9 @@
 }
 
 .statIcon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.7rem;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -57,6 +58,7 @@
 .statLabel {
   font-size: 0.85rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .statValue {

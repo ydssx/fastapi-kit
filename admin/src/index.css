@@ -1,19 +1,20 @@
 :root {
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --sidebar-bg: #0f172a;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #dbeafe;
+  --sidebar-bg: #101827;
   --sidebar-text: #e2e8f0;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --surface-hover: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
+  --surface-muted: #f6f8fb;
+  --surface-hover: #eef4ff;
+  --border: #d8e0ea;
+  --text: #111827;
   --text-muted: #64748b;
   --radius: 8px;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --shadow-md: 0 12px 36px rgba(17, 24, 39, 0.1);
   --danger: #dc2626;
   --danger-text: #991b1b;
   --danger-bg: #fef2f2;
@@ -22,14 +23,14 @@
   --warn-border: rgba(214, 158, 46, 0.35);
   --success-icon-bg: #dcfce7;
   --success-icon-fg: #16a34a;
-  --accent-icon-bg: #e0e7ff;
-  --accent-stat: #4f46e5;
+  --accent-icon-bg: #dbeafe;
+  --accent-stat: #1d4ed8;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   color: var(--text);
-  background: #f1f5f9;
+  background: var(--surface-muted);
 }
 
 *,
@@ -41,6 +42,9 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32rem),
+    linear-gradient(180deg, #f8fafc 0%, var(--surface-muted) 42%);
 }
 
 #root {

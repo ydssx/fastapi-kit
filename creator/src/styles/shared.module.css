@@ -6,7 +6,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .pageSubtitle {
@@ -55,7 +55,7 @@
 .input,
 .textarea,
 .select {
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--bg);
@@ -85,6 +85,7 @@
 }
 
 .btn {
+  min-height: 42px;
   padding: 9px 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -116,6 +117,7 @@
   background: var(--accent);
   color: #0f1419;
   font-weight: 600;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .btnPrimary:hover:not(:disabled) {

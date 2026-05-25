@@ -3,7 +3,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 28px rgba(17, 24, 39, 0.06);
 }
 
 .wrapScroll {
@@ -19,21 +19,23 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .table th {
   text-align: left;
-  padding: 0.75rem 1rem;
+  padding: 0.7rem 1rem;
   font-weight: 600;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
-  background: var(--surface-muted);
+  background: linear-gradient(180deg, #f8fafc, var(--surface-muted));
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 0.75rem 1rem;
+  padding: 0.72rem 1rem;
   border-bottom: 1px solid var(--border);
+  vertical-align: top;
 }
 
 .table tbody tr {
