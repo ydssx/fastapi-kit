@@ -3,16 +3,26 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_password_hash
 from app.repositories.audit_log import AuditLogRepository
+from app.repositories.user import UserRepository
 from app.services.audit import AuditService
+
+
+async def _create_user(session: AsyncSession, email: str) -> uuid.UUID:
+    user = await UserRepository(session).create(
+        email=email,
+        hashed_password=get_password_hash("securepass123"),
+    )
+    return user.id
 
 
 @pytest.mark.asyncio
 async def test_list_for_user_includes_actor_and_target_resource_logs(
     db_session: AsyncSession,
 ) -> None:
-    actor_id = uuid.uuid4()
-    target_id = uuid.uuid4()
+    actor_id = await _create_user(db_session, "actor@example.com")
+    target_id = await _create_user(db_session, "target@example.com")
     audit = AuditService(db_session)
 
     await audit.record(
