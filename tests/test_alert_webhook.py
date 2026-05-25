@@ -3,7 +3,8 @@ import hmac
 
 import pytest
 
-from app.services.alert_webhook import sign_payload, validate_webhook_url
+from app.core.config import Settings
+from app.services.alert_webhook import build_alert_payload, sign_payload, validate_webhook_url
 
 
 @pytest.mark.parametrize(
@@ -29,6 +30,19 @@ def test_validate_webhook_url_accepts_http_and_https(url: str) -> None:
 def test_validate_webhook_url_rejects_invalid_urls(url: str) -> None:
     with pytest.raises(ValueError):
         validate_webhook_url(url)
+
+
+def test_build_alert_payload_uses_summary_or_event_type() -> None:
+    settings = Settings(
+        environment="test",
+        jwt_secret="test-secret-key-for-jwt-signing-32chars",
+    )
+    known = build_alert_payload(event_type="ready_failed", settings=settings)
+    assert known["summary"] == "Service readiness check failed"
+    assert known["environment"] == "test"
+
+    custom = build_alert_payload(event_type="custom.event", settings=settings)
+    assert custom["summary"] == "custom.event"
 
 
 def test_sign_payload_matches_hmac_sha256() -> None:

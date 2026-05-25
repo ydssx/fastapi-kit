@@ -7,6 +7,9 @@ from app.services.migration_status import _alembic_head_revision, get_migration_
 
 @pytest.mark.asyncio
 async def test_migration_status_without_alembic_table(db_session: AsyncSession) -> None:
+    await db_session.execute(text("DROP TABLE IF EXISTS alembic_version"))
+    await db_session.commit()
+
     at_head, current, head = await get_migration_status(db_session)
     assert at_head is False
     assert current is None
