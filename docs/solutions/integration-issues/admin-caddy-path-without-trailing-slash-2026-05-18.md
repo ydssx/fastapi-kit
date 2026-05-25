@@ -25,6 +25,8 @@ related_components:
 
 # Admin SPA 404 when visiting /admin without trailing slash
 
+> 同一 Caddy 配置对 **creator** 工作台对称：`@creator_exact path /creator` → 301 `/creator/`（`handle_path /creator/*`）。下文以 admin 为例。
+
 ## Problem
 
 After deploying the admin SPA behind Caddy on `https://localhost`, users who open **`/admin`** (no trailing slash) see a FastAPI 404 JSON response instead of the management UI. The SPA works at **`/admin/`**.
@@ -43,7 +45,7 @@ After deploying the admin SPA behind Caddy on `https://localhost`, users who ope
 
 ## Solution
 
-In `docker/Caddyfile`, add an explicit matcher and redirect **before** `handle_path /admin/*` and before the API `reverse_proxy`:
+In `docker/Caddyfile`, add explicit matchers and redirects **before** each SPA's `handle_path` block and before the API `reverse_proxy`:
 
 ```caddyfile
 @admin_exact path /admin
@@ -52,6 +54,16 @@ redir @admin_exact /admin/ permanent
 handle_path /admin/* {
     root * /srv/admin
     uri strip_prefix /admin
+    try_files {path} /index.html
+    file_server
+}
+
+@creator_exact path /creator
+redir @creator_exact /creator/ permanent
+
+handle_path /creator/* {
+    root * /srv/creator
+    uri strip_prefix /creator
     try_files {path} /index.html
     file_server
 }
@@ -82,13 +94,15 @@ The `@admin_exact` matcher catches the bare path and issues a **301** to `/admin
 
 ## Prevention
 
-- Document the canonical URL as **`https://localhost/admin/`** (already in `AGENTS.md`).
-- When adding new path-mounted SPAs in Caddy, always add an explicit redirect for the non-trailing-slash variant if the app uses a `base` with a trailing slash.
+- Document the canonical URLs as **`https://localhost/admin/`** and **`https://localhost/creator/`** (see `AGENTS.md`).
+- When adding new path-mounted SPAs in Caddy, always add an explicit redirect for the non-trailing-slash variant if the app uses a `base` with a trailing slash (`admin/vite.config.ts` and `creator/vite.config.ts` both use trailing-slash bases).
 - Smoke test both URLs after proxy changes:
 
   ```bash
   curl -sk -o /dev/null -w "%{http_code} %{redirect_url}\n" https://localhost/admin
   curl -sk -o /dev/null -w "%{http_code}\n" https://localhost/admin/
+  curl -sk -o /dev/null -w "%{http_code} %{redirect_url}\n" https://localhost/creator
+  curl -sk -o /dev/null -w "%{http_code}\n" https://localhost/creator/
   ```
 
 ## Related Issues

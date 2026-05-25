@@ -50,7 +50,7 @@ tags:
 - **能力**：JWT 注册/登录/刷新、`/me`、Redis 缓存与限流、Celery 示例任务、structlog、`/metrics`、Alembic、pytest + testcontainers、GitHub Actions
 - **两种启动路径**：
   - `scripts/init_dev.sh`：仅 Docker 起 Postgres + Redis，本机 `uvicorn --reload`（热重载开发）
-  - `scripts/start.sh -d` / `docker compose up --build -d`：全栈（API + worker + 依赖）
+  - `scripts/start.sh -d` / `make up`：全栈 Compose（`postgres`、`redis`、`migrate`、`proxy`（Caddy + **admin**/**creator** 静态资源）、`api`、`celery-worker`、`celery-beat`）；对外入口 **https://localhost**
 
 实施与 code review 阶段还修复了 Docker 构建、hatchling 打包、注册/Celery 时序、限流策略与生产密钥校验等问题。
 
@@ -70,7 +70,7 @@ tags:
 | 脚本 | 作用 |
 |------|------|
 | `scripts/init_dev.sh` | `uv sync`、Docker 仅 `postgres`+`redis`、`alembic upgrade`；**不**启动 API |
-| `scripts/start.sh -d` | 检查 Docker → `docker compose up --build -d` → 等待 `/health` |
+| `scripts/start.sh -d` | 检查 Docker → `docker compose up --build -d`（含 migrate、Caddy proxy）→ 等待 **https://localhost** `/health` |
 | `scripts/stop.sh` | `docker compose down` |
 
 ### 生产加固（code review 落地）
@@ -173,10 +173,10 @@ def reject_default_jwt_secret_in_production(self) -> "Settings":
 ```bash
 bash scripts/start.sh -d
 # 或
-docker compose up --build -d
+make up
 ```
 
-API 文档：http://localhost:8000/docs
+API 文档（经 Caddy）：**https://localhost/docs**（直连 `http://localhost:8000` 会 301 到 HTTPS）
 
 ## Related
 
