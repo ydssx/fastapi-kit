@@ -1,4 +1,5 @@
 .card {
+  flex: 1;
   display: flex;
   align-items: stretch;
   gap: 16px;
@@ -88,6 +89,35 @@
   color: var(--text-muted);
   font-size: 1.25rem;
   padding-left: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  list-style: none;
+}
+
+.deleteBtn {
+  align-self: center;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  border-color: var(--danger, #f87171);
+  color: var(--danger, #f87171);
+}
+
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 560px) {

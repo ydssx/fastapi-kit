@@ -73,6 +73,20 @@ class Settings(BaseSettings):
     creator_free_ai_calls_per_month: int = 50
     creator_pro_multiplier: int = 10
 
+    app_public_url: str = "https://localhost"
+    password_reset_expire_minutes: int = 60
+    password_reset_rate_limit_per_hour: int = 5
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+    smtp_use_tls: bool = True
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.smtp_host and self.smtp_from)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> list[str]:

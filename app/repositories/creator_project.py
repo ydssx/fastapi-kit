@@ -45,3 +45,7 @@ class CreatorProjectRepository:
         await self.session.flush()
         await self.session.refresh(project)
         return project
+
+    async def delete(self, project: ContentProject) -> None:
+        await self.session.delete(project)
+        await self.session.flush()

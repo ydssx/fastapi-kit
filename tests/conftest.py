@@ -98,7 +98,9 @@ def mock_celery_task(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest_asyncio.fixture
-async def client(test_settings: Settings, db_engine) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    test_settings: Settings, db_engine, monkeypatch: pytest.MonkeyPatch
+) -> AsyncGenerator[AsyncClient, None]:
     get_settings.cache_clear()
     app = create_app()
 
@@ -115,6 +117,11 @@ async def client(test_settings: Settings, db_engine) -> AsyncGenerator[AsyncClie
 
     app.dependency_overrides[get_settings] = lambda: test_settings
     app.dependency_overrides[get_db] = override_get_db
+
+    import app.core.config as config_module
+
+    config_module.get_settings.cache_clear()
+    monkeypatch.setattr(config_module, "get_settings", lambda: test_settings)
 
     # Middleware calls get_settings() directly (not via FastAPI Depends).
     import app.middleware.rate_limit as rate_limit_middleware

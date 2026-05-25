@@ -9,6 +9,7 @@ import styles from './CreatorLayout.module.css'
 const NAV = [
   { to: '/', label: '项目' },
   { to: '/brand', label: '品牌档案' },
+  { to: '/account', label: '账号' },
 ]
 
 export function CreatorLayout() {

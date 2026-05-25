@@ -24,6 +24,17 @@ class ProjectCreate(BaseModel):
     target_platform_keys: list[str] = Field(default_factory=list)
 
 
+class ProjectUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=500)
+    target_platform_keys: list[str] | None = None
+
+
+class PublishProgressOut(BaseModel):
+    platforms_total: int
+    platforms_published: int
+    summary_label: str
+
+
 class StepDraftUpdate(BaseModel):
     content: str
 
@@ -63,6 +74,7 @@ class ProjectOut(BaseModel):
     updated_at: datetime
     completed_at: datetime | None
     artifacts: list[StepArtifactOut] = Field(default_factory=list)
+    publish_progress: PublishProgressOut | None = None
 
 
 class BrandProfileOut(BaseModel):

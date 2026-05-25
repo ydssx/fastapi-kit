@@ -81,6 +81,29 @@ export function completeProject(projectId: string): Promise<Project> {
   })
 }
 
+export function updateProject(
+  projectId: string,
+  payload: { title?: string; target_platform_keys?: string[] },
+): Promise<Project> {
+  return apiFetch<Project>(`/api/v1/creator/projects/${projectId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteProject(projectId: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/creator/projects/${projectId}`, {
+    method: 'DELETE',
+  })
+}
+
+export function openStep(projectId: string, stepKey: string): Promise<Project> {
+  return apiFetch<Project>(
+    `/api/v1/creator/projects/${projectId}/steps/${stepKey}/open`,
+    { method: 'POST' },
+  )
+}
+
 export function fetchUsage(): Promise<Usage> {
   return apiFetch<Usage>('/api/v1/creator/usage')
 }

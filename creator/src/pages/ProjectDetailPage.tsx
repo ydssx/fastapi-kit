@@ -1,26 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
+import { creatorApiErrorMessage } from '../lib/errors'
 import {
   aiSuggest,
   completeProject,
   confirmStep,
+  deleteProject,
   fetchPipelines,
   fetchProject,
   fetchPublishChecklist,
+  openStep,
   saveDraft,
+  updateProject,
   updatePublishChecklist,
 } from '../api/creator'
 import { AiLoadingOverlay } from '../components/AiLoadingOverlay'
 import { CompletedBanner } from '../components/CompletedBanner'
-import { ConfirmedStepsHistory } from '../components/ConfirmedStepsHistory'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PipelineThumbnail } from '../components/PipelineThumbnail'
+import { PlatformPicker } from '../components/PlatformPicker'
 import { PublishChecklist } from '../components/PublishChecklist'
 import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
 import { StepEditorPanel } from '../components/StepEditorPanel'
 import { StepProgress } from '../components/StepProgress'
+import { StepVersionHistory } from '../components/StepVersionHistory'
 import { useAuth } from '../auth/AuthContext'
 import { formatProjectDate } from '../lib/format'
 import { pipelineLabel, platformLabels, statusLabel } from '../lib/labels'
@@ -28,8 +33,16 @@ import type { Project, PublishChecklistItem } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
 
+const PLATFORMS = [
+  { key: 'douyin', label: '抖音', emoji: '🎵' },
+  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
+  { key: 'wechat', label: '公众号', emoji: '💬' },
+  { key: 'bilibili', label: 'B站', emoji: '📺' },
+]
+
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: project, isLoading } = useQuery({
@@ -42,6 +55,7 @@ export function ProjectDetailPage() {
     queryFn: fetchPipelines,
   })
   const isPublish = project?.current_step_key === 'publish'
+  const canEditPlatforms = project?.status !== 'completed' && !isPublish
   const { data: checklist = [] } = useQuery({
     queryKey: ['checklist', id],
     queryFn: () => fetchPublishChecklist(id!),
@@ -49,6 +63,8 @@ export function ProjectDetailPage() {
   })
 
   const [content, setContent] = useState('')
+  const [editTitle, setEditTitle] = useState('')
+  const [editPlatforms, setEditPlatforms] = useState<string[]>([])
   const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -59,8 +75,10 @@ export function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       setContent(project.draft_content[project.current_step_key] ?? '')
+      setEditTitle(project.title)
+      setEditPlatforms(project.target_platforms)
     }
-  }, [project?.id, project?.current_step_key, project?.draft_content])
+  }, [project?.id, project?.current_step_key, project?.draft_content, project?.title, project?.target_platforms])
 
   function stepTitle(key: string) {
     return pipeline?.steps.find((s) => s.key === key)?.title ?? key
@@ -69,6 +87,8 @@ export function ProjectDetailPage() {
   function applyProjectUpdate(updated: Project) {
     queryClient.setQueryData(['project', id], updated)
     setContent(updated.draft_content[updated.current_step_key] ?? '')
+    setEditTitle(updated.title)
+    setEditPlatforms(updated.target_platforms)
     void queryClient.invalidateQueries({ queryKey: ['projects'] })
     void queryClient.invalidateQueries({ queryKey: ['usage'] })
   }
@@ -81,6 +101,8 @@ export function ProjectDetailPage() {
         setActionError(null)
         return
       }
+      setActionError(creatorApiErrorMessage(err.code, err.message))
+      return
     }
     setActionError(err instanceof Error ? err.message : '操作失败')
   }
@@ -129,7 +151,40 @@ export function ProjectDetailPage() {
     mutationFn: (keys: string[]) => updatePublishChecklist(id!, keys),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['checklist', id] })
+      void queryClient.invalidateQueries({ queryKey: ['project', id] })
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
     },
+  })
+
+  const openMut = useMutation({
+    mutationFn: (stepKey: string) => openStep(id!, stepKey),
+    onSuccess: (updated) => {
+      setActionError(null)
+      applyProjectUpdate(updated)
+    },
+    onError: handleApiError,
+  })
+
+  const updateMut = useMutation({
+    mutationFn: (payload: { title?: string; target_platform_keys?: string[] }) =>
+      updateProject(id!, payload),
+    onSuccess: (updated) => {
+      setActionError(null)
+      applyProjectUpdate(updated)
+      if (canEditPlatforms) {
+        void queryClient.invalidateQueries({ queryKey: ['checklist', id] })
+      }
+    },
+    onError: handleApiError,
+  })
+
+  const deleteMut = useMutation({
+    mutationFn: () => deleteProject(id!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
+      navigate('/')
+    },
+    onError: handleApiError,
   })
 
   if (isLoading || !project) {
@@ -140,14 +195,63 @@ export function ProjectDetailPage() {
     )
   }
 
+  function handleDelete() {
+    if (!window.confirm('确定删除此项目？此操作不可恢复。')) return
+    deleteMut.mutate()
+  }
+
+  function saveTitle() {
+    const trimmed = editTitle.trim()
+    if (!trimmed || trimmed === project!.title) return
+    updateMut.mutate({ title: trimmed })
+  }
+
+  function savePlatforms(next: string[]) {
+    setEditPlatforms(next)
+    if (next.length === 0) return
+    const changed =
+      next.length !== project!.target_platforms.length ||
+      next.some((key) => !project!.target_platforms.includes(key))
+    if (
+      changed &&
+      !window.confirm('修改目标平台将清空发布核对进度，确定继续？')
+    ) {
+      setEditPlatforms(project!.target_platforms)
+      return
+    }
+    updateMut.mutate({ target_platform_keys: next })
+  }
+
   if (project.status === 'completed') {
     return (
       <div className={`${shared.page} ${styles.page}`}>
-        <Link to="/" className={shared.backLink}>
-          ← 返回列表
-        </Link>
+        <div className={styles.toolbar}>
+          <Link to="/" className={shared.backLink}>
+            ← 返回列表
+          </Link>
+          <button
+            type="button"
+            className={shared.btnGhost}
+            onClick={handleDelete}
+            disabled={deleteMut.isPending}
+          >
+            删除项目
+          </button>
+        </div>
         <CompletedBanner title={project.title} />
-        <ConfirmedStepsHistory artifacts={project.artifacts} stepTitle={stepTitle} />
+        <section className={styles.metaEdit}>
+          <label className={shared.fieldLabel}>
+            项目标题
+            <input
+              className={shared.input}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={saveTitle}
+            />
+          </label>
+        </section>
+        <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
+        {actionError && <p className={shared.error}>{actionError}</p>}
       </div>
     )
   }
@@ -165,9 +269,19 @@ export function ProjectDetailPage() {
 
   return (
     <div className={`${shared.page} ${styles.page}`}>
-      <Link to="/" className={shared.backLink}>
-        ← 返回列表
-      </Link>
+      <div className={styles.toolbar}>
+        <Link to="/" className={shared.backLink}>
+          ← 返回列表
+        </Link>
+        <button
+          type="button"
+          className={shared.btnGhost}
+          onClick={handleDelete}
+          disabled={deleteMut.isPending}
+        >
+          删除项目
+        </button>
+      </div>
 
       <header className={styles.hero}>
         <PipelineThumbnail pipelineId={project.pipeline_id} className={styles.heroThumb} />
@@ -182,15 +296,21 @@ export function ProjectDetailPage() {
                 </>
               )}
             </p>
-            <span
-              className={
-                project.status === 'completed' ? shared.badgeDone : shared.badgeProgress
-              }
-            >
-              {statusLabel(project.status)}
+            <span className={shared.badgeProgress}>
+              {isPublish && project.publish_progress
+                ? project.publish_progress.summary_label
+                : statusLabel(project.status)}
             </span>
           </div>
-          <h1 className={shared.pageTitle}>{project.title}</h1>
+          <label className={styles.titleEdit}>
+            <span className="sr-only">项目标题</span>
+            <input
+              className={styles.titleInput}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={saveTitle}
+            />
+          </label>
           {step?.description && <p className={styles.heroDesc}>{step.description}</p>}
           <dl className={styles.heroStats}>
             <div>
@@ -209,12 +329,32 @@ export function ProjectDetailPage() {
             )}
           </dl>
           <p className={styles.stepHint}>
-            步骤 {stepIndex + 1}/{pipeline?.steps.length ?? 0} · {step?.title ?? project.current_step_key}
+            {isPublish
+              ? project.publish_progress?.summary_label ?? '发布核对'
+              : `步骤 ${stepIndex + 1}/${pipeline?.steps.length ?? 0} · ${step?.title ?? project.current_step_key}`}
           </p>
         </div>
       </header>
 
-      {pipeline && <StepProgress steps={pipeline.steps} currentStepKey={project.current_step_key} />}
+      {canEditPlatforms && (
+        <section className={styles.metaEdit}>
+          <PlatformPicker
+            options={PLATFORMS}
+            value={editPlatforms}
+            onChange={savePlatforms}
+            legend="目标平台（发布步骤前可修改）"
+          />
+        </section>
+      )}
+
+      {pipeline && (
+        <StepProgress
+          steps={pipeline.steps}
+          currentStepKey={project.current_step_key}
+          onStepOpen={(stepKey) => openMut.mutate(stepKey)}
+          openingStepKey={openMut.isPending ? openMut.variables : null}
+        />
+      )}
 
       {isPublish ? (
         <>
@@ -248,7 +388,7 @@ export function ProjectDetailPage() {
 
       <AiLoadingOverlay active={aiMut.isPending} />
 
-      <ConfirmedStepsHistory artifacts={project.artifacts} stepTitle={stepTitle} />
+      <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
     </div>
   )
 }

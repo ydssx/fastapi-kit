@@ -33,3 +33,26 @@ class CreatorArtifactRepository:
             .order_by(ProjectStepArtifact.step_key, ProjectStepArtifact.version)
         )
         return list(result.scalars().all())
+
+    async def get_latest(
+        self, project_id: uuid.UUID, step_key: str
+    ) -> ProjectStepArtifact | None:
+        result = await self.session.execute(
+            select(ProjectStepArtifact)
+            .where(
+                ProjectStepArtifact.project_id == project_id,
+                ProjectStepArtifact.step_key == step_key,
+            )
+            .order_by(ProjectStepArtifact.version.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_latest_by_step(self, project_id: uuid.UUID) -> list[ProjectStepArtifact]:
+        rows = await self.list_for_project(project_id)
+        latest: dict[str, ProjectStepArtifact] = {}
+        for row in rows:
+            existing = latest.get(row.step_key)
+            if existing is None or row.version > existing.version:
+                latest[row.step_key] = row
+        return list(latest.values())

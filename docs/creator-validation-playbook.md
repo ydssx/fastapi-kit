@@ -32,3 +32,9 @@ uv run python scripts/promote_creator_pro.py --email creator@example.com
 # Admin 查看埋点汇总
 curl -H "Authorization: Bearer $ADMIN_TOKEN" https://localhost/api/v1/admin/creator-metrics/summary
 ```
+
+## 密码问题兜底
+
+- **已登录改密**：创作者工作台 → 顶栏进入「账号设置」，需输入当前密码。
+- **忘记密码（邮件）**：登录页「忘记密码」；需配置 `SMTP_*` 与 `APP_PUBLIC_URL`（见 `.env.example`）。
+- **SMTP 未配置 / 邮件未收到**：由运营在 Admin 用户详情执行「重置密码」，将临时密码私下发给被访者；勿在 C 端展示无效重置链接。

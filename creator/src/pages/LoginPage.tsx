@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { IconInput, LockIcon, MailIcon } from '../components/IconInput'
 import shared from '../styles/shared.module.css'
@@ -7,6 +7,8 @@ import styles from './LoginPage.module.css'
 
 export function LoginPage() {
   const { user, loading, login, register } = useAuth()
+  const location = useLocation()
+  const resetSuccess = (location.state as { resetSuccess?: boolean } | null)?.resetSuccess
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +50,9 @@ export function LoginPage() {
       <form className={styles.card} onSubmit={handleSubmit}>
         <h2 className={styles.cardTitle}>{mode === 'login' ? '登录' : '注册'}</h2>
         <p className={styles.cardSubtitle}>进入创作者工作台</p>
+        {resetSuccess && (
+          <p className={styles.successBanner}>密码已重置，请使用新密码登录。</p>
+        )}
         {error && (
           <p className={shared.error} role="alert">
             {error}
@@ -80,6 +85,13 @@ export function LoginPage() {
         <button type="submit" className={shared.btnPrimary} disabled={submitting}>
           {submitting ? '处理中…' : mode === 'login' ? '登录' : '创建账号'}
         </button>
+        {mode === 'login' && (
+          <p className={styles.forgotRow}>
+            <Link to="/forgot-password" className={styles.switchLink}>
+              忘记密码？
+            </Link>
+          </p>
+        )}
         <p className={styles.switchRow}>
           {mode === 'login' ? '没有账号？' : '已有账号？'}
           <button

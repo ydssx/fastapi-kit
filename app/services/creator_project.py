@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppException
 from app.creator import pipelines as pipelines_module
-from app.creator.checklists import build_publish_checklist
+from app.creator.checklists import build_publish_checklist, summarize_publish_progress
 from app.creator.pipelines import (
     first_step_key,
     get_pipeline,
@@ -21,8 +21,10 @@ from app.schemas.creator import (
     PipelineStepOut,
     ProjectCreate,
     ProjectOut,
+    ProjectUpdate,
     PublishChecklistItemOut,
     PublishChecklistUpdate,
+    PublishProgressOut,
     StepArtifactOut,
 )
 from app.services.creator_events import CreatorEventService
@@ -88,6 +90,64 @@ class CreatorProjectService:
 
     async def get_project(self, user: User, project_id: uuid.UUID) -> ProjectOut:
         project = await self._get_owned(user, project_id)
+        return await self._to_out(project)
+
+    async def update_project(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        payload: ProjectUpdate,
+    ) -> ProjectOut:
+        project = await self._get_owned(user, project_id)
+        if payload.title is not None:
+            project.title = payload.title.strip()
+        if payload.target_platform_keys is not None:
+            if project.status == "completed":
+                raise AppException(
+                    "Cannot change target platforms on a completed project",
+                    code=40023,
+                    status_code=400,
+                )
+            if project.current_step_key == "publish":
+                raise AppException(
+                    "Change target platforms before the publish step",
+                    code=40023,
+                    status_code=400,
+                )
+            project.target_platforms = payload.target_platform_keys
+            project.publish_checklist_state = {}
+        await self.projects.save(project)
+        return await self._to_out(project)
+
+    async def delete_project(self, user: User, project_id: uuid.UUID) -> None:
+        project = await self._get_owned(user, project_id)
+        await self.projects.delete(project)
+
+    async def open_step(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        step_key: str,
+    ) -> ProjectOut:
+        project = await self._get_owned(user, project_id)
+        self._ensure_editable(project)
+        self._validate_step(project, step_key)
+        if step_key == project.current_step_key:
+            return await self._to_out(project)
+
+        artifact = await self.artifacts.get_latest(project.id, step_key)
+        if artifact is None:
+            raise AppException(
+                "Step has not been confirmed yet",
+                code=40024,
+                status_code=400,
+            )
+
+        project.current_step_key = step_key
+        drafts = dict(project.draft_content)
+        drafts[step_key] = artifact.content
+        project.draft_content = drafts
+        await self.projects.save(project)
         return await self._to_out(project)
 
     async def save_draft(
@@ -282,16 +342,26 @@ class CreatorProjectService:
             updated_at=project.updated_at,
             completed_at=project.completed_at,
             artifacts=artifacts,
+            publish_progress=self._publish_progress(project),
+        )
+
+    def _publish_progress(self, project: ContentProject) -> PublishProgressOut | None:
+        if project.status == "completed" or project.current_step_key != "publish":
+            return None
+        return summarize_publish_progress(
+            list(project.target_platforms or []),
+            dict(project.publish_checklist_state or {}),
         )
 
     async def gather_confirmed_context(self, project: ContentProject) -> str:
-        artifacts = await self.artifacts.list_for_project(project.id)
+        latest = await self.artifacts.list_latest_by_step(project.id)
+        by_step = {artifact.step_key: artifact for artifact in latest}
         pipeline = get_pipeline(project.pipeline_id)
         lines: list[str] = [f"选题: {project.title}"]
         for step in pipeline.steps:
             if step.key == "publish":
                 continue
-            for artifact in artifacts:
-                if artifact.step_key == step.key:
-                    lines.append(f"\n## {step.title}\n{artifact.content}")
+            artifact = by_step.get(step.key)
+            if artifact is not None:
+                lines.append(f"\n## {step.title}\n{artifact.content}")
         return "\n".join(lines)

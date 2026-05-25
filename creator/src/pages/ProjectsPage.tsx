@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { createProject, fetchPipelines, fetchProjects } from '../api/creator'
+import { createProject, deleteProject, fetchPipelines, fetchProjects } from '../api/creator'
 import { EmptyState } from '../components/EmptyState'
 import { PageHeader } from '../components/PageHeader'
 import { PlatformPicker } from '../components/PlatformPicker'
@@ -68,6 +68,18 @@ export function ProjectsPage() {
     },
   })
 
+  const deleteMut = useMutation({
+    mutationFn: deleteProject,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
+    },
+  })
+
+  function handleDeleteProject(projectId: string) {
+    if (!window.confirm('确定删除此项目？此操作不可恢复。')) return
+    deleteMut.mutate(projectId)
+  }
+
   const canCreate = title.trim().length > 0 && platforms.length > 0 && !createMut.isPending
 
   function renderProjectCards(items: typeof projects) {
@@ -85,6 +97,8 @@ export function ProjectsPage() {
           stepTitle={stepTitle}
           stepNum={stepNum}
           totalSteps={total}
+          onDelete={handleDeleteProject}
+          deleting={deleteMut.isPending}
         />
       )
     })

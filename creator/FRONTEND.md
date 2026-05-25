@@ -21,7 +21,7 @@
 | `EmptyState` | 列表空态 |
 | `ProjectCard` / `PlatformPicker` / `PipelineThumbnail` | 项目列表 |
 | `StepProgress` / `StepEditorPanel` / `AiLoadingOverlay` | 流水线向导 |
-| `PublishChecklist` / `CompletedBanner` / `ConfirmedStepsHistory` | 变体态 |
+| `PublishChecklist` / `CompletedBanner` / `StepVersionHistory` | 变体态 |
 | `BrandField` | 品牌档案字段 + 字数 |
 
 ## UI 验收

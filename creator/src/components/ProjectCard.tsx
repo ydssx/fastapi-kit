@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { Project } from '../types/api'
 import { pipelineLabel, statusLabel } from '../lib/labels'
@@ -11,6 +12,8 @@ interface ProjectCardProps {
   stepTitle?: string
   stepNum: number
   totalSteps: number
+  onDelete?: (projectId: string) => void
+  deleting?: boolean
 }
 
 export function ProjectCard({
@@ -19,26 +22,45 @@ export function ProjectCard({
   stepTitle,
   stepNum,
   totalSteps,
+  onDelete,
+  deleting,
 }: ProjectCardProps) {
+  const onPublishStep = project.current_step_key === 'publish' && project.status !== 'completed'
   const pct = totalSteps > 0 ? Math.round((stepNum / totalSteps) * 100) : 0
   const inProgress = project.status !== 'completed'
 
+  function handleDelete(e: MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    onDelete?.(project.id)
+  }
+
   return (
-    <li>
+    <li className={styles.row}>
       <Link to={`/projects/${project.id}`} className={styles.card}>
         <PipelineThumbnail pipelineId={project.pipeline_id} className={styles.thumb} size="lg" />
         <div className={styles.body}>
           <div className={styles.top}>
             <strong>{project.title}</strong>
             <span className={project.status === 'completed' ? shared.badgeDone : shared.badgeProgress}>
-              {statusLabel(project.status)}
+              {onPublishStep && project.publish_progress
+                ? project.publish_progress.summary_label
+                : statusLabel(project.status)}
             </span>
           </div>
           <span className={styles.meta}>
-            {pipelineTitle ?? pipelineLabel(project.pipeline_id)} · 第 {stepNum}/{totalSteps} 步
-            {stepTitle ? ` · ${stepTitle}` : ''}
+            {pipelineTitle ?? pipelineLabel(project.pipeline_id)}
+            {onPublishStep ? (
+              <> · 发布核对</>
+            ) : (
+              <>
+                {' · 第 '}
+                {stepNum}/{totalSteps} 步
+                {stepTitle ? ` · ${stepTitle}` : ''}
+              </>
+            )}
           </span>
-          {inProgress && totalSteps > 0 && (
+          {inProgress && !onPublishStep && totalSteps > 0 && (
             <div className={styles.progressWrap}>
               <div className={styles.progressBar} aria-hidden>
                 <span style={{ width: `${pct}%` }} />
@@ -51,6 +73,17 @@ export function ProjectCard({
           →
         </span>
       </Link>
+      {onDelete && (
+        <button
+          type="button"
+          className={styles.deleteBtn}
+          onClick={handleDelete}
+          disabled={deleting}
+          aria-label={`删除项目 ${project.title}`}
+        >
+          删除
+        </button>
+      )}
     </li>
   )
 }

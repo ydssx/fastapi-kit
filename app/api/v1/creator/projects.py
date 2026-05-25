@@ -7,6 +7,7 @@ from app.schemas.common import ApiResponse
 from app.schemas.creator import (
     ProjectCreate,
     ProjectOut,
+    ProjectUpdate,
     PublishChecklistItemOut,
     PublishChecklistUpdate,
     StepArtifactOut,
@@ -46,6 +47,26 @@ async def get_project(
     return ApiResponse(data=data)
 
 
+@router.patch("/projects/{project_id}", response_model=ApiResponse[ProjectOut])
+async def update_project(
+    user: CurrentUser,
+    db: DbSession,
+    project_id: uuid.UUID,
+    payload: ProjectUpdate,
+) -> ApiResponse[ProjectOut]:
+    data = await CreatorProjectService(db).update_project(user, project_id, payload)
+    return ApiResponse(data=data)
+
+
+@router.delete("/projects/{project_id}", status_code=204)
+async def delete_project(
+    user: CurrentUser,
+    db: DbSession,
+    project_id: uuid.UUID,
+) -> None:
+    await CreatorProjectService(db).delete_project(user, project_id)
+
+
 @router.patch(
     "/projects/{project_id}/steps/{step_key}",
     response_model=ApiResponse[ProjectOut],
@@ -74,6 +95,20 @@ async def confirm_step(
 ) -> ApiResponse[ProjectOut]:
     content = payload.content if payload else None
     data = await CreatorProjectService(db).confirm_step(user, project_id, step_key, content)
+    return ApiResponse(data=data)
+
+
+@router.post(
+    "/projects/{project_id}/steps/{step_key}/open",
+    response_model=ApiResponse[ProjectOut],
+)
+async def open_step(
+    user: CurrentUser,
+    db: DbSession,
+    project_id: uuid.UUID,
+    step_key: str,
+) -> ApiResponse[ProjectOut]:
+    data = await CreatorProjectService(db).open_step(user, project_id, step_key)
     return ApiResponse(data=data)
 
 

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from app.schemas.creator import PublishProgressOut
+
 
 @dataclass(frozen=True)
 class ChecklistItemDef:
@@ -62,3 +64,45 @@ def build_publish_checklist(platform_keys: list[str]) -> list[dict[str, object]]
                 }
             )
     return items
+
+
+def summarize_publish_progress(
+    platform_keys: list[str],
+    checklist_state: dict[str, bool],
+) -> PublishProgressOut:
+    """Aggregate per-platform checklist completion into a project-level summary."""
+    if not platform_keys:
+        return PublishProgressOut(
+            platforms_total=0,
+            platforms_published=0,
+            summary_label="未配置平台",
+        )
+
+    published = 0
+    in_progress = 0
+    for platform in platform_keys:
+        defs = PLATFORM_CHECKLISTS.get(platform, ())
+        if not defs:
+            continue
+        checked_count = sum(
+            1 for item in defs if checklist_state.get(f"{platform}:{item.key}", False)
+        )
+        total = len(defs)
+        if checked_count == total:
+            published += 1
+        elif checked_count > 0:
+            in_progress += 1
+
+    total_platforms = len(platform_keys)
+    if published == total_platforms:
+        summary = f"全部平台已核对（{published}/{total_platforms}）"
+    elif published > 0 or in_progress > 0:
+        summary = f"部分已发（{published}/{total_platforms} 平台）"
+    else:
+        summary = f"发布核对中（0/{total_platforms} 平台已发）"
+
+    return PublishProgressOut(
+        platforms_total=total_platforms,
+        platforms_published=published,
+        summary_label=summary,
+    )

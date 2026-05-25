@@ -54,6 +54,13 @@ export interface Project {
   updated_at: string
   completed_at: string | null
   artifacts: StepArtifact[]
+  publish_progress: PublishProgress | null
+}
+
+export interface PublishProgress {
+  platforms_total: number
+  platforms_published: number
+  summary_label: string
 }
 
 export interface PublishChecklistItem {
