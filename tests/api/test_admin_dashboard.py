@@ -1,8 +1,10 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.repositories.user import UserRepository
+from app.services.migration_status import _alembic_head_revision
 
 
 async def _register(client: AsyncClient, email: str) -> str:
@@ -49,3 +51,41 @@ async def test_admin_dashboard(client: AsyncClient, db_engine) -> None:
     )
     assert metrics.status_code == 200
     assert isinstance(metrics.json()["data"], dict)
+
+
+@pytest.mark.asyncio
+async def test_admin_dashboard_ready_degraded_when_migration_behind(
+    client: AsyncClient,
+    db_engine,
+) -> None:
+    head = _alembic_head_revision()
+    assert head is not None
+
+    session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with session_factory() as session:
+        await session.execute(
+            text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL)")
+        )
+        await session.execute(text("DELETE FROM alembic_version"))
+        await session.execute(
+            text("INSERT INTO alembic_version (version_num) VALUES ('stale-revision')")
+        )
+        await session.commit()
+
+    admin_email = "dash-migration@example.com"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    response = await client.get(
+        "/api/v1/admin/dashboard",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200
+    system = response.json()["data"]["system"]
+    assert system["migration_at_head"] is False
+    assert system["ready_status"] == "degraded"
+    assert "migration" in (system["ready_message"] or "").lower()
+
+    async with session_factory() as session:
+        await session.execute(text("DROP TABLE IF EXISTS alembic_version"))
+        await session.commit()

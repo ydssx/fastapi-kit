@@ -142,6 +142,49 @@ async def test_audit_log_request_id_on_alert_test_send(
 
 
 @pytest.mark.asyncio
+async def test_audit_log_request_id_on_password_reset(
+    client: AsyncClient,
+    db_engine,
+) -> None:
+    admin_email = "audit-reset@example.com"
+    target_email = "audit-reset-target@example.com"
+    trace_id = "password-reset-trace-003"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": target_email, "password": "securepass123"},
+    )
+
+    listed = await client.get(
+        f"/api/v1/admin/users?email={target_email}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    target_id = listed.json()["data"]["items"][0]["id"]
+
+    reset_response = await client.post(
+        f"/api/v1/admin/users/{target_id}/reset-password",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+            "X-Request-ID": trace_id,
+        },
+    )
+    assert reset_response.status_code == 200
+    assert reset_response.headers.get("X-Request-ID") == trace_id
+
+    logs = await client.get(
+        "/api/v1/admin/audit-logs?action=user.reset_password",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert logs.status_code == 200
+    items = logs.json()["data"]["items"]
+    assert len(items) >= 1
+    assert items[0]["action"] == "user.reset_password"
+    assert items[0]["request_id"] == trace_id
+
+
+@pytest.mark.asyncio
 async def test_audit_logs_csv_export(client: AsyncClient, db_engine) -> None:
     admin_email = "export-admin@example.com"
     admin_token = await _register(client, admin_email)
