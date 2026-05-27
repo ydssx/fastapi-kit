@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
@@ -17,6 +17,10 @@ export function CreatorLayout() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: fetchUsage })
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   function navClass(to: string) {
     const active =

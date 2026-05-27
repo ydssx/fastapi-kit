@@ -1,20 +1,31 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
 .create {
-  padding: clamp(18px, 3vw, 28px);
+  position: relative;
+  padding: clamp(20px, 3.5vw, 28px);
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 46%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 52%),
+    linear-gradient(225deg, color-mix(in srgb, var(--success) 4%, transparent), transparent 40%),
     var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    var(--shadow-md),
+    var(--shadow-glow);
+  overflow: hidden;
+}
+
+.create::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  pointer-events: none;
 }
 
 .createGrid {
@@ -22,6 +33,7 @@
   grid-template-columns: 1fr minmax(160px, 220px);
   gap: var(--space-md);
   align-items: end;
+  position: relative;
 }
 
 .createSpan2 {
@@ -36,20 +48,34 @@
 }
 
 .createActions button {
-  min-width: 160px;
+  min-width: 168px;
+}
+
+.section {
+  composes: section from '../styles/shared.module.css';
+}
+
+.sectionCount {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .list {
   list-style: none;
   padding: 0;
-  margin: var(--space-md) 0 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
+}
+
+.listPanel {
+  composes: panel from '../styles/shared.module.css';
 }
 
 .completedSection {
-  margin-top: var(--space-lg);
+  opacity: 0.92;
 }
 
 @media (max-width: 720px) {

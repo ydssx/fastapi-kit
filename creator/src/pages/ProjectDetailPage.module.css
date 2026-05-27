@@ -1,9 +1,3 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
 .loadingWrap {
   display: flex;
   align-items: center;
@@ -15,10 +9,13 @@
   display: flex;
   gap: var(--space-md);
   align-items: flex-start;
-  padding: var(--space-md);
-  border: 1px solid var(--border-subtle);
+  padding: clamp(18px, 3vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-subtle));
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 50%),
+    color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .heroThumb {
@@ -97,7 +94,7 @@
   font-weight: 500;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .hero {
     flex-direction: column;
   }

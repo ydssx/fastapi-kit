@@ -5,20 +5,29 @@
   gap: 16px;
   padding: 16px 18px;
   min-height: 104px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 95%, var(--bg));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   color: inherit;
   transition:
-    border-color 0.2s ease,
-    transform 0.15s ease,
-    box-shadow 0.2s ease;
+    border-color 0.22s ease,
+    transform 0.18s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
 }
 
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  transform: translateY(-2px);
+  background: var(--surface);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.24),
+    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.card:hover .chevron {
+  color: var(--accent);
+  transform: translateX(3px);
 }
 
 .thumb {
@@ -42,8 +51,9 @@
 }
 
 .top strong {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
   line-height: 1.35;
 }
 
@@ -72,16 +82,18 @@
 .progressBar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent-hover));
   border-radius: inherit;
+  transition: width 0.4s ease;
 }
 
 .pct {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--accent);
   font-weight: 600;
   min-width: 2.75rem;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .chevron {
@@ -89,6 +101,9 @@
   color: var(--text-muted);
   font-size: 1.25rem;
   padding-left: 4px;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .row {
@@ -108,11 +123,26 @@
   color: var(--text-muted);
   font-size: 0.8rem;
   cursor: pointer;
+  transition:
+    opacity 0.18s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deleteBtn {
+    opacity: 0;
+  }
+
+  .row:hover .deleteBtn,
+  .row:focus-within .deleteBtn {
+    opacity: 1;
+  }
 }
 
 .deleteBtn:hover:not(:disabled) {
-  border-color: var(--danger, #f87171);
-  color: var(--danger, #f87171);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .deleteBtn:disabled {
@@ -124,5 +154,15 @@
   .top {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+
+  .card:hover .chevron {
+    transform: none;
   }
 }

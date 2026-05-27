@@ -44,18 +44,20 @@ export function BrandPage() {
         description="完善品牌档案，帮助 AI 更好理解你的创作边界与表达偏好。"
       />
 
-      <div className={styles.grid}>
-        {FIELDS.map((field) => (
-          <BrandField
-            key={field.key}
-            label={field.label}
-            hint={field.hint}
-            rows={field.rows}
-            value={form[field.key]}
-            onChange={(value) => setForm({ ...form, [field.key]: value })}
-          />
-        ))}
-      </div>
+      <section className={shared.panel}>
+        <div className={styles.grid}>
+          {FIELDS.map((field) => (
+            <BrandField
+              key={field.key}
+              label={field.label}
+              hint={field.hint}
+              rows={field.rows}
+              value={form[field.key]}
+              onChange={(value) => setForm({ ...form, [field.key]: value })}
+            />
+          ))}
+        </div>
+      </section>
 
       <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>
 

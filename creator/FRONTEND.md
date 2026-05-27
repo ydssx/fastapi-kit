@@ -9,7 +9,7 @@
 
 ## 视觉定位
 
-暗色编辑室 + 琥珀强调色（`--accent #f2b84b`）+ 完成态绿（`--success #4ade80`）。Token 定义在 `src/index.css`。
+暗色编辑室 + 琥珀强调色（`--accent #f2b84b`）+ 完成态绿（`--success #4ade80`）。标题字体 `--font-display`（Instrument Serif），正文字体 `--font`（DM Sans）。Token 定义在 `src/index.css`。
 
 ## 共享组件（`src/components/`）
 

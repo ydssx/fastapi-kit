@@ -1,5 +1,41 @@
 .page {
-  animation: fadeUp 0.35s ease-out both;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.page > * {
+  animation: fadeUp 0.45s ease-out both;
+}
+
+.page > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.page > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.page > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.page > *:nth-child(4) {
+  animation-delay: 210ms;
+}
+
+.page > *:nth-child(5) {
+  animation-delay: 280ms;
+}
+
+.noPageStagger {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page > * {
+    animation: none;
+  }
 }
 
 .pageHeader {
@@ -8,7 +44,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .toolbar {
@@ -20,15 +56,19 @@
 
 .pageTitle {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 3.5vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 .pageSubtitle {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.925rem;
+  max-width: 36rem;
+  line-height: 1.55;
 }
 
 .backLink {
@@ -44,20 +84,36 @@
   color: var(--accent);
 }
 
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
 .panel {
-  padding: 24px;
+  padding: clamp(18px, 3vw, 24px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .panelTitle {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .fieldLabel {
@@ -76,7 +132,9 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  transition: border-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .input:focus-visible,
@@ -111,7 +169,8 @@
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
-    transform 0.1s ease;
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn:hover:not(:disabled) {
@@ -130,15 +189,20 @@
 .btnPrimary {
   composes: btn;
   border-color: var(--accent);
-  background: var(--accent);
-  color: #0f1419;
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  color: var(--on-accent);
   font-weight: 600;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow:
+    0 10px 24px color-mix(in srgb, var(--accent) 18%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-hover) 90%, white), var(--accent-hover));
   border-color: var(--accent-hover);
+  box-shadow:
+    0 12px 28px color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
 }
 
 .btnGhost {
@@ -193,10 +257,12 @@
 
 .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .badgeProgress {

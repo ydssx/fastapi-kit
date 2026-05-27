@@ -3,13 +3,14 @@
 }
 
 .card {
-  padding: var(--space-lg);
-  border: 1px solid var(--border-subtle);
+  padding: clamp(20px, 3vw, var(--space-lg));
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .meta {

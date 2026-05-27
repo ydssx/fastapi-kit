@@ -3,29 +3,33 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
-  padding: 32px 24px;
-  border: 1px dashed var(--border);
+  gap: 10px;
+  padding: clamp(28px, 5vw, 40px) 24px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 28%, var(--border));
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+    color-mix(in srgb, var(--surface) 70%, transparent);
 }
 
 .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
   background: var(--accent-muted);
   color: var(--accent);
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .title {
   margin: 4px 0 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
 }
 
 .description {
@@ -33,7 +37,7 @@
   max-width: 28rem;
   color: var(--text-muted);
   font-size: 0.9rem;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 .actions {

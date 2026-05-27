@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { createProject, deleteProject, fetchPipelines, fetchProjects } from '../api/creator'
 import { EmptyState } from '../components/EmptyState'
+import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { ProjectCard } from '../components/ProjectCard'
@@ -160,23 +161,37 @@ export function ProjectsPage() {
         )}
       </section>
 
-      <section>
-        <h2 className={shared.panelTitle}>进行中的项目</h2>
-        {isLoading && <p className={shared.muted}>加载中…</p>}
-        {!isLoading && activeProjects.length === 0 && (
-          <EmptyState
-            icon="✦"
-            title="还没有项目"
-            description="填写上方表单，创建你的第一条流水线。从选题到发布，按步骤推进即可。"
-          />
-        )}
-        <ul className={styles.list}>{renderProjectCards(activeProjects)}</ul>
+      <section className={styles.section}>
+        <div className={shared.sectionHead}>
+          <h2 className={shared.panelTitle}>进行中的项目</h2>
+          {!isLoading && activeProjects.length > 0 && (
+            <span className={styles.sectionCount}>{activeProjects.length} 个</span>
+          )}
+        </div>
+        <div className={styles.listPanel}>
+          {isLoading && <LoadingBlock label="加载项目…" />}
+          {!isLoading && activeProjects.length === 0 && (
+            <EmptyState
+              icon="✦"
+              title="还没有项目"
+              description="填写上方表单，创建你的第一条流水线。从选题到发布，按步骤推进即可。"
+            />
+          )}
+          {!isLoading && activeProjects.length > 0 && (
+            <ul className={styles.list}>{renderProjectCards(activeProjects)}</ul>
+          )}
+        </div>
       </section>
 
       {!isLoading && completedProjects.length > 0 && (
-        <section className={styles.completedSection}>
-          <h2 className={shared.panelTitle}>已完成</h2>
-          <ul className={styles.list}>{renderProjectCards(completedProjects)}</ul>
+        <section className={`${styles.section} ${styles.completedSection} ${shared.noPageStagger}`}>
+          <div className={shared.sectionHead}>
+            <h2 className={shared.panelTitle}>已完成</h2>
+            <span className={styles.sectionCount}>{completedProjects.length} 个</span>
+          </div>
+          <div className={styles.listPanel}>
+            <ul className={styles.list}>{renderProjectCards(completedProjects)}</ul>
+          </div>
         </section>
       )}
     </div>
