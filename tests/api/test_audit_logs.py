@@ -158,3 +158,53 @@ async def test_audit_logs_csv_export(client: AsyncClient, db_engine) -> None:
     assert "created_at" in header
     assert "action" in header
     assert "request_id" in header
+
+
+@pytest.mark.asyncio
+async def test_audit_logs_filter_by_action(client: AsyncClient, db_engine) -> None:
+    admin_email = "filter-admin@example.com"
+    target_email = "filter-target@example.com"
+
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": target_email, "password": "securepass123"},
+    )
+
+    listed = await client.get(
+        f"/api/v1/admin/users?email={target_email}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    target_id = listed.json()["data"]["items"][0]["id"]
+
+    await client.patch(
+        f"/api/v1/admin/users/{target_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"is_active": False},
+    )
+
+    await client.patch(
+        "/api/v1/admin/alerts/settings",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"recovery_notifications_enabled": True},
+    )
+
+    user_logs = await client.get(
+        "/api/v1/admin/audit-logs?action=user.update",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert user_logs.status_code == 200
+    user_items = user_logs.json()["data"]["items"]
+    assert len(user_items) >= 1
+    assert all(item["action"] == "user.update" for item in user_items)
+
+    alert_logs = await client.get(
+        "/api/v1/admin/audit-logs?action=alert.settings_update",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert alert_logs.status_code == 200
+    alert_items = alert_logs.json()["data"]["items"]
+    assert len(alert_items) >= 1
+    assert all(item["action"] == "alert.settings_update" for item in alert_items)

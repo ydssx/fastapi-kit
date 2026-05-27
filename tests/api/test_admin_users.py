@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -191,3 +193,104 @@ async def test_admin_reset_password_and_login(client: AsyncClient, db_engine) ->
     )
     assert audits.status_code == 200
     assert any(item["action"] == "user.reset_password" for item in audits.json()["data"])
+
+
+@pytest.mark.asyncio
+async def test_admin_get_user_not_found(client: AsyncClient, db_engine) -> None:
+    admin_email = "lookup-admin@example.com"
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    missing_id = uuid.uuid4()
+    response = await client.get(
+        f"/api/v1/admin/users/{missing_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 404
+    assert response.json()["code"] == 40401
+
+
+@pytest.mark.asyncio
+async def test_admin_update_user_empty_payload_is_noop(
+    client: AsyncClient,
+    db_engine,
+) -> None:
+    admin_email = "noop-admin@example.com"
+    target_email = "noop-target@example.com"
+
+    admin_token = await _register(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": target_email, "password": "securepass123"},
+    )
+
+    listed = await client.get(
+        f"/api/v1/admin/users?email={target_email}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    target = listed.json()["data"]["items"][0]
+    original_role = target["role"]
+    original_active = target["is_active"]
+
+    response = await client.patch(
+        f"/api/v1/admin/users/{target['id']}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["role"] == original_role
+    assert data["is_active"] is original_active
+
+
+@pytest.mark.asyncio
+async def test_can_demote_inactive_admin_when_one_active_admin_remains(
+    client: AsyncClient,
+    db_engine,
+) -> None:
+    """Demoting an already-inactive admin is allowed; self-demotion still returns 40004."""
+    keeper_email = "keeper-last@example.com"
+    inactive_admin_email = "inactive-admin@example.com"
+
+    keeper_token = await _register(client, keeper_email)
+    await _make_admin(db_engine, keeper_email)
+
+    await _register(client, inactive_admin_email)
+    await _make_admin(db_engine, inactive_admin_email)
+
+    inactive_list = await client.get(
+        f"/api/v1/admin/users?email={inactive_admin_email}",
+        headers={"Authorization": f"Bearer {keeper_token}"},
+    )
+    inactive_id = inactive_list.json()["data"]["items"][0]["id"]
+
+    deactivate = await client.patch(
+        f"/api/v1/admin/users/{inactive_id}",
+        headers={"Authorization": f"Bearer {keeper_token}"},
+        json={"is_active": False},
+    )
+    assert deactivate.status_code == 200
+
+    demote = await client.patch(
+        f"/api/v1/admin/users/{inactive_id}",
+        headers={"Authorization": f"Bearer {keeper_token}"},
+        json={"role": "user"},
+    )
+    assert demote.status_code == 200
+    assert demote.json()["data"]["role"] == "user"
+
+    me = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {keeper_token}"},
+    )
+    keeper_id = me.json()["data"]["id"]
+
+    block_self = await client.patch(
+        f"/api/v1/admin/users/{keeper_id}",
+        headers={"Authorization": f"Bearer {keeper_token}"},
+        json={"role": "user"},
+    )
+    assert block_self.status_code == 400
+    assert block_self.json()["code"] == 40004
