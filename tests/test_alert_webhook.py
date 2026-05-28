@@ -32,6 +32,19 @@ def test_validate_webhook_url_rejects_invalid_urls(url: str) -> None:
         validate_webhook_url(url)
 
 
+def test_build_alert_payload_uses_summary_or_event_type() -> None:
+    settings = Settings(
+        environment="test",
+        jwt_secret="test-secret-key-for-jwt-signing-32chars",
+    )
+    known = build_alert_payload(event_type="ready_failed", settings=settings)
+    assert known["summary"] == "Service readiness check failed"
+    assert known["environment"] == "test"
+
+    custom = build_alert_payload(event_type="custom.event", settings=settings)
+    assert custom["summary"] == "custom.event"
+
+
 def test_sign_payload_matches_hmac_sha256() -> None:
     body = b'{"event":"test"}'
     secret = "s3cret"
