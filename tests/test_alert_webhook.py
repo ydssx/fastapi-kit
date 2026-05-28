@@ -50,3 +50,22 @@ def test_sign_payload_matches_hmac_sha256() -> None:
     secret = "s3cret"
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     assert sign_payload(body, secret) == f"sha256={expected}"
+
+
+def test_build_alert_payload_includes_event_metadata() -> None:
+    settings = Settings(
+        environment="test",
+        database_url="postgresql+asyncpg://unused",
+        redis_url="redis://unused",
+        jwt_secret="test-secret-key-for-jwt-signing-32chars",
+    )
+    payload = build_alert_payload(
+        event_type="ready_failed",
+        settings=settings,
+        details={"database": "error"},
+    )
+    assert payload["event"] == "ready_failed"
+    assert payload["environment"] == "test"
+    assert payload["summary"] == "Service readiness check failed"
+    assert payload["details"] == {"database": "error"}
+    assert payload["timestamp"]

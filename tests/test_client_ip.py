@@ -27,3 +27,14 @@ def test_get_client_ip_uses_forwarded_for_when_trusted() -> None:
 def test_get_client_ip_falls_back_to_real_ip() -> None:
     request = _request([(b"x-real-ip", b"198.51.100.2")])
     assert get_client_ip(request, trust_proxy_headers=True) == "198.51.100.2"
+
+
+def test_get_client_ip_unknown_when_no_client() -> None:
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "headers": [],
+    }
+    request = Request(scope)
+    assert get_client_ip(request, trust_proxy_headers=False) == "unknown"
