@@ -101,6 +101,20 @@ async def test_admin_dashboard_ready_degraded_when_beat_stale(
     admin_token = await _register(client, admin_email)
     await _make_admin(db_engine, admin_email)
 
+    head = _alembic_head_revision()
+    assert head is not None
+    session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with session_factory() as session:
+        await session.execute(
+            text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL)")
+        )
+        await session.execute(text("DELETE FROM alembic_version"))
+        await session.execute(
+            text("INSERT INTO alembic_version (version_num) VALUES (:rev)"),
+            {"rev": head},
+        )
+        await session.commit()
+
     stale = datetime.now(UTC) - timedelta(
         seconds=test_settings.celery_beat_heartbeat_interval_seconds * 3
     )

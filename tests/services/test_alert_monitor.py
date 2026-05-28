@@ -285,6 +285,7 @@ async def test_alert_monitor_dedupe_skips_repeat_ready_failed(
             from app.cache.redis import get_redis_client
 
             redis = get_redis_client()
+            await redis.flushdb()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
             await session.commit()
@@ -336,18 +337,19 @@ async def test_alert_monitor_workers_missing_after_duration(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
             from app.cache.redis import get_redis_client
 
             redis = get_redis_client()
+            await redis.flushdb()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
+            row.recovery_notifications_enabled = False
             await session.commit()
 
             since = (datetime.now(UTC) - timedelta(seconds=120)).isoformat()
             await redis.set(ALERT_WORKER_ZERO_SINCE, since)
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "workers_missing" in sent
