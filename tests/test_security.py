@@ -56,3 +56,15 @@ def test_access_token_rejected_as_refresh(security_settings: Settings) -> None:
 def test_verify_token_type_rejects_mismatch() -> None:
     with pytest.raises(JWTError):
         verify_token_type({"type": "refresh"}, "access")
+
+
+def test_get_subject_from_token_rejects_missing_sub(security_settings: Settings) -> None:
+    from jose import jwt
+
+    payload = {
+        "exp": 9999999999,
+        "type": "access",
+    }
+    token = jwt.encode(payload, security_settings.jwt_secret, algorithm=security_settings.jwt_algorithm)
+    with pytest.raises(JWTError):
+        get_subject_from_token(token, "access", security_settings)
