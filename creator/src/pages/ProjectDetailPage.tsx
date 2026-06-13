@@ -8,6 +8,7 @@ import {
   completeProject,
   confirmStep,
   deleteProject,
+  fetchBrand,
   fetchPipelines,
   fetchProject,
   fetchPublishChecklist,
@@ -16,19 +17,19 @@ import {
   updateProject,
   updatePublishChecklist,
 } from '../api/creator'
-import { AiLoadingOverlay } from '../components/AiLoadingOverlay'
+import { AiSuggestionPanel } from '../components/AiSuggestionPanel'
 import { CompletedBanner } from '../components/CompletedBanner'
+import { ContextChips } from '../components/ContextChips'
 import { LoadingBlock } from '../components/LoadingBlock'
-import { PipelineThumbnail } from '../components/PipelineThumbnail'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { PublishChecklist } from '../components/PublishChecklist'
 import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
 import { StepEditorPanel } from '../components/StepEditorPanel'
 import { StepProgress } from '../components/StepProgress'
+import { StepWorkspace } from '../components/StepWorkspace'
 import { StepVersionHistory } from '../components/StepVersionHistory'
-import { useAuth } from '../auth/AuthContext'
-import { formatProjectDate } from '../lib/format'
-import { pipelineLabel, platformLabels, statusLabel } from '../lib/labels'
+import { adjustmentsForStep, shouldAutoSuggest } from '../lib/stepAiAdjustments'
+import { pipelineLabel, platformLabels } from '../lib/labels'
 import type { Project, PublishChecklistItem } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
@@ -43,7 +44,6 @@ const PLATFORMS = [
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -54,6 +54,10 @@ export function ProjectDetailPage() {
     queryKey: ['pipelines'],
     queryFn: fetchPipelines,
   })
+  const { data: brand = { tone: '', audience: '', taboos: '', structure_notes: '' } } = useQuery({
+    queryKey: ['brand'],
+    queryFn: fetchBrand,
+  })
   const isPublish = project?.current_step_key === 'publish'
   const canEditPlatforms = project?.status !== 'completed' && !isPublish
   const { data: checklist = [] } = useQuery({
@@ -63,6 +67,7 @@ export function ProjectDetailPage() {
   })
 
   const [content, setContent] = useState('')
+  const [suggestion, setSuggestion] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
   const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
@@ -82,6 +87,15 @@ export function ProjectDetailPage() {
 
   function stepTitle(key: string) {
     return pipeline?.steps.find((s) => s.key === key)?.title ?? key
+  }
+
+  function prevStepContext() {
+    if (!pipeline || !project || stepIndex <= 0) return { title: undefined, summary: undefined }
+    const prev = pipeline.steps[stepIndex - 1]
+    const art = [...project.artifacts]
+      .filter((a) => a.step_key === prev.key)
+      .sort((a, b) => b.version - a.version)[0]
+    return { title: prev.title, summary: art?.content }
   }
 
   function applyProjectUpdate(updated: Project) {
@@ -127,15 +141,25 @@ export function ProjectDetailPage() {
   })
 
   const aiMut = useMutation({
-    mutationFn: () => aiSuggest(id!, project!.current_step_key),
+    mutationFn: (adjustment?: string) => aiSuggest(id!, project!.current_step_key, adjustment),
     onSuccess: (data) => {
       setQuotaError(null)
       setActionError(null)
-      setContent(data.suggestion)
+      setSuggestion(data.suggestion)
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
     },
     onError: handleApiError,
   })
+
+  useEffect(() => {
+    if (!project || !step || isPublish) return
+    setSuggestion(null)
+    const draft = project.draft_content[project.current_step_key] ?? ''
+    if (shouldAutoSuggest(stepIndex, step.ai_enabled, !draft.trim())) {
+      aiMut.mutate(undefined)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on step change
+  }, [project?.current_step_key])
 
   const completeMut = useMutation({
     mutationFn: () => completeProject(id!),
@@ -267,6 +291,34 @@ export function ProjectDetailPage() {
     checklistMut.mutate(next)
   }
 
+  const prevCtx = prevStepContext()
+  const sourceParts = [
+    '品牌档案',
+    prevCtx.title ? `步骤${prevCtx.title}` : null,
+    platformLabels(project.target_platforms) || null,
+  ].filter(Boolean) as string[]
+
+  const totalSteps = pipeline?.steps.length ?? 0
+  const showPlatformPicker = canEditPlatforms && stepIndex <= 1
+
+  const editorPanel = (
+    <StepEditorPanel
+      title={step?.title ?? project.current_step_key}
+      decisionHint={step?.description}
+      content={content}
+      onContentChange={setContent}
+      onSaveDraft={() => draftMut.mutate()}
+      onConfirm={() => confirmMut.mutate()}
+      savingDraft={draftMut.isPending}
+      confirming={confirmMut.isPending}
+      editorDisabled={aiMut.isPending}
+    />
+  )
+
+  const stepBadgeLabel = isPublish
+    ? (project.publish_progress?.summary_label ?? '发布核对')
+    : `步骤 ${stepIndex + 1}/${totalSteps}`
+
   return (
     <div className={`${shared.page} ${styles.page}`}>
       <div className={styles.toolbar}>
@@ -283,77 +335,66 @@ export function ProjectDetailPage() {
         </button>
       </div>
 
-      <header className={styles.hero}>
-        <PipelineThumbnail pipelineId={project.pipeline_id} className={styles.heroThumb} />
-        <div className={styles.heroBody}>
-          <div className={styles.heroTop}>
-            <p className={styles.meta}>
-              {pipelineLabel(project.pipeline_id)}
-              {project.target_platforms.length > 0 && (
-                <>
-                  <span className={styles.metaDot}>·</span>
-                  {platformLabels(project.target_platforms)}
-                </>
-              )}
-            </p>
-            <span className={shared.badgeProgress}>
-              {isPublish && project.publish_progress
-                ? project.publish_progress.summary_label
-                : statusLabel(project.status)}
-            </span>
-          </div>
+      <header className={styles.heroCompact}>
+        <div className={styles.heroCompactMain}>
+          <p className={styles.meta}>
+            {pipelineLabel(project.pipeline_id)}
+            {project.target_platforms.length > 0 && (
+              <>
+                <span className={styles.metaDot}>·</span>
+                {platformLabels(project.target_platforms)}
+              </>
+            )}
+          </p>
           <label className={styles.titleEdit}>
             <span className="sr-only">项目标题</span>
             <input
-              className={styles.titleInput}
+              className={styles.titleInputCompact}
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               onBlur={saveTitle}
             />
           </label>
-          {step?.description && <p className={styles.heroDesc}>{step.description}</p>}
-          <dl className={styles.heroStats}>
-            <div>
-              <dt>创建</dt>
-              <dd>{formatProjectDate(project.created_at)}</dd>
-            </div>
-            <div>
-              <dt>更新</dt>
-              <dd>{formatProjectDate(project.updated_at)}</dd>
-            </div>
-            {user?.email && (
-              <div>
-                <dt>创作者</dt>
-                <dd>{user.email}</dd>
-              </div>
-            )}
-          </dl>
-          <p className={styles.stepHint}>
-            {isPublish
-              ? project.publish_progress?.summary_label ?? '发布核对'
-              : `步骤 ${stepIndex + 1}/${pipeline?.steps.length ?? 0} · ${step?.title ?? project.current_step_key}`}
-          </p>
         </div>
+        <span className={styles.stepBadge}>{stepBadgeLabel}</span>
       </header>
 
-      {canEditPlatforms && (
+      {showPlatformPicker && (
         <section className={styles.metaEdit}>
           <PlatformPicker
             options={PLATFORMS}
             value={editPlatforms}
             onChange={savePlatforms}
-            legend="目标平台（发布步骤前可修改）"
+            legend="目标平台（前两步可修改）"
           />
         </section>
       )}
 
-      {pipeline && (
-        <StepProgress
-          steps={pipeline.steps}
-          currentStepKey={project.current_step_key}
-          onStepOpen={(stepKey) => openMut.mutate(stepKey)}
-          openingStepKey={openMut.isPending ? openMut.variables : null}
-        />
+      {isPublish ? (
+        pipeline && (
+          <StepProgress
+            steps={pipeline.steps}
+            currentStepKey={project.current_step_key}
+            onStepOpen={(stepKey) => openMut.mutate(stepKey)}
+            openingStepKey={openMut.isPending ? openMut.variables : null}
+          />
+        )
+      ) : (
+        <div className={styles.stickyWizardHead}>
+          {pipeline && (
+            <StepProgress
+              steps={pipeline.steps}
+              currentStepKey={project.current_step_key}
+              onStepOpen={(stepKey) => openMut.mutate(stepKey)}
+              openingStepKey={openMut.isPending ? openMut.variables : null}
+            />
+          )}
+          <ContextChips
+            brand={brand}
+            prevStepTitle={prevCtx.title}
+            prevStepSummary={prevCtx.summary}
+          />
+        </div>
       )}
 
       {isPublish ? (
@@ -369,24 +410,38 @@ export function ProjectDetailPage() {
         </>
       ) : (
         <>
-          <StepEditorPanel
-            title={step?.title ?? project.current_step_key}
-            content={content}
-            onContentChange={setContent}
-            aiEnabled={step?.ai_enabled ?? false}
-            onSaveDraft={() => draftMut.mutate()}
-            onAiSuggest={() => aiMut.mutate()}
-            onConfirm={() => confirmMut.mutate()}
-            savingDraft={draftMut.isPending}
-            aiPending={aiMut.isPending}
-            confirming={confirmMut.isPending}
-          />
-          {quotaError && <QuotaLimitNotice kind={quotaError} />}
+          {step?.ai_enabled ? (
+            <>
+              <StepWorkspace
+                editor={editorPanel}
+                aiPanel={
+                  <AiSuggestionPanel
+                    stepTitle={step.title}
+                    suggestion={suggestion}
+                    loading={aiMut.isPending}
+                    quotaBlocked={quotaError === 'ai'}
+                    sourceParts={sourceParts}
+                    adjustments={adjustmentsForStep(project.current_step_key)}
+                    onAdoptAll={() => setContent(suggestion ?? '')}
+                    onInsert={() =>
+                      setContent((c) => (c ? `${c}\n\n${suggestion}` : (suggestion ?? '')))
+                    }
+                    onRegenerate={() => aiMut.mutate(undefined)}
+                    onAdjust={(adj) => aiMut.mutate(adj)}
+                  />
+                }
+              />
+              {quotaError === 'projects' && <QuotaLimitNotice kind={quotaError} />}
+            </>
+          ) : (
+            <>
+              {editorPanel}
+              {quotaError && <QuotaLimitNotice kind={quotaError} />}
+            </>
+          )}
           {actionError && <p className={shared.error}>{actionError}</p>}
         </>
       )}
-
-      <AiLoadingOverlay active={aiMut.isPending} />
 
       <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
     </div>

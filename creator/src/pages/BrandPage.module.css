@@ -14,3 +14,33 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.previewSentence {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.previewChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.previewChip {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}

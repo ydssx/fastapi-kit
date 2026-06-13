@@ -20,13 +20,16 @@
 | `QuotaDisplay` / `QuotaLimitNotice` | 顶栏用量 / 402 限额提示 |
 | `EmptyState` | 列表空态 |
 | `ProjectCard` / `PlatformPicker` / `PipelineThumbnail` | 项目列表 |
+| `ContextChips` | 向导顶栏品牌 + 上步摘要芯片 |
+| `AiSuggestionPanel` | AI 建议预览、采纳、快捷调整、配额态 |
+| `StepWorkspace` | 双栏布局（编辑区 + AI 面板），含移动端折叠 |
 | `StepProgress` / `StepEditorPanel` / `AiLoadingOverlay` | 流水线向导 |
 | `PublishChecklist` / `CompletedBanner` / `StepVersionHistory` | 变体态 |
 | `BrandField` | 品牌档案字段 + 字数 |
 
 ## UI 验收
 
-对照 `docs/prototypes/` 8 张 PNG；已知差异见 `docs/prototypes/README.md`「实现已知差异」。
+对照 `docs/prototypes/v2/` 10 张 PNG 与 README；v1 资产见 `docs/prototypes/`。
 
 ## 禁止
 

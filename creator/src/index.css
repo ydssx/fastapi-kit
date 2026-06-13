@@ -32,6 +32,9 @@
   --space-xl: 32px;
   --bp-nav: 720px;
   --bp-narrow: 640px;
+  --panel: #1a2030;
+  --ai-panel: #141a22;
+  --bp-wizard: 900px;
 }
 
 *,

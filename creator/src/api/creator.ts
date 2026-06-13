@@ -52,10 +52,17 @@ export function confirmStep(
   )
 }
 
-export function aiSuggest(projectId: string, stepKey: string): Promise<{ suggestion: string }> {
+export function aiSuggest(
+  projectId: string,
+  stepKey: string,
+  adjustment?: string,
+): Promise<{ suggestion: string }> {
   return apiFetch<{ suggestion: string }>(
     `/api/v1/creator/projects/${projectId}/steps/${stepKey}/ai-suggest`,
-    { method: 'POST' },
+    {
+      method: 'POST',
+      body: JSON.stringify(adjustment ? { adjustment } : {}),
+    },
   )
 }
 

@@ -84,3 +84,36 @@ async def test_ai_context_uses_latest_artifact_after_reconfirm(
     assert captured
     assert "修订选题" in captured[0]
     assert "初版选题" not in captured[0]
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_with_adjustment(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    captured: list[str] = []
+
+    async def fake_complete(_self, _system: str, user_prompt: str) -> str:
+        captured.append(user_prompt)
+        return "更口语的脚本"
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-adj@example.com")
+    project = await create_short_video_project(client, token)
+    for step_key, content in [("topic", "选题"), ("hook", "钩子")]:
+        await client.post(
+            f"/api/v1/creator/projects/{project['id']}/steps/{step_key}/confirm",
+            headers=auth_headers(token),
+            json={"content": content},
+        )
+
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/script/ai-suggest",
+        headers=auth_headers(token),
+        json={"adjustment": "更口语"},
+    )
+    assert response.status_code == 200
+    assert "更口语" in captured[-1]

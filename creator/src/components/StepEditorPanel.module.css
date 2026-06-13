@@ -5,6 +5,10 @@
   line-height: 1.55;
 }
 
+.decision {
+  color: var(--text);
+}
+
 .editorWrap {
   position: relative;
   display: flex;

@@ -1,0 +1,22 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.editorCol {
+  min-width: 0;
+}
+
+.aiCol {
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr minmax(280px, 36%);
+    gap: var(--space-lg);
+    align-items: start;
+  }
+}

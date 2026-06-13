@@ -14,6 +14,15 @@ function itemKey(item: PublishChecklistItem) {
 }
 
 export function PublishChecklist({ items, onToggle, onComplete, completing }: PublishChecklistProps) {
+  const platforms = new Set(items.map((i) => i.platform))
+  const donePlatforms = new Set(
+    [...platforms].filter((p) => {
+      const pi = items.filter((i) => i.platform === p)
+      return pi.length > 0 && pi.every((i) => i.checked)
+    }),
+  )
+  const pending = items.filter((i) => !i.checked).length
+
   const byPlatform = items.reduce<Record<string, PublishChecklistItem[]>>((acc, item) => {
     acc[item.platform_label] = acc[item.platform_label] ?? []
     acc[item.platform_label].push(item)
@@ -23,6 +32,11 @@ export function PublishChecklist({ items, onToggle, onComplete, completing }: Pu
   return (
     <section className={shared.panel}>
       <h2 className={shared.panelTitle}>发布核对</h2>
+      {platforms.size > 0 && (
+        <p className={styles.summary}>
+          {donePlatforms.size}/{platforms.size} 平台已核对 · {pending} 项待完成
+        </p>
+      )}
       <p className={styles.hint}>勾选各平台发布项，全部完成后可结束项目。</p>
       {Object.entries(byPlatform).map(([platformLabel, platformItems]) => (
         <div key={platformLabel} className={styles.group}>

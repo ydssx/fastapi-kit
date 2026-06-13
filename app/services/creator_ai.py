@@ -30,6 +30,7 @@ class CreatorAiService:
         user: User,
         project_id: uuid.UUID,
         step_key: str,
+        adjustment: str | None = None,
     ) -> AiSuggestOut:
         project = await self.project_service._get_owned(user, project_id)
         self.project_service._ensure_editable(project)
@@ -56,6 +57,7 @@ class CreatorAiService:
             brand_taboos=brand.taboos,
             brand_structure=brand.structure_notes,
             context=context,
+            adjustment=adjustment,
         )
         suggestion = await self.llm.complete(system, user_prompt)
         await self.usage.increment_ai(user)

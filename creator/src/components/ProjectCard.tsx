@@ -26,8 +26,8 @@ export function ProjectCard({
   deleting,
 }: ProjectCardProps) {
   const onPublishStep = project.current_step_key === 'publish' && project.status !== 'completed'
-  const pct = totalSteps > 0 ? Math.round((stepNum / totalSteps) * 100) : 0
-  const inProgress = project.status !== 'completed'
+  const completed = project.status === 'completed'
+  const showDots = totalSteps > 0 && (completed || !onPublishStep)
 
   function handleDelete(e: MouseEvent) {
     e.preventDefault()
@@ -60,12 +60,22 @@ export function ProjectCard({
               </>
             )}
           </span>
-          {inProgress && !onPublishStep && totalSteps > 0 && (
-            <div className={styles.progressWrap}>
-              <div className={styles.progressBar} aria-hidden>
-                <span style={{ width: `${pct}%` }} />
-              </div>
-              <span className={styles.pct}>{pct}%</span>
+          {showDots && (
+            <div className={styles.dots} aria-label={`步骤 ${stepNum}/${totalSteps}`}>
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <span
+                  key={i}
+                  className={
+                    completed
+                      ? styles.dotDone
+                      : i < stepNum - 1
+                        ? styles.dotDone
+                        : i === stepNum - 1
+                          ? styles.dotCurrent
+                          : styles.dotTodo
+                  }
+                />
+              ))}
             </div>
           )}
         </div>

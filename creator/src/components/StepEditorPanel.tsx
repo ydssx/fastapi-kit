@@ -3,35 +3,35 @@ import styles from './StepEditorPanel.module.css'
 
 interface StepEditorPanelProps {
   title: string
-  description?: string
+  decisionHint?: string
   content: string
   onContentChange: (value: string) => void
-  aiEnabled: boolean
   onSaveDraft: () => void
-  onAiSuggest: () => void
   onConfirm: () => void
   savingDraft: boolean
-  aiPending: boolean
   confirming: boolean
+  editorDisabled?: boolean
 }
 
 export function StepEditorPanel({
   title,
-  description,
+  decisionHint,
   content,
   onContentChange,
-  aiEnabled,
   onSaveDraft,
-  onAiSuggest,
   onConfirm,
   savingDraft,
-  aiPending,
   confirming,
+  editorDisabled = false,
 }: StepEditorPanelProps) {
   return (
     <section className={shared.panel}>
       <h2 className={shared.panelTitle}>{title}</h2>
-      {description && <p className={styles.hint}>{description}</p>}
+      {decisionHint && (
+        <p className={styles.hint}>
+          本步你要决定：<span className={styles.decision}>{decisionHint}</span>
+        </p>
+      )}
       <div className={styles.editorWrap}>
         <textarea
           className={shared.textarea}
@@ -39,37 +39,25 @@ export function StepEditorPanel({
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
           placeholder={`撰写「${title}」…`}
-          disabled={aiPending}
+          disabled={editorDisabled}
           maxLength={2000}
         />
-        <span className={styles.charCount}>
-          {content.length} / 2000
-        </span>
+        <span className={styles.charCount}>{content.length} / 2000</span>
       </div>
       <div className={shared.btnRow}>
         <button
           type="button"
           className={shared.btnGhost}
           onClick={onSaveDraft}
-          disabled={savingDraft || aiPending}
+          disabled={savingDraft || editorDisabled}
         >
           {savingDraft ? '保存中…' : '暂存草稿'}
         </button>
-        {aiEnabled && (
-          <button
-            type="button"
-            className={shared.btn}
-            onClick={onAiSuggest}
-            disabled={aiPending || confirming}
-          >
-            {aiPending ? 'AI 生成中…' : 'AI 建议'}
-          </button>
-        )}
         <button
           type="button"
           className={shared.btnPrimary}
           onClick={onConfirm}
-          disabled={confirming || aiPending || !content.trim()}
+          disabled={confirming || editorDisabled || !content.trim()}
         >
           {confirming ? '确认中…' : '确认并下一步 →'}
         </button>

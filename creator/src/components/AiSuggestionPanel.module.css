@@ -1,0 +1,158 @@
+.panel {
+  background: var(--ai-panel);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: clamp(16px, 2.5vw, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.toggle {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonLine,
+.skeletonLineShort {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--border) 60%, transparent) 25%,
+    color-mix(in srgb, var(--border) 90%, transparent) 50%,
+    color-mix(in srgb, var(--border) 60%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonLine {
+  width: 100%;
+}
+
+.skeletonLineShort {
+  width: 65%;
+}
+
+.loadingText {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.preview {
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  border: 1px solid var(--border-subtle);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.adjustments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.adjustChip {
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.adjustChip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent-hover);
+}
+
+.adjustChip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.footnote {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonLine,
+  .skeletonLineShort {
+    animation: none;
+  }
+}

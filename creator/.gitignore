@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Screenshot script ephemeral state
+docs/prototypes/v2/.capture-state.json

@@ -1,3 +1,14 @@
+.summary {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .hint {
   margin: 0;
   color: var(--text-muted);

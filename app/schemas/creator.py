@@ -100,6 +100,10 @@ class UsageOut(BaseModel):
     plan: str
 
 
+class AiSuggestIn(BaseModel):
+    adjustment: str | None = Field(default=None, max_length=100)
+
+
 class AiSuggestOut(BaseModel):
     suggestion: str
 

@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from app.api.deps import CurrentUser, DbSession
 from app.schemas.common import ApiResponse
-from app.schemas.creator import AiSuggestOut
+from app.schemas.creator import AiSuggestIn, AiSuggestOut
 from app.services.creator_ai import CreatorAiService
 
 router = APIRouter()
@@ -19,6 +19,8 @@ async def ai_suggest(
     db: DbSession,
     project_id: uuid.UUID,
     step_key: str,
+    body: AiSuggestIn | None = None,
 ) -> ApiResponse[AiSuggestOut]:
-    data = await CreatorAiService(db).suggest(user, project_id, step_key)
+    adjustment = body.adjustment if body else None
+    data = await CreatorAiService(db).suggest(user, project_id, step_key, adjustment)
     return ApiResponse(data=data)

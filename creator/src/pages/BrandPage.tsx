@@ -21,10 +21,23 @@ const FIELDS: { key: keyof BrandProfile; label: string; hint: string; rows: numb
   { key: 'structure_notes', label: '结构偏好', hint: '例如：总-分-总结构、分点论述、结尾行动建议', rows: 3 },
 ]
 
+const PREVIEW_CHIPS: { key: keyof BrandProfile; label: string }[] = [
+  { key: 'tone', label: '语气' },
+  { key: 'audience', label: '受众' },
+  { key: 'taboos', label: '禁忌' },
+]
+
+function buildPreview(form: BrandProfile): string {
+  const tone = form.tone.trim() || '（未设置语气）'
+  const aud = form.audience.trim() || '（未设置受众）'
+  return `示例：面向${aud}，用${tone}的语气开场——「嘿，今天想跟你聊一个很多人忽略的细节…」`
+}
+
 export function BrandPage() {
   const queryClient = useQueryClient()
   const { data } = useQuery({ queryKey: ['brand'], queryFn: fetchBrand })
   const [form, setForm] = useState<BrandProfile>(empty)
+  const [showUpdatedNotice, setShowUpdatedNotice] = useState(false)
 
   useEffect(() => {
     if (data) setForm(data)
@@ -34,8 +47,12 @@ export function BrandPage() {
     mutationFn: () => updateBrand(form),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['brand'] })
+      setShowUpdatedNotice(true)
+      setTimeout(() => setShowUpdatedNotice(false), 3000)
     },
   })
+
+  const previewChips = PREVIEW_CHIPS.filter((chip) => form[chip.key].trim().length > 0)
 
   return (
     <div className={`${shared.page} ${styles.page}`}>
@@ -57,6 +74,23 @@ export function BrandPage() {
             />
           ))}
         </div>
+      </section>
+
+      <section className={`${shared.panel} ${styles.preview}`}>
+        <h2 className={shared.panelTitle}>预览效果</h2>
+        {showUpdatedNotice && (
+          <p className={shared.notice}>品牌档案已更新，后续 AI 建议将应用新约束</p>
+        )}
+        <p className={styles.previewSentence}>{buildPreview(form)}</p>
+        {previewChips.length > 0 && (
+          <div className={styles.previewChips}>
+            {previewChips.map((chip) => (
+              <span key={chip.key} className={styles.previewChip}>
+                {chip.label}: {form[chip.key].trim()}
+              </span>
+            ))}
+          </div>
+        )}
       </section>
 
       <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>

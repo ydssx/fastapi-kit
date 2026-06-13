@@ -11,6 +11,7 @@ def build_step_prompt(
     brand_taboos: str,
     brand_structure: str,
     context: str,
+    adjustment: str | None = None,
 ) -> tuple[str, str]:
     pipeline = get_pipeline(pipeline_id)
     step = next(s for s in pipeline.steps if s.key == step_key)
@@ -31,4 +32,6 @@ def build_step_prompt(
     if context.strip():
         user_parts.append(f"\n已确认上文:\n{context}")
     user_parts.append(f"\n请生成「{step.title}」内容。")
+    if adjustment:
+        user_parts.append(f"\n额外要求: {adjustment}")
     return system, "\n".join(user_parts)
