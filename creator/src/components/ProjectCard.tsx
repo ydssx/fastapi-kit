@@ -35,6 +35,8 @@ export function ProjectCard({
     onDelete?.(project.id)
   }
 
+  const progressPct = totalSteps > 0 ? Math.round((completed ? totalSteps : stepNum) / totalSteps * 100) : 0
+
   return (
     <li className={styles.row}>
       <Link to={`/projects/${project.id}`} className={styles.card}>
@@ -61,21 +63,16 @@ export function ProjectCard({
             )}
           </span>
           {showDots && (
-            <div className={styles.dots} aria-label={`步骤 ${stepNum}/${totalSteps}`}>
-              {Array.from({ length: totalSteps }, (_, i) => (
+            <div className={styles.progressTrack} aria-label={`进度 ${stepNum}/${totalSteps}`}>
+              <div className={styles.progressBar}>
                 <span
-                  key={i}
-                  className={
-                    completed
-                      ? styles.dotDone
-                      : i < stepNum - 1
-                        ? styles.dotDone
-                        : i === stepNum - 1
-                          ? styles.dotCurrent
-                          : styles.dotTodo
-                  }
+                  className={completed ? styles.progressFillDone : styles.progressFill}
+                  style={{ width: `${progressPct}%` }}
                 />
-              ))}
+              </div>
+              <span className={styles.progressLabel}>
+                {completed ? '完成' : `${progressPct}%`}
+              </span>
             </div>
           )}
         </div>

@@ -1,3 +1,24 @@
+.page {
+  composes: page from '../styles/shared.module.css';
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr 300px;
+    align-items: start;
+  }
+
+  .previewSticky {
+    position: sticky;
+    top: var(--space-lg);
+  }
+}
+
 .grid {
   display: grid;
   gap: var(--space-md);
@@ -5,7 +26,7 @@
 
 .footerNote {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
@@ -13,34 +34,56 @@
   color: var(--success);
   font-size: 0.875rem;
   font-weight: 500;
+  font-family: var(--font-mono);
 }
 
 .preview {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
+  background: color-mix(in srgb, var(--ai-panel) 50%, var(--surface));
+  border-color: color-mix(in srgb, var(--ai) 15%, var(--border-subtle));
+}
+
+.preview::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ai) 50%, transparent) 50%,
+    transparent
+  );
+}
+
+.previewLabel {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ai);
 }
 
 .previewSentence {
   margin: 0;
   font-size: 0.9rem;
-  line-height: 1.55;
+  line-height: 1.65;
   color: var(--text);
+  font-style: italic;
 }
 
 .previewChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .previewChip {
   display: inline-block;
-  padding: 5px 12px;
-  border: 1px solid var(--accent);
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--ai) 30%, transparent);
   border-radius: 999px;
-  background: var(--panel);
+  background: var(--ai-muted);
   color: var(--text);
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   line-height: 1.4;
 }

@@ -4,9 +4,9 @@
   gap: var(--space-md);
   min-height: 320px;
   padding: var(--space-md);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--ai) 15%, var(--border-subtle));
   border-radius: var(--radius-lg);
-  background: var(--ai-panel);
+  background: var(--bg-elevated);
 }
 
 .messages {
@@ -16,64 +16,97 @@
   gap: var(--space-sm);
   max-height: 360px;
   overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
 }
 
 .userMsg,
 .assistantMsg {
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius);
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
 }
 
 .userMsg {
   background: var(--surface);
   align-self: flex-end;
-  max-width: 92%;
+  max-width: 88%;
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border-subtle));
+  border-bottom-right-radius: 4px;
 }
 
 .assistantMsg {
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--ai-panel) 80%, var(--surface));
   align-self: flex-start;
   max-width: 92%;
+  border-color: color-mix(in srgb, var(--ai) 18%, var(--border-subtle));
+  border-bottom-left-radius: 4px;
 }
 
 .role {
   display: block;
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.userMsg .role {
+  color: color-mix(in srgb, var(--accent) 70%, var(--text-muted));
+}
+
+.assistantMsg .role {
+  color: color-mix(in srgb, var(--ai) 70%, var(--text-muted));
 }
 
 .userMsg p,
 .assistantMsg p {
   margin: 0;
   white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .understanding {
-  padding: var(--space-sm) var(--space-md);
-  border-left: 3px solid var(--accent);
-  background: var(--accent-muted);
+  padding: 12px 14px;
+  border-left: 3px solid var(--ai);
+  background: var(--ai-muted);
   border-radius: var(--radius);
 }
 
 .understanding p {
   margin: 4px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
 }
 
 .composer {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .input {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
+  padding: 11px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   font: inherit;
   resize: vertical;
+  min-height: 72px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--ai) 50%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 15%, transparent);
 }

@@ -134,6 +134,7 @@ export function PlaygroundPage() {
       />
 
       <div className={styles.persistWarn} role="status">
+        <span className={styles.persistLabel}>提示</span>
         刷新页面可能丢失未导出的 Playground 会话。
         <button type="button" className={styles.linkBtn} onClick={exportSession}>
           导出会话 JSON
@@ -145,8 +146,12 @@ export function PlaygroundPage() {
 
       {session.topics.length === 0 ? (
         <div className={styles.empty}>
+          <span className={styles.emptyIcon} aria-hidden>
+            ✦
+          </span>
+          <p className={styles.emptyKicker}>灵感实验室</p>
           <h2 className={styles.emptyTitle}>不知道写什么？</h2>
-          <p className={shared.muted}>
+          <p className={styles.emptyDesc}>
             我们将基于你的品牌档案生成 5–10 条可执行选题。无需先创建项目。
           </p>
           <button
@@ -167,7 +172,7 @@ export function PlaygroundPage() {
             </p>
           ) : null}
 
-          <section>
+          <section className={styles.section}>
             <h2 className={styles.sectionTitle}>选题清单</h2>
             <PlaygroundTopicCards
               topics={session.topics}

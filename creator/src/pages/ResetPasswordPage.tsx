@@ -37,10 +37,13 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <h2 className={styles.cardTitle}>设置新密码</h2>
-        <p className={styles.cardSubtitle}>为你的账号设置一个新密码。</p>
+    <div className={`${styles.page} ${styles.authOnly}`}>
+      <div className={styles.cardWrap}>
+        <form className={styles.card} onSubmit={handleSubmit}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>设置新密码</h2>
+            <p className={styles.cardSubtitle}>为你的账号设置一个新密码。</p>
+          </div>
         {error && (
           <p className={shared.error} role="alert">
             {error}
@@ -78,7 +81,8 @@ export function ResetPasswordPage() {
             返回登录
           </Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

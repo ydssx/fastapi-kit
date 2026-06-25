@@ -116,8 +116,13 @@ export function ProjectsPage() {
         description="通过流水线式的创作流程，高效完成优质内容的策划与制作。"
       />
 
-      <section className={styles.create}>
-        <h2 className={shared.panelTitle}>新建项目</h2>
+      <section className={styles.hero} aria-labelledby="create-project-heading">
+        <div>
+          <p className={styles.heroKicker}>开始创作</p>
+          <h2 id="create-project-heading" className={styles.heroTitle}>
+            新建内容项目
+          </h2>
+        </div>
         <div className={styles.createGrid}>
           <label className={shared.fieldLabel}>
             项目主题

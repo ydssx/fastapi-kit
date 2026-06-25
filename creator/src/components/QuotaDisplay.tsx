@@ -37,7 +37,7 @@ export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
       aria-label="本月用量"
     >
       <div className={styles.row}>
-        <span className={projectWarn ? styles.warnLabel : undefined}>
+        <span className={`${styles.label} ${projectWarn ? styles.warnLabel : ''}`}>
           完成 {usage.completed_projects}/{usage.completed_projects_limit}
         </span>
         <div
@@ -48,7 +48,7 @@ export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
         </div>
       </div>
       <div className={styles.row}>
-        <span className={pgWarn ? styles.warnLabel : undefined}>
+        <span className={`${styles.label} ${pgWarn ? styles.warnLabel : ''}`}>
           实验室 {usage.playground_calls}/{usage.playground_calls_limit}
         </span>
         <div
@@ -59,7 +59,7 @@ export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
         </div>
       </div>
       <div className={styles.row}>
-        <span className={aiWarn ? styles.warnLabel : undefined}>
+        <span className={`${styles.label} ${aiWarn ? styles.warnLabel : ''}`}>
           AI {usage.ai_calls}/{usage.ai_calls_limit}
         </span>
         <div

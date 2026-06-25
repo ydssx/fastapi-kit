@@ -6,8 +6,10 @@
 
 .legend {
   margin-bottom: var(--space-sm);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .pills {
@@ -21,17 +23,18 @@
   align-items: center;
   gap: 6px;
   min-height: 38px;
-  padding: 8px 14px;
-  border-radius: var(--radius);
+  padding: 8px 16px;
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 500;
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .pill:hover {
@@ -40,10 +43,11 @@
 }
 
 .active {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
   background: var(--accent-muted);
   color: var(--accent);
   font-weight: 600;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .emoji {

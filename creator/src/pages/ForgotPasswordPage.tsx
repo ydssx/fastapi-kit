@@ -27,10 +27,13 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <h2 className={styles.cardTitle}>找回密码</h2>
-        <p className={styles.cardSubtitle}>输入注册邮箱，我们将发送重置链接（需已配置邮件服务）。</p>
+    <div className={`${styles.page} ${styles.authOnly}`}>
+      <div className={styles.cardWrap}>
+        <form className={styles.card} onSubmit={handleSubmit}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>找回密码</h2>
+            <p className={styles.cardSubtitle}>输入注册邮箱，我们将发送重置链接（需已配置邮件服务）。</p>
+          </div>
         {message && <p className={styles.successBanner}>{message}</p>}
         {error && (
           <p className={shared.error} role="alert">
@@ -57,7 +60,8 @@ export function ForgotPasswordPage() {
             返回登录
           </Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

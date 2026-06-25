@@ -1,7 +1,7 @@
 .workspace {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 .editorCol {
@@ -15,8 +15,20 @@
 @media (min-width: 900px) {
   .workspace {
     display: grid;
-    grid-template-columns: 1fr minmax(280px, 36%);
+    grid-template-columns: 1fr minmax(280px, 34%);
     gap: var(--space-lg);
     align-items: start;
+  }
+
+  .editorCol {
+    padding-right: var(--space-sm);
+    border-right: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 899px) {
+  .aiCol {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: var(--space-md);
   }
 }

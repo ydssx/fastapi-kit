@@ -4,11 +4,14 @@
   align-items: stretch;
   gap: 16px;
   padding: 16px 18px;
-  min-height: 104px;
-  background: color-mix(in srgb, var(--surface) 95%, var(--bg));
+  min-height: 96px;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   color: inherit;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
   transition:
     border-color 0.22s ease,
     transform 0.18s ease,
@@ -16,18 +19,33 @@
     background 0.22s ease;
 }
 
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.22s ease;
+}
+
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
-  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  transform: translateX(2px);
   background: var(--surface);
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.24),
-    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.card:hover::before {
+  background: var(--accent);
 }
 
 .card:hover .chevron {
   color: var(--accent);
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 .thumb {
@@ -40,7 +58,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .top {
@@ -52,28 +70,65 @@
 
 .top strong {
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 400;
+  font-size: 1.05rem;
+  font-weight: 500;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .meta {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   line-height: 1.45;
+}
+
+.progressTrack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+  transition: width 0.3s ease;
+}
+
+.progressFillDone {
+  composes: progressFill;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success) 70%, var(--accent)), var(--success));
+}
+
+.progressLabel {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
 .dots {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 5px;
+  margin-top: 6px;
 }
 
 .dots span {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
@@ -83,16 +138,17 @@
 
 .dotCurrent {
   background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .dotTodo {
-  background: var(--border-subtle);
+  background: var(--border);
 }
 
 .chevron {
   align-self: center;
   color: var(--text-muted);
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   padding-left: 4px;
   transition:
     color 0.2s ease,
@@ -114,7 +170,7 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   cursor: pointer;
   transition:
     opacity 0.18s ease,

@@ -1,31 +1,50 @@
-.create {
+.page {
+  composes: page from '../styles/shared.module.css';
+}
+
+.hero {
   position: relative;
-  padding: clamp(20px, 3.5vw, 28px);
+  padding: clamp(24px, 4vw, 36px);
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 52%),
-    linear-gradient(225deg, color-mix(in srgb, var(--success) 4%, transparent), transparent 40%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent),
+    radial-gradient(ellipse 50% 50% at 0% 100%, color-mix(in srgb, var(--ai) 6%, transparent), transparent),
     var(--surface);
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-subtle));
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  box-shadow:
-    var(--shadow-md),
-    var(--shadow-glow);
+  gap: var(--space-lg);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
-.create::before {
+.hero::before {
   content: '';
   position: absolute;
-  top: -40%;
-  right: -10%;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
-  pointer-events: none;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--stage-line);
+}
+
+.heroKicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .createGrid {
@@ -33,7 +52,6 @@
   grid-template-columns: 1fr minmax(160px, 220px);
   gap: var(--space-md);
   align-items: end;
-  position: relative;
 }
 
 .createSpan2 {
@@ -48,7 +66,7 @@
 }
 
 .createActions button {
-  min-width: 168px;
+  min-width: 180px;
 }
 
 .section {
@@ -56,9 +74,14 @@
 }
 
 .sectionCount {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
+  border: 1px solid var(--border-subtle);
 }
 
 .list {
@@ -72,10 +95,12 @@
 
 .listPanel {
   composes: panel from '../styles/shared.module.css';
+  padding: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .completedSection {
-  opacity: 0.92;
+  opacity: 0.88;
 }
 
 @media (max-width: 720px) {

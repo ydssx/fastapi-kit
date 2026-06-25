@@ -1,68 +1,153 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
+  composes: page from '../styles/shared.module.css';
 }
 
 .persistWarn {
-  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 14px;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--warn) 25%, var(--border-subtle));
   background: var(--quota-high);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
+.persistLabel {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--warn);
+}
+
 .linkBtn {
-  margin-left: var(--space-sm);
   border: none;
   background: none;
   color: var(--accent);
   cursor: pointer;
   font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .empty {
-  padding: var(--space-xl);
+  position: relative;
+  padding: clamp(40px, 6vw, 64px) var(--space-xl);
   text-align: center;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  border: 1px dashed color-mix(in srgb, var(--ai) 30%, var(--border));
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--ai) 8%, transparent), transparent),
+    var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  overflow: hidden;
+}
+
+.empty::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ai) 60%, transparent) 50%,
+    transparent
+  );
+}
+
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  color: var(--ai);
+  background: var(--ai-muted);
+  border: 1px solid color-mix(in srgb, var(--ai) 25%, transparent);
+}
+
+.emptyKicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ai);
 }
 
 .emptyTitle {
-  margin: 0 0 var(--space-sm);
+  margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.6rem;
+  font-weight: 500;
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  letter-spacing: -0.02em;
+}
+
+.emptyDesc {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.section {
+  composes: panel from '../styles/shared.module.css';
 }
 
 .sectionTitle {
   margin: 0 0 var(--space-md);
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.25rem;
+  font-weight: 500;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
 }
 
 .refineSection {
-  margin-top: var(--space-md);
+  composes: panel from '../styles/shared.module.css';
+  background: var(--ai-panel);
+  border-color: color-mix(in srgb, var(--ai) 18%, var(--border-subtle));
+}
+
+.refineSection::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ai) 55%, transparent) 50%,
+    transparent
+  );
 }
 
 .brandWarn {
-  padding: var(--space-sm) var(--space-md);
+  padding: 10px 14px;
   border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   background: var(--accent-muted);
   color: var(--text-muted);
+  font-size: 0.88rem;
 }
 
 .brandWarn a {
   margin-left: var(--space-sm);
   color: var(--accent);
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
   .empty {
-    padding: var(--space-lg);
+    padding: var(--space-xl) var(--space-lg);
   }
 }

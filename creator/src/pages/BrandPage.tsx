@@ -61,37 +61,40 @@ export function BrandPage() {
         description="完善品牌档案，帮助 AI 更好理解你的创作边界与表达偏好。"
       />
 
-      <section className={shared.panel}>
-        <div className={styles.grid}>
-          {FIELDS.map((field) => (
-            <BrandField
-              key={field.key}
-              label={field.label}
-              hint={field.hint}
-              rows={field.rows}
-              value={form[field.key]}
-              onChange={(value) => setForm({ ...form, [field.key]: value })}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className={`${shared.panel} ${styles.preview}`}>
-        <h2 className={shared.panelTitle}>预览效果</h2>
-        {showUpdatedNotice && (
-          <p className={shared.notice}>品牌档案已更新，后续 AI 建议将应用新约束</p>
-        )}
-        <p className={styles.previewSentence}>{buildPreview(form)}</p>
-        {previewChips.length > 0 && (
-          <div className={styles.previewChips}>
-            {previewChips.map((chip) => (
-              <span key={chip.key} className={styles.previewChip}>
-                {chip.label}: {form[chip.key].trim()}
-              </span>
+      <div className={styles.layout}>
+        <section className={shared.panel}>
+          <div className={styles.grid}>
+            {FIELDS.map((field) => (
+              <BrandField
+                key={field.key}
+                label={field.label}
+                hint={field.hint}
+                rows={field.rows}
+                value={form[field.key]}
+                onChange={(value) => setForm({ ...form, [field.key]: value })}
+              />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+
+        <section className={`${shared.panel} ${styles.preview} ${styles.previewSticky}`}>
+          <p className={styles.previewLabel}>实时预览</p>
+          <h2 className={shared.panelTitle}>语气效果</h2>
+          {showUpdatedNotice && (
+            <p className={shared.notice}>品牌档案已更新，后续 AI 建议将应用新约束</p>
+          )}
+          <p className={styles.previewSentence}>{buildPreview(form)}</p>
+          {previewChips.length > 0 && (
+            <div className={styles.previewChips}>
+              {previewChips.map((chip) => (
+                <span key={chip.key} className={styles.previewChip}>
+                  {chip.label}: {form[chip.key].trim()}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>
 

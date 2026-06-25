@@ -3,41 +3,42 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 10px;
-  padding: clamp(28px, 5vw, 40px) 24px;
-  border: 1px dashed color-mix(in srgb, var(--accent) 28%, var(--border));
+  gap: 12px;
+  padding: clamp(32px, 5vw, 48px) 24px;
+  border: 1px dashed color-mix(in srgb, var(--border) 80%, var(--accent));
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
-    color-mix(in srgb, var(--surface) 70%, transparent);
+    radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--accent) 5%, transparent), transparent),
+    color-mix(in srgb, var(--bg-elevated) 60%, transparent);
 }
 
 .icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: var(--accent-muted);
   color: var(--accent);
-  font-size: 1.35rem;
-  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 15%, transparent);
+  font-size: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .title {
   margin: 4px 0 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
-  font-weight: 400;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .description {
   margin: 0;
   max-width: 28rem;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 0.88rem;
+  line-height: 1.65;
 }
 
 .actions {

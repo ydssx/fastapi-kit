@@ -1,51 +1,84 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .card {
   position: relative;
   text-align: left;
-  padding: var(--space-md);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  padding: var(--space-md) var(--space-md) var(--space-md) calc(var(--space-md) + 4px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.18s ease,
+    box-shadow 0.2s ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.2s ease;
 }
 
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-color: color-mix(in srgb, var(--ai) 35%, var(--border));
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+
+.card:hover::before {
+  background: color-mix(in srgb, var(--ai) 50%, transparent);
 }
 
 .active {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-muted);
+  border-color: color-mix(in srgb, var(--ai) 45%, var(--border));
+  background: color-mix(in srgb, var(--ai-muted) 60%, var(--surface));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--ai) 10%, transparent);
+}
+
+.active::before {
+  background: var(--ai);
 }
 
 .title {
   margin: 0 0 var(--space-sm);
   font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text);
+  letter-spacing: -0.01em;
+  padding-right: 48px;
 }
 
 .reason {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .badge {
   position: absolute;
   top: var(--space-sm);
   right: var(--space-sm);
-  font-size: 0.7rem;
-  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: var(--accent-muted);
-  color: var(--accent);
+  background: var(--ai-muted);
+  color: var(--ai);
+  border: 1px solid color-mix(in srgb, var(--ai) 30%, transparent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

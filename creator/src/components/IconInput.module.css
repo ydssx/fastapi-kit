@@ -2,11 +2,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: var(--bg);
-  transition: border-color 0.15s ease;
+  background: var(--bg-elevated);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .wrap:focus-within {

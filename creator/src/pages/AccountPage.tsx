@@ -39,15 +39,15 @@ export function AccountPage() {
   }
 
   return (
-    <div className={`${shared.page} ${styles.page}`}>
+    <div className={styles.page}>
       <PageHeader title="账号设置" description="管理登录邮箱与密码。" />
-      <section className={styles.card}>
-        <dl className={styles.meta}>
-          <div>
-            <dt>登录邮箱</dt>
-            <dd>{user?.email}</dd>
-          </div>
-        </dl>
+
+      <section className={styles.profileCard}>
+        <p className={styles.profileLabel}>当前账号</p>
+        <p className={styles.email}>{user?.email}</p>
+      </section>
+
+      <section className={styles.passwordCard}>
         <form className={styles.form} onSubmit={handleSubmit}>
           <h2 className={shared.panelTitle}>修改密码</h2>
           {error && (

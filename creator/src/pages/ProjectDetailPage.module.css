@@ -24,22 +24,25 @@
 
 .stepBadge {
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--accent-muted);
   color: var(--accent);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .titleInputCompact {
   width: 100%;
-  font: inherit;
-  font-size: clamp(1.125rem, 2.5vw, 1.4rem);
-  font-weight: 600;
-  line-height: 1.3;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: var(--text);
   background: transparent;
   border: none;
@@ -55,16 +58,26 @@
 
 .stickyWizardHead {
   position: sticky;
-  top: 57px;
+  top: var(--layout-sticky-top, 0px);
   z-index: 5;
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  padding: var(--space-sm) 0 var(--space-md);
+  padding: var(--space-md) 0;
   margin-bottom: var(--space-sm);
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.stickyWizardHead::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 48px;
+  height: 2px;
+  background: var(--stage-line);
 }
 
 .hero {
@@ -125,9 +138,12 @@
 
 .heroStats dt {
   margin: 0;
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   color: var(--text-muted);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .heroStats dd {
