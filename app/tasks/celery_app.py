@@ -27,12 +27,12 @@ def _beat_schedule(settings: Settings) -> dict[str, dict[str, object]]:
     }
 
 
-@worker_process_init.connect
+@worker_process_init.connect  # type: ignore[untyped-decorator]
 def configure_worker_logging(**_kwargs: object) -> None:
     setup_logging(get_settings())
 
 
-@beat_init.connect
+@beat_init.connect  # type: ignore[untyped-decorator]
 def configure_beat_logging(**_kwargs: object) -> None:
     setup_logging(get_settings())
 
