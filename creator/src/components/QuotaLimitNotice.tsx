@@ -1,6 +1,6 @@
 import shared from '../styles/shared.module.css'
 
-export type QuotaLimitKind = 'ai' | 'projects'
+export type QuotaLimitKind = 'ai' | 'projects' | 'playground'
 
 interface QuotaLimitNoticeProps {
   kind: QuotaLimitKind
@@ -15,6 +15,10 @@ const COPY: Record<QuotaLimitKind, { title: string; body: string }> = {
   projects: {
     title: '完整项目额度已用尽',
     body: '本月可完成的流水线项目数已达上限。升级 Pro 可创建更多项目，或等待下月重置。',
+  },
+  playground: {
+    title: 'Playground 额度已用尽',
+    body: '本月灵感实验室调用次数已达上限。升级 Pro 可获更高额度，或等待下月重置。',
   },
 }
 
@@ -34,5 +38,6 @@ export function QuotaLimitNotice({ kind, plan }: QuotaLimitNoticeProps) {
 export function quotaLimitKindFromCode(code: number): QuotaLimitKind | null {
   if (code === 40201) return 'ai'
   if (code === 40202) return 'projects'
+  if (code === 40203) return 'playground'
   return null
 }

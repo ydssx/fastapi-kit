@@ -1,0 +1,68 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.persistWarn {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--quota-high);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.linkBtn {
+  margin-left: var(--space-sm);
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.empty {
+  padding: var(--space-xl);
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.emptyTitle {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6rem;
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.25rem;
+}
+
+.refineSection {
+  margin-top: var(--space-md);
+}
+
+.brandWarn {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  background: var(--accent-muted);
+  color: var(--text-muted);
+}
+
+.brandWarn a {
+  margin-left: var(--space-sm);
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .empty {
+    padding: var(--space-lg);
+  }
+}

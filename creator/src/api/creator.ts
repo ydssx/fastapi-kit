@@ -1,6 +1,11 @@
 import type {
   BrandProfile,
   Pipeline,
+  PlaygroundMessage,
+  PlaygroundHandoffResponse,
+  PlaygroundRefineResponse,
+  PlaygroundTopic,
+  PlaygroundTopicsResponse,
   Project,
   PublishChecklistItem,
   Usage,
@@ -113,6 +118,33 @@ export function openStep(projectId: string, stepKey: string): Promise<Project> {
 
 export function fetchUsage(): Promise<Usage> {
   return apiFetch<Usage>('/api/v1/creator/usage')
+}
+
+export function playgroundTopics(): Promise<PlaygroundTopicsResponse> {
+  return apiFetch('/api/v1/creator/playground/topics', { method: 'POST' })
+}
+
+export function playgroundRefine(payload: {
+  selected_topic: PlaygroundTopic
+  messages: PlaygroundMessage[]
+}): Promise<PlaygroundRefineResponse> {
+  return apiFetch('/api/v1/creator/playground/refine', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function playgroundHandoff(payload: {
+  pipeline_id: string
+  title: string
+  brief: string
+  hooks?: string
+  raw_notes?: string
+}): Promise<PlaygroundHandoffResponse> {
+  return apiFetch('/api/v1/creator/playground/handoff', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }
 
 export function fetchBrand(): Promise<BrandProfile> {

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -97,7 +98,46 @@ class UsageOut(BaseModel):
     completed_projects_limit: int
     ai_calls: int
     ai_calls_limit: int
+    playground_calls: int
+    playground_calls_limit: int
     plan: str
+
+
+class PlaygroundTopic(BaseModel):
+    title: str = Field(max_length=200)
+    reason: str = Field(max_length=500)
+
+
+class PlaygroundTopicsOut(BaseModel):
+    topics: list[PlaygroundTopic]
+    brand_empty: bool = False
+
+
+class PlaygroundMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=4000)
+
+
+class PlaygroundRefineIn(BaseModel):
+    selected_topic: PlaygroundTopic
+    messages: list[PlaygroundMessage] = Field(default_factory=list, max_length=40)
+
+
+class PlaygroundRefineOut(BaseModel):
+    reply: str
+    understanding: str | None = None
+
+
+class PlaygroundHandoffIn(BaseModel):
+    pipeline_id: str
+    title: str = Field(min_length=1, max_length=500)
+    brief: str = Field(min_length=1, max_length=5000)
+    hooks: str | None = Field(default=None, max_length=5000)
+    raw_notes: str | None = Field(default=None, max_length=10000)
+
+
+class PlaygroundHandoffOut(BaseModel):
+    project_id: uuid.UUID
 
 
 class AiSuggestIn(BaseModel):

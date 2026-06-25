@@ -77,7 +77,33 @@ export interface Usage {
   completed_projects_limit: number
   ai_calls: number
   ai_calls_limit: number
+  playground_calls: number
+  playground_calls_limit: number
   plan: string
+}
+
+export interface PlaygroundTopic {
+  title: string
+  reason: string
+}
+
+export interface PlaygroundMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface PlaygroundTopicsResponse {
+  topics: PlaygroundTopic[]
+  brand_empty: boolean
+}
+
+export interface PlaygroundRefineResponse {
+  reply: string
+  understanding: string | null
+}
+
+export interface PlaygroundHandoffResponse {
+  project_id: string
 }
 
 export interface BrandProfile {

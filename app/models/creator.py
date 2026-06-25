@@ -111,6 +111,7 @@ class CreatorUsageCounter(Base):
     year_month: Mapped[str] = mapped_column(String(7), nullable=False)
     completed_projects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     ai_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    playground_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
 
 class CreatorEvent(Base):

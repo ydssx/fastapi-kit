@@ -22,10 +22,13 @@ function isExhausted(used: number, limit: number) {
 export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
   const projectPct = pct(usage.completed_projects, usage.completed_projects_limit)
   const aiPct = pct(usage.ai_calls, usage.ai_calls_limit)
+  const pgPct = pct(usage.playground_calls, usage.playground_calls_limit)
   const projectWarn = isHigh(usage.completed_projects, usage.completed_projects_limit)
   const aiWarn = isHigh(usage.ai_calls, usage.ai_calls_limit)
+  const pgWarn = isHigh(usage.playground_calls, usage.playground_calls_limit)
   const projectFull = isExhausted(usage.completed_projects, usage.completed_projects_limit)
   const aiFull = isExhausted(usage.ai_calls, usage.ai_calls_limit)
+  const pgFull = isExhausted(usage.playground_calls, usage.playground_calls_limit)
 
   return (
     <div
@@ -42,6 +45,17 @@ export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
           aria-hidden
         >
           <span style={{ width: `${projectPct}%` }} />
+        </div>
+      </div>
+      <div className={styles.row}>
+        <span className={pgWarn ? styles.warnLabel : undefined}>
+          实验室 {usage.playground_calls}/{usage.playground_calls_limit}
+        </span>
+        <div
+          className={`${styles.bar} ${pgWarn ? styles.barWarn : ''} ${pgFull ? styles.barFull : ''}`}
+          aria-hidden
+        >
+          <span style={{ width: `${pgPct}%` }} />
         </div>
       </div>
       <div className={styles.row}>

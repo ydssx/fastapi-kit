@@ -71,6 +71,7 @@ class Settings(BaseSettings):
 
     creator_free_completed_projects_per_month: int = 2
     creator_free_ai_calls_per_month: int = 50
+    creator_free_playground_calls_per_month: int = 30
     creator_pro_multiplier: int = 10
 
     app_public_url: str = "https://localhost"

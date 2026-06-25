@@ -6,6 +6,7 @@ import { AccountPage } from './pages/AccountPage'
 import { BrandPage } from './pages/BrandPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { LoginPage } from './pages/LoginPage'
+import { PlaygroundPage } from './pages/PlaygroundPage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
@@ -21,6 +22,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<CreatorLayout />}>
               <Route index element={<ProjectsPage />} />
+              <Route path="playground" element={<PlaygroundPage />} />
               <Route path="projects/:id" element={<ProjectDetailPage />} />
               <Route path="brand" element={<BrandPage />} />
               <Route path="account" element={<AccountPage />} />
