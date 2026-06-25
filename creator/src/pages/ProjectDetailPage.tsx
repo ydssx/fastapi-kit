@@ -23,7 +23,11 @@ import { ContextChips } from '../components/ContextChips'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { PublishChecklist } from '../components/PublishChecklist'
-import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
+import {
+  QuotaLimitNotice,
+  quotaLimitKindFromCode,
+  type QuotaLimitKind,
+} from '../components/QuotaLimitNotice'
 import { StepEditorPanel } from '../components/StepEditorPanel'
 import { StepProgress } from '../components/StepProgress'
 import { StepWorkspace } from '../components/StepWorkspace'
@@ -70,7 +74,7 @@ export function ProjectDetailPage() {
   const [suggestion, setSuggestion] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
-  const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
+  const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const pipeline = pipelines.find((p) => p.id === project?.pipeline_id)

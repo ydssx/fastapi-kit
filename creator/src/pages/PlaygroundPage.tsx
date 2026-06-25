@@ -9,10 +9,8 @@ import {
   playgroundTopics,
 } from '../api/creator'
 import { LoadingBlock } from '../components/LoadingBlock'
-import {
-  HandoffPayload,
-  PlaygroundHandoffModal,
-} from '../components/PlaygroundHandoffModal'
+import { PlaygroundHandoffModal } from '../components/PlaygroundHandoffModal'
+import type { HandoffPayload } from '../components/PlaygroundHandoffModal'
 import { PageHeader } from '../components/PageHeader'
 import { PlaygroundRefinePanel } from '../components/PlaygroundRefinePanel'
 import {

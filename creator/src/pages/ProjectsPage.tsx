@@ -8,7 +8,11 @@ import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { ProjectCard } from '../components/ProjectCard'
-import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
+import {
+  QuotaLimitNotice,
+  quotaLimitKindFromCode,
+  type QuotaLimitKind,
+} from '../components/QuotaLimitNotice'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
@@ -34,7 +38,7 @@ export function ProjectsPage() {
   const [title, setTitle] = useState('')
   const [pipelineId, setPipelineId] = useState('short_video')
   const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
-  const [quotaError, setQuotaError] = useState<'ai' | 'projects' | null>(null)
+  const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
 
   const activeProjects = useMemo(
     () =>
