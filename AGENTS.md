@@ -13,7 +13,7 @@
 - `app/db/`：异步 SQLAlchemy session 与数据库基础设施。
 - `app/cache/`、`app/tasks/`、`app/middleware/`：Redis、Celery 与 HTTP 中间件。
 
-迁移文件在 `alembic/`。测试在 `tests/`，API 测试放在 `tests/api/`。脚本在 `scripts/`，Docker 相关文件在仓库根目录和 `docker/`。`docs/solutions/` 按类别归档过往方案与模式（bugs、架构决策等），YAML frontmatter 含 `module`、`tags`、`problem_type`；在实现或排查已记录领域时可供检索。
+迁移文件在 `alembic/`。测试在 `tests/`，API 测试放在 `tests/api/`。脚本在 `scripts/`，Docker 相关文件在仓库根目录和 `docker/`。`docs/solutions/` 按类别归档过往方案与模式（bugs、架构决策等），YAML frontmatter 含 `module`、`tags`、`problem_type`；在实现或排查已记录领域时可供检索。`CONCEPTS.md` 为共享领域词汇（实体、命名流程、状态概念），熟悉 creator/流水线等领域时可供查阅。
 
 ## 构建、测试与开发命令
 
