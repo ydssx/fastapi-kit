@@ -73,3 +73,57 @@
 不要提交 `.env` 或真实密钥。使用 `.env.example` 记录配置项。生产环境下默认 `JWT_SECRET` 会被拒绝。写库路由如需调度 Celery，应确保数据库提交完成后再调用 `.delay()`；适合时使用 `BackgroundTasks`。
 
 Docker Compose 中 `migrate` 服务在 API 启动前执行 `alembic upgrade head`（多副本不会并行迁移）。经 Caddy 暴露 API 时，在 `api` 服务上设置 `TRUST_PROXY_HEADERS=true`，限流才按真实客户端 IP 计数；本机直连 uvicorn 时保持默认 `false`。
+
+## Cursor Cloud specific instructions
+
+### Environment prerequisites
+
+The VM update script handles `uv sync --all-extras` and `cd admin && npm ci`. The following system dependencies are pre-installed and must be present: Python 3.11 (`deadsnakes/ppa`), `uv`, Docker CE with `fuse-overlayfs` storage driver and `iptables-legacy` (needed for Docker-in-Docker inside the Firecracker VM).
+
+### Starting Docker daemon
+
+Docker must be started manually on each session:
+
+```bash
+sudo dockerd &>/tmp/dockerd.log &
+sleep 3
+```
+
+### Running the full stack
+
+1. Ensure `.env` exists (`cp .env.example .env` if missing).
+2. Generate TLS certs if `docker/certs/cert.pem` does not exist (use `openssl` directly; the `scripts/gen_dev_certs.sh` uses `set -euo pipefail` which may fail under `sh`):
+   ```bash
+   mkdir -p docker/certs
+   openssl req -x509 -nodes -days 825 -newkey rsa:2048 \
+     -keyout docker/certs/key.pem -out docker/certs/cert.pem \
+     -subj "/CN=localhost" \
+     -addext "subjectAltName=DNS:localhost,DNS:*.localhost,IP:127.0.0.1,IP:::1"
+   chmod 600 docker/certs/key.pem
+   ```
+3. Start the stack: `sudo docker compose up --build -d`
+4. Verify: `curl -k -s https://localhost/health` should return `{"code":0,...,"status":"ok"}`.
+
+### Running tests
+
+Tests need Postgres + Redis running. Set env vars to point at already-running Docker containers (to skip testcontainers):
+
+```bash
+export TEST_DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/fastapi_kit"
+export TEST_REDIS_URL="redis://localhost:6379/0"
+uv run pytest -v
+```
+
+**Gotcha**: Tests may drop tables during teardown. If the `migrate` Docker service fails with "Can't locate revision identified by 'stale-revision'", fix with:
+```bash
+sudo docker exec <postgres-container> psql -U postgres -d fastapi_kit -c "DROP TABLE IF EXISTS alembic_version CASCADE;"
+uv run alembic upgrade head
+```
+
+### Lint / type-check / build
+
+Standard commands per `构建、测试与开发命令` in this file. Key commands: `uv run ruff check .`, `uv run mypy app`, `cd admin && npm run build`.
+
+### Mypy known pre-existing errors
+
+`app/tasks/celery_app.py` has 2 `untyped-decorator` errors from Celery signal decorators — these are pre-existing and not blocking.
