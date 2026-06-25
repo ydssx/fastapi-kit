@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator, Generator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.cache.redis import close_redis_pool, init_redis_pool
@@ -11,6 +12,7 @@ from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.main import create_app
 from app.models import Base
+from app.services.migration_status import _alembic_head_revision
 
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-jwt-signing-32chars")
@@ -67,6 +69,7 @@ def test_settings(postgres_url: str, redis_url: str) -> Settings:
         redis_url=redis_url,
         jwt_secret="test-secret-key-for-jwt-signing-32chars",
         rate_limit_per_minute=1000,
+        llm_api_key=None,
     )
 
 
@@ -75,6 +78,19 @@ async def db_engine(test_settings: Settings):
     engine = create_async_engine(test_settings.database_url_str, pool_pre_ping=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        head = _alembic_head_revision()
+        if head is not None:
+            await conn.execute(
+                text(
+                    "CREATE TABLE IF NOT EXISTS alembic_version "
+                    "(version_num VARCHAR(32) NOT NULL)"
+                )
+            )
+            await conn.execute(text("DELETE FROM alembic_version"))
+            await conn.execute(
+                text("INSERT INTO alembic_version (version_num) VALUES (:rev)"),
+                {"rev": head},
+            )
     yield engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -123,10 +139,14 @@ async def client(
     config_module.get_settings.cache_clear()
     monkeypatch.setattr(config_module, "get_settings", lambda: test_settings)
 
-    # Middleware calls get_settings() directly (not via FastAPI Depends).
-    import app.middleware.rate_limit as rate_limit_middleware
-
-    rate_limit_middleware.get_settings = lambda: test_settings  # type: ignore[method-assign]
+    # Modules that bind get_settings at import time must be patched separately.
+    for module_path in (
+        "app.middleware.rate_limit",
+        "app.services.creator_ai",
+        "app.services.creator_playground",
+        "app.services.creator_usage",
+    ):
+        monkeypatch.setattr(f"{module_path}.get_settings", lambda: test_settings)
 
     await init_redis_pool(test_settings)
 

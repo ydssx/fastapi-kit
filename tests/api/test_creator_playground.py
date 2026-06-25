@@ -13,7 +13,8 @@ TOPICS_JSON = """{"topics": [
 
 
 @pytest.mark.asyncio
-async def test_playground_topics_without_key(client: AsyncClient) -> None:
+async def test_playground_topics_without_key(client: AsyncClient, test_settings) -> None:
+    test_settings.llm_api_key = None
     token = await register_token(client, "pg-no-key@example.com")
     response = await client.post(
         "/api/v1/creator/playground/topics",

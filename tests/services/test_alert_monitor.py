@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.cache.redis import close_redis_pool, init_redis_pool
+from app.cache.redis import close_redis_pool, get_redis_client, init_redis_pool
 from app.core.alert_keys import (
     ALERT_DEDUPE_PREFIX,
     ALERT_STATE_BEAT,
@@ -15,23 +15,25 @@ from app.repositories.alert import AlertSettingsRepository
 from app.services.alert_monitor import AlertMonitorService
 
 
+async def _reset_alert_redis() -> None:
+    await get_redis_client().flushdb()
+
+
 @pytest.mark.asyncio
 async def test_alert_monitor_skips_without_webhook(db_engine, test_settings) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             repo = AlertSettingsRepository(session)
             row = await repo.get_or_create()
             row.webhook_url = None
             await session.commit()
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
     finally:
         await close_redis_pool()
@@ -46,6 +48,7 @@ async def test_alert_monitor_ready_failed(
 ) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     sent: list[str] = []
@@ -70,15 +73,12 @@ async def test_alert_monitor_ready_failed(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
             await session.commit()
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "ready_failed" in sent
@@ -97,6 +97,7 @@ async def test_alert_monitor_ready_recovered_after_failure(
 ) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     sent: list[str] = []
@@ -121,9 +122,6 @@ async def test_alert_monitor_ready_recovered_after_failure(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
@@ -132,7 +130,7 @@ async def test_alert_monitor_ready_recovered_after_failure(
 
             await redis.set(ALERT_STATE_READY, "failed")
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "ready_recovered" in sent
@@ -151,6 +149,7 @@ async def test_alert_monitor_beat_missing(
 ) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     sent: list[str] = []
@@ -175,15 +174,12 @@ async def test_alert_monitor_beat_missing(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
             await session.commit()
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "beat_missing" in sent
@@ -202,6 +198,7 @@ async def test_alert_monitor_beat_recovered_after_missing(
 ) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     sent: list[str] = []
@@ -226,9 +223,6 @@ async def test_alert_monitor_beat_recovered_after_missing(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
@@ -237,7 +231,7 @@ async def test_alert_monitor_beat_recovered_after_missing(
 
             await redis.set(ALERT_STATE_BEAT, "missing")
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "beat_recovered" in sent
@@ -256,6 +250,7 @@ async def test_alert_monitor_dedupe_skips_repeat_ready_failed(
 ) -> None:
     get_settings.cache_clear()
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     call_count = 0
@@ -281,15 +276,12 @@ async def test_alert_monitor_dedupe_skips_repeat_ready_failed(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
             await session.commit()
 
-            service = AlertMonitorService(session, redis, settings)
+            service = AlertMonitorService(session, redis, test_settings)
             await service.run_check()
             await service.run_check()
             await session.commit()
@@ -312,6 +304,7 @@ async def test_alert_monitor_workers_missing_after_duration(
     test_settings.alert_worker_zero_enabled = True
     test_settings.alert_worker_zero_duration_seconds = 60
     await init_redis_pool(test_settings)
+    await _reset_alert_redis()
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
 
     sent: list[str] = []
@@ -336,10 +329,14 @@ async def test_alert_monitor_workers_missing_after_duration(
 
     try:
         async with session_factory() as session:
-            settings = get_settings()
-            from app.cache.redis import get_redis_client
-
             redis = get_redis_client()
+            await redis.delete(
+                ALERT_STATE_READY,
+                ALERT_STATE_BEAT,
+                "alert:state:workers",
+                ALERT_WORKER_ZERO_SINCE,
+                f"{ALERT_DEDUPE_PREFIX}workers_missing",
+            )
             row = await AlertSettingsRepository(session).get_or_create()
             row.webhook_url = "https://example.com/hook"
             await session.commit()
@@ -347,7 +344,7 @@ async def test_alert_monitor_workers_missing_after_duration(
             since = (datetime.now(UTC) - timedelta(seconds=120)).isoformat()
             await redis.set(ALERT_WORKER_ZERO_SINCE, since)
 
-            await AlertMonitorService(session, redis, settings).run_check()
+            await AlertMonitorService(session, redis, test_settings).run_check()
             await session.commit()
 
             assert "workers_missing" in sent

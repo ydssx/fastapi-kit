@@ -5,7 +5,8 @@ from tests.api.creator_helpers import auth_headers, create_short_video_project, 
 
 
 @pytest.mark.asyncio
-async def test_ai_suggest_without_key(client: AsyncClient) -> None:
+async def test_ai_suggest_without_key(client: AsyncClient, test_settings) -> None:
+    test_settings.llm_api_key = None
     token = await register_token(client, "creator-ai@example.com")
     project = await create_short_video_project(client, token)
     response = await client.post(
