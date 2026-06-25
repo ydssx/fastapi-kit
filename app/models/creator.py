@@ -28,6 +28,7 @@ class ContentProject(Base):
     status: Mapped[str] = mapped_column(String(30), default="in_progress", nullable=False)
     current_step_key: Mapped[str] = mapped_column(String(50), nullable=False)
     target_platforms: Mapped[list[str]] = mapped_column(JSONB, default=list, nullable=False)
+    primary_platform_key: Mapped[str | None] = mapped_column(String(50), nullable=True)
     draft_content: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict, nullable=False)
     publish_checklist_state: Mapped[dict[str, bool]] = mapped_column(
         JSONB, default=dict, nullable=False

@@ -23,11 +23,13 @@ class ProjectCreate(BaseModel):
     pipeline_id: str
     title: str = Field(min_length=1, max_length=500)
     target_platform_keys: list[str] = Field(default_factory=list)
+    primary_platform_key: str | None = None
 
 
 class ProjectUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=500)
     target_platform_keys: list[str] | None = None
+    primary_platform_key: str | None = None
 
 
 class PublishProgressOut(BaseModel):
@@ -69,6 +71,7 @@ class ProjectOut(BaseModel):
     status: str
     current_step_key: str
     target_platforms: list[str]
+    primary_platform_key: str | None = None
     draft_content: dict[str, str]
     publish_checklist_state: dict[str, bool]
     created_at: datetime

@@ -28,6 +28,7 @@ export function createProject(payload: {
   pipeline_id: string
   title: string
   target_platform_keys: string[]
+  primary_platform_key?: string | null
 }): Promise<Project> {
   return apiFetch<Project>('/api/v1/creator/projects', {
     method: 'POST',
@@ -95,7 +96,11 @@ export function completeProject(projectId: string): Promise<Project> {
 
 export function updateProject(
   projectId: string,
-  payload: { title?: string; target_platform_keys?: string[] },
+  payload: {
+    title?: string
+    target_platform_keys?: string[]
+    primary_platform_key?: string | null
+  },
 ): Promise<Project> {
   return apiFetch<Project>(`/api/v1/creator/projects/${projectId}`, {
     method: 'PATCH',

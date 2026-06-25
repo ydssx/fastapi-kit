@@ -57,6 +57,7 @@ class CreatorAiService:
             brand_taboos=brand.taboos,
             brand_structure=brand.structure_notes,
             context=context,
+            primary_platform_key=project.primary_platform_key,
             adjustment=adjustment,
         )
         suggestion = await self.llm.complete(system, user_prompt)

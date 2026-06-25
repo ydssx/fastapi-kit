@@ -1,4 +1,5 @@
 from app.creator.pipelines import get_pipeline
+from app.creator.platform_prompts import build_platform_prompt_section
 
 
 def build_step_prompt(
@@ -11,6 +12,7 @@ def build_step_prompt(
     brand_taboos: str,
     brand_structure: str,
     context: str,
+    primary_platform_key: str | None = None,
     adjustment: str | None = None,
 ) -> tuple[str, str]:
     pipeline = get_pipeline(pipeline_id)
@@ -31,6 +33,13 @@ def build_step_prompt(
         )
     if context.strip():
         user_parts.append(f"\n已确认上文:\n{context}")
+    platform_section = build_platform_prompt_section(
+        primary_platform_key=primary_platform_key,
+        pipeline_id=pipeline_id,
+        step_key=step_key,
+    )
+    if platform_section:
+        user_parts.append(platform_section)
     user_parts.append(f"\n请生成「{step.title}」内容。")
     if adjustment:
         user_parts.append(f"\n额外要求: {adjustment}")

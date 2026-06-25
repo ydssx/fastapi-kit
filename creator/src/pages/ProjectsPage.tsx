@@ -38,7 +38,19 @@ export function ProjectsPage() {
   const [title, setTitle] = useState('')
   const [pipelineId, setPipelineId] = useState('short_video')
   const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
+  const [primaryPlatform, setPrimaryPlatform] = useState<string>('xiaohongshu')
   const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
+
+  function handlePlatformsChange(next: string[]) {
+    setPlatforms(next)
+    if (next.length === 1) {
+      setPrimaryPlatform(next[0]!)
+    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
+      setPrimaryPlatform('')
+    }
+  }
+
+  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
 
   const activeProjects = useMemo(
     () =>
@@ -58,6 +70,7 @@ export function ProjectsPage() {
         pipeline_id: pipelineId,
         title,
         target_platform_keys: platforms,
+        primary_platform_key: platforms.length === 1 ? platforms[0] : primaryPlatform || null,
       }),
     onSuccess: (project) => {
       setQuotaError(null)
@@ -85,7 +98,8 @@ export function ProjectsPage() {
     deleteMut.mutate(projectId)
   }
 
-  const canCreate = title.trim().length > 0 && platforms.length > 0 && !createMut.isPending
+  const canCreate =
+    title.trim().length > 0 && platforms.length > 0 && primaryReady && !createMut.isPending
 
   function renderProjectCards(items: typeof projects) {
     return items.map((p) => {
@@ -151,7 +165,15 @@ export function ProjectsPage() {
             </select>
           </label>
           <div className={styles.createSpan2}>
-            <PlatformPicker options={PLATFORMS} value={platforms} onChange={setPlatforms} legend="发布平台" />
+            <PlatformPicker
+              options={PLATFORMS}
+              value={platforms}
+              onChange={handlePlatformsChange}
+              legend="发布平台"
+              showPrimary
+              primaryKey={primaryPlatform || null}
+              onPrimaryChange={setPrimaryPlatform}
+            />
           </div>
           <div className={styles.createActions}>
             <button

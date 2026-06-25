@@ -22,15 +22,22 @@ async def create_short_video_project(
     *,
     title: str = "测试选题",
     platforms: list[str] | None = None,
+    primary_platform_key: str | None = None,
 ) -> dict:
+    platform_keys = platforms or ["xiaohongshu", "wechat"]
+    payload: dict = {
+        "pipeline_id": "short_video",
+        "title": title,
+        "target_platform_keys": platform_keys,
+    }
+    if primary_platform_key is not None:
+        payload["primary_platform_key"] = primary_platform_key
+    elif len(platform_keys) > 1:
+        payload["primary_platform_key"] = platform_keys[0]
     response = await client.post(
         "/api/v1/creator/projects",
         headers=auth_headers(token),
-        json={
-            "pipeline_id": "short_video",
-            "title": title,
-            "target_platform_keys": platforms or ["xiaohongshu", "wechat"],
-        },
+        json=payload,
     )
     assert response.status_code == 201
     return response.json()["data"]

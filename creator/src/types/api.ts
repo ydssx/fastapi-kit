@@ -48,6 +48,7 @@ export interface Project {
   status: string
   current_step_key: string
   target_platforms: string[]
+  primary_platform_key: string | null
   draft_content: Record<string, string>
   publish_checklist_state: Record<string, boolean>
   created_at: string

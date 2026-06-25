@@ -88,6 +88,57 @@ async def test_update_title_and_platforms(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_single_platform_auto_primary(client: AsyncClient) -> None:
+    token = await register_token(client, "creator-primary-auto@example.com")
+    response = await client.post(
+        "/api/v1/creator/projects",
+        headers=auth_headers(token),
+        json={
+            "pipeline_id": "short_video",
+            "title": "单平台",
+            "target_platform_keys": ["xiaohongshu"],
+        },
+    )
+    assert response.status_code == 201
+    assert response.json()["data"]["primary_platform_key"] == "xiaohongshu"
+
+
+@pytest.mark.asyncio
+async def test_create_multi_platform_requires_primary(client: AsyncClient) -> None:
+    token = await register_token(client, "creator-primary-req@example.com")
+    response = await client.post(
+        "/api/v1/creator/projects",
+        headers=auth_headers(token),
+        json={
+            "pipeline_id": "short_video",
+            "title": "多平台",
+            "target_platform_keys": ["xiaohongshu", "wechat"],
+        },
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == 40025
+
+
+@pytest.mark.asyncio
+async def test_update_platforms_clears_invalid_primary(client: AsyncClient) -> None:
+    token = await register_token(client, "creator-primary-clear@example.com")
+    project = await create_short_video_project(
+        client,
+        token,
+        platforms=["xiaohongshu", "wechat"],
+        primary_platform_key="xiaohongshu",
+    )
+
+    patch = await client.patch(
+        f"/api/v1/creator/projects/{project['id']}",
+        headers=auth_headers(token),
+        json={"target_platform_keys": ["douyin", "wechat"]},
+    )
+    assert patch.status_code == 200
+    assert patch.json()["data"]["primary_platform_key"] is None
+
+
+@pytest.mark.asyncio
 async def test_update_platforms_blocked_on_publish_step(client: AsyncClient) -> None:
     token = await register_token(client, "creator-patch-pub@example.com")
     project = await create_short_video_project(client, token)

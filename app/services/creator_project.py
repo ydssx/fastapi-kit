@@ -73,6 +73,11 @@ class CreatorProjectService:
             status="in_progress",
             current_step_key=first_step_key(payload.pipeline_id),
             target_platforms=payload.target_platform_keys,
+            primary_platform_key=self._validate_primary_platform(
+                payload.target_platform_keys,
+                payload.primary_platform_key,
+                require_when_multi=True,
+            ),
             draft_content={},
             publish_checklist_state={},
         )
@@ -87,6 +92,47 @@ class CreatorProjectService:
     async def list_projects(self, user: User) -> list[ProjectOut]:
         rows = await self.projects.list_for_user(user.id)
         return [await self._to_out(row, include_artifacts=False) for row in rows]
+
+    @staticmethod
+    def _validate_primary_platform(
+        target_platform_keys: list[str],
+        primary_platform_key: str | None,
+        *,
+        require_when_multi: bool,
+    ) -> str | None:
+        platforms = list(dict.fromkeys(target_platform_keys))
+        if not platforms:
+            return None
+        if len(platforms) == 1:
+            return platforms[0]
+        if primary_platform_key is None:
+            if require_when_multi:
+                raise AppException(
+                    "Primary platform is required when multiple targets are selected",
+                    code=40025,
+                    status_code=400,
+                )
+            return None
+        if primary_platform_key not in platforms:
+            raise AppException(
+                "Primary platform must be one of the target platforms",
+                code=40025,
+                status_code=400,
+            )
+        return primary_platform_key
+
+    @staticmethod
+    def _sync_primary_after_platform_change(project: ContentProject) -> None:
+        platforms = list(project.target_platforms or [])
+        if not platforms:
+            project.primary_platform_key = None
+            return
+        if len(platforms) == 1:
+            project.primary_platform_key = platforms[0]
+            return
+        if project.primary_platform_key in platforms:
+            return
+        project.primary_platform_key = None
 
     async def get_project(self, user: User, project_id: uuid.UUID) -> ProjectOut:
         project = await self._get_owned(user, project_id)
@@ -116,6 +162,20 @@ class CreatorProjectService:
                 )
             project.target_platforms = payload.target_platform_keys
             project.publish_checklist_state = {}
+            if payload.primary_platform_key is not None:
+                project.primary_platform_key = self._validate_primary_platform(
+                    payload.target_platform_keys,
+                    payload.primary_platform_key,
+                    require_when_multi=True,
+                )
+            else:
+                self._sync_primary_after_platform_change(project)
+        elif payload.primary_platform_key is not None:
+            project.primary_platform_key = self._validate_primary_platform(
+                list(project.target_platforms or []),
+                payload.primary_platform_key,
+                require_when_multi=True,
+            )
         await self.projects.save(project)
         return await self._to_out(project)
 
@@ -336,6 +396,7 @@ class CreatorProjectService:
             status=project.status,
             current_step_key=project.current_step_key,
             target_platforms=list(project.target_platforms or []),
+            primary_platform_key=project.primary_platform_key,
             draft_content=dict(project.draft_content or {}),
             publish_checklist_state=dict(project.publish_checklist_state or {}),
             created_at=project.created_at,

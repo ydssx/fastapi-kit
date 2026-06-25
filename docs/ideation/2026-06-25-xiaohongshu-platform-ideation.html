@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ideation: 小红书平台定向调整与优化</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #1a1a20;
+      --border: #2a2a32;
+      --text: #e8e6e3;
+      --muted: #9a9690;
+      --accent: #f2b84b;
+      --success: #4ade80;
+      --danger: #f87171;
+      --font: "DM Sans", system-ui, sans-serif;
+      --font-display: "Instrument Serif", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 400;
+      margin: 0 0 0.75rem;
+      color: var(--accent);
+    }
+    .meta { color: var(--muted); font-size: 0.9rem; }
+    .meta span { margin-right: 1.25rem; }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 400;
+      margin: 2.5rem 0 1rem;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin: 0 0 0.5rem;
+      color: var(--accent);
+    }
+    section { margin-bottom: 2rem; }
+    .grounding, .axes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+    .grounding ul, .axes ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .grounding li, .axes li { margin-bottom: 0.35rem; }
+    .jump-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .jump-list ol { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .jump-list a { color: var(--accent); text-decoration: none; }
+    .jump-list a:hover { text-decoration: underline; }
+    .idea-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .idea-card .rank {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .field { margin: 0.6rem 0; }
+    .field-label {
+      display: inline-block;
+      min-width: 6.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+    .badge-conf-high { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+    .badge-conf-med { background: rgba(242, 184, 75, 0.15); color: var(--accent); }
+    .badge-cx-low { background: rgba(154, 150, 144, 0.2); color: var(--muted); }
+    .badge-cx-med { background: rgba(242, 184, 75, 0.1); color: var(--accent); }
+    .badge-cx-high { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+    .diagram {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      border: 1px dashed var(--border);
+    }
+    .diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+    }
+    th { background: var(--surface); color: var(--muted); font-weight: 600; }
+    footer.composition-signal {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ideation: 小红书平台定向调整与优化</h1>
+      <div class="meta">
+        <span><strong>Date:</strong> 2026-06-25</span>
+        <span><strong>Topic:</strong> xiaohongshu-platform</span>
+        <span><strong>Focus:</strong> 针对小红书平台做定向调整与优化</span>
+        <span><strong>Mode:</strong> repo-grounded</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Grounding Context</h2>
+      <div class="grounding">
+        <p><strong>Codebase Context</strong> — FastAPI + React Creator 工作台（<code>/creator/</code>），流水线（短视频 / 长图文）+ 品牌档案 + 步骤级 AI 建议 + 终端发布核对清单。小红书以 <code>xiaohongshu</code> key 存在于 <code>target_platforms</code>，新建项目默认勾选；但 AI 生成阶段<strong>平台无关</strong>，核对规则停留在发布步。</p>
+        <ul>
+          <li><strong>现状：</strong><code>build_step_prompt</code> 未接收 <code>target_platforms</code>（<code>app/services/creator_ai.py:51-61</code>）；XHS checklist 仅 4 项定性描述（<code>app/creator/checklists.py:27-32</code>），对比抖音已有「竖屏 9:16」「标题 ≤30 字」等量化项。</li>
+          <li><strong>已有杠杆：</strong><code>STEP_AI_ADJUSTMENTS</code> 含「更口语」「更 SEO」等 chip；<code>long_article</code> 流水线有 <code>seo_variants</code> 步；品牌 <code>taboos</code> 已注入 prompt；<code>StepVersionHistory</code> 支持单版本复制。</li>
+          <li><strong>制度沉淀：</strong>平台变更在 publish 步前允许但清空 checklist；发布后锁定平台（40023）；Studio Sidebar + 珊瑚/薄荷色 AI 面板规范。</li>
+          <li><strong>外部信号（2025-2026）：</strong>3:4 封面为流量主规格；标题 9-13 字、关键词前 10 字；标签 5-3-2 策略；CES 权重 保存 &gt; 分享 &gt; 评论；竞品（XHSPlus 等）强调敏感词检测与多平台差异化适配。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Topic Axes</h2>
+      <div class="axes">
+        <ul>
+          <li>AI 提示词与步骤产出</li>
+          <li>发布核对清单与进度</li>
+          <li>平台选择与流水线配置</li>
+          <li>格式规范与合规校验</li>
+          <li>创作者工作台前端体验</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Ranked Ideas</h2>
+      <nav class="jump-list" aria-label="Ideas jump list">
+        <strong>Jump to idea</strong>
+        <ol>
+          <li><a href="#idea-1">Platform Prompt Guard（平台提示词护栏）</a></li>
+          <li><a href="#idea-2">Checklist-to-Prompt 反哺</a></li>
+          <li><a href="#idea-3">5-3-2 小红书标签生成器</a></li>
+          <li><a href="#idea-4">量化发布核对（3:4 / 标题 / 首屏）</a></li>
+          <li><a href="#idea-5">一键发布包复制</a></li>
+          <li><a href="#idea-6">敏感词合规扫描层</a></li>
+          <li><a href="#idea-7">小红书笔记专用流水线</a></li>
+        </ol>
+      </nav>
+
+      <article class="idea-card" id="idea-1">
+        <div class="rank">#1</div>
+        <h3>Platform Prompt Guard（平台提示词护栏）</h3>
+        <p class="field"><span class="field-label">Description</span>将 <code>project.target_platforms</code> 传入 <code>build_step_prompt</code>，当含 <code>xiaohongshu</code> 时在 system/user 段注入 XHS 写作约束：口语化 + 分段 + Emoji 适度、首屏钩子、搜索关键词前置。各步骤（script/body/cover/seo）按步骤类型差异化约束，而非一套通用「小红书语气」。</p>
+        <p class="field"><span class="field-label">Axis</span>AI 提示词与步骤产出</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> <code>creator_ai.py</code> 调用 <code>build_step_prompt</code> 时未传 <code>target_platforms</code>；<code>prompts/__init__.py:18-21</code> system 模板为平台无关中文助手；前端 adjustment chip 是唯一能「小红书化」的入口。</p>
+        <p class="field"><span class="field-label">Rationale</span>这是「定向调整」的最低成本、最高杠杆改动——不改变流水线结构，却让 AI 从第一步起按目标平台产出，消除用户手动点「更口语 / 更 SEO」的补丁式操作。</p>
+        <p class="field"><span class="field-label">Downsides</span>多平台项目需定义优先级或分平台变体输出；prompt 变长增加 token；需 A/B 验证生成质量。</p>
+        <p class="field"><span class="field-label">Confidence</span>94% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+        <div class="diagram" aria-label="Prompt guard flow">
+          <svg viewBox="0 0 520 130" width="520" height="130" role="img">
+            <text x="10" y="18" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">Before: 平台盲区</text>
+            <rect x="10" y="28" width="100" height="40" rx="6" fill="#1a1a20" stroke="#2a2a32"/>
+            <text x="60" y="52" fill="#e8e6e3" font-size="10" text-anchor="middle">brand + step</text>
+            <path d="M120 48 L160 48" stroke="#f87171" stroke-width="2"/>
+            <text x="140" y="42" fill="#f87171" font-size="9" text-anchor="middle">无平台</text>
+            <rect x="170" y="28" width="80" height="40" rx="6" fill="#1a1a20" stroke="#2a2a32"/>
+            <text x="210" y="52" fill="#e8e6e3" font-size="10" text-anchor="middle">通用草稿</text>
+            <text x="280" y="18" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">After: Platform Guard</text>
+            <rect x="280" y="28" width="90" height="40" rx="6" fill="#1a1a20" stroke="#f2b84b"/>
+            <text x="325" y="45" fill="#e8e6e3" font-size="9" text-anchor="middle">brand + step</text>
+            <text x="325" y="58" fill="#f2b84b" font-size="9" text-anchor="middle">+ xhs rules</text>
+            <path d="M380 48 L420 48" stroke="#4ade80" stroke-width="2"/>
+            <rect x="430" y="28" width="80" height="40" rx="6" fill="#1a1a20" stroke="#4ade80"/>
+            <text x="470" y="52" fill="#e8e6e3" font-size="10" text-anchor="middle">笔记感草稿</text>
+            <text x="10" y="100" fill="#9a9690" font-size="10" font-family="DM Sans,sans-serif">adjustment chip 从「补救」降级为「微调」</text>
+          </svg>
+        </div>
+      </article>
+
+      <article class="idea-card" id="idea-2">
+        <div class="rank">#2</div>
+        <h3>Checklist-to-Prompt 反哺</h3>
+        <p class="field"><span class="field-label">Description</span>将 <code>PLATFORM_CHECKLISTS["xiaohongshu"]</code> 的核对项（封面清晰、标题吸引、首屏钩子、话题关键词）在<strong>对应前置步骤</strong>的 AI prompt 中作为「必须满足的发布标准」注入——例如 body 步要求「首屏 100 字内出现钩子」，cover 步要求「标题含核心搜索词」。发布步 checklist 与生成步 prompt 共用同一规则源（single source of truth）。</p>
+        <p class="field"><span class="field-label">Axis</span>AI 提示词与步骤产出 · 发布核对清单与进度</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> checklist 定义于 <code>checklists.py:27-32</code> 但仅用于 publish 步勾选；<code>summarize_publish_progress</code> 聚合进度，生成与核对两套标准目前割裂。</p>
+        <p class="field"><span class="field-label">Rationale</span>用户不应在发布步才发现「首屏没钩子」——把已有核对语义前移到生成阶段，减少 publish 步返工，且规则变更只需改一处。</p>
+        <p class="field"><span class="field-label">Downsides</span>需建立 step_key → checklist_item 映射表；多平台时映射复杂度上升；过度约束可能降低创意多样性。</p>
+        <p class="field"><span class="field-label">Confidence</span>88% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-3">
+        <div class="rank">#3</div>
+        <h3>5-3-2 小红书标签生成器</h3>
+        <p class="field"><span class="field-label">Description</span>扩展 <code>seo_variants</code> 步（或新增 XHS 专用子输出）：当目标含小红书时，AI 返回结构化 JSON——5 个垂类核心词 + 3 个场景细分词 + 2 个时效热搜占位（用户可编辑替换）。UI 以分组 chip 展示，一键复制为 <code>#标签1 #标签2</code> 格式。</p>
+        <p class="field"><span class="field-label">Axis</span>AI 提示词与步骤产出</p>
+        <p class="field"><span class="field-label">Basis</span><code>external:</code> 2025-2026 小红书标签 5-3-2 策略与 3-5 个标签最优区间；<code>direct:</code> 现有 <code>seo</code> 步 adjustment 为「多平台标题更 SEO」泛化表述（<code>stepAiAdjustments.ts:32-35</code>），无结构化标签输出。</p>
+        <p class="field"><span class="field-label">Rationale</span>标签是小红书搜索与推荐的关键杠杆，结构化输出比「一段 SEO 文案」更可操作，且与外部最佳实践对齐。</p>
+        <p class="field"><span class="field-label">Downsides</span>热搜词需人工确认或外部数据源；JSON schema 增加前后端契约；多平台时需并列输出而非仅 XHS。</p>
+        <p class="field"><span class="field-label">Confidence</span>85% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+        <div class="diagram" aria-label="5-3-2 tag structure">
+          <svg viewBox="0 0 480 110" width="480" height="110" role="img">
+            <text x="10" y="20" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">seo_variants → XHS 结构化输出</text>
+            <rect x="10" y="30" width="140" height="28" rx="4" fill="#2a2a32"/><text x="80" y="48" fill="#f2b84b" font-size="10" text-anchor="middle">5 垂类核心</text>
+            <rect x="10" y="68" width="140" height="28" rx="4" fill="#2a2a32"/><text x="80" y="86" fill="#e8e6e3" font-size="10" text-anchor="middle">3 场景细分</text>
+            <rect x="170" y="68" width="140" height="28" rx="4" fill="#2a2a32"/><text x="240" y="86" fill="#e8e6e3" font-size="10" text-anchor="middle">2 时效热搜</text>
+            <path d="M320 60 L360 60" stroke="#4ade80" stroke-width="2"/>
+            <rect x="370" y="40" width="100" height="50" rx="6" fill="#1a1a20" stroke="#4ade80"/>
+            <text x="420" y="62" fill="#e8e6e3" font-size="9" text-anchor="middle">复制 #tag</text>
+            <text x="420" y="78" fill="#9a9690" font-size="8" text-anchor="middle">粘贴到 XHS</text>
+          </svg>
+        </div>
+      </article>
+
+      <article class="idea-card" id="idea-4">
+        <div class="rank">#4</div>
+        <h3>量化发布核对（3:4 / 标题 / 首屏）</h3>
+        <p class="field"><span class="field-label">Description</span>将小红书 checklist 从纯定性升级为可度量项，对齐抖音 checklist 的量化风格：封面「建议 3:4 (1242×1660)」、标题「9-20 字，关键词前 10 字」、正文「首段 ≤100 字含钩子」。发布步 UI 实时显示字数/比例提示（软校验，不阻断保存），勾选前展示达标状态。</p>
+        <p class="field"><span class="field-label">Axis</span>发布核对清单与进度 · 格式规范与合规校验</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> 抖音已有 <code>title ≤ 30 字</code>、<code>vertical 9:16</code>（<code>checklists.py:21-25</code>），小红书仅「标题吸引点击」等定性项；<code>external:</code> 2026 年 3:4 封面与标题 9-13 字为流量主规格。</p>
+        <p class="field"><span class="field-label">Rationale</span>量化核对让用户在勾选前自检，减少「以为达标其实未达」的发布失误；与竞品工具（比例提醒、字数计数）对齐，实现成本低（前端计数 + checklist 文案）。</p>
+        <p class="field"><span class="field-label">Downsides</span>软校验可能被忽视；视频笔记 vs 图文笔记规则不同需分支；规格随平台变化需维护常量表。</p>
+        <p class="field"><span class="field-label">Confidence</span>91% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-low">Low</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-5">
+        <div class="rank">#5</div>
+        <h3>一键发布包复制</h3>
+        <p class="field"><span class="field-label">Description</span>在发布核对步（或项目详情顶栏）增加「复制小红书发布包」：从各步骤 artifact 聚合标题、正文、标签，格式化为 XHS 粘贴友好结构（标题一行、正文分段、标签行）。支持「仅标题+正文」「含标签完整包」两种模式。</p>
+        <p class="field"><span class="field-label">Axis</span>创作者工作台前端体验</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> <code>StepVersionHistory.tsx</code> 已有单版本复制，但需逐步手动拼接；brainstorm 文档指出「上下文在各工具间复制粘贴」是核心痛点；XHS 发布需跨字段组合。</p>
+        <p class="field"><span class="field-label">Rationale</span>工作台价值闭环在「复制到小红书编辑器」——聚合复制是零后端依赖、高感知的功能，直接缩短最后一公里。</p>
+        <p class="field"><span class="field-label">Downsides</span>artifact 字段映射因流水线而异；多平台项目需分平台复制按钮；格式偏好因人而异。</p>
+        <p class="field"><span class="field-label">Confidence</span>93% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-low">Low</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-6">
+        <div class="rank">#6</div>
+        <h3>敏感词合规扫描层</h3>
+        <p class="field"><span class="field-label">Description</span>在 body/cover/seo 步编辑器旁增加轻量合规扫描：合并品牌 <code>taboos</code> + 内置小红书高频风险词表（绝对化用语、导流词等），实时高亮并给出替换建议。发布步 checklist 增加「合规扫描已通过」勾选项。</p>
+        <p class="field"><span class="field-label">Axis</span>格式规范与合规校验</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> 合规目前仅靠品牌 taboos 注入 prompt（<code>BrandPage.tsx</code> 提示绝对化用语）；无自动化扫描；<code>external:</code> XHSPlus 等竞品以敏感词检测为核心卖点。</p>
+        <p class="field"><span class="field-label">Rationale</span>小红书对违规词惩罚明确，创作者最怕「写完才发现不能发」——扫描层是差异化功能，可与 taboos 叠加而非替代。</p>
+        <p class="field"><span class="field-label">Downsides</span>词库维护与误报；官方规则变化；不能完全替代人工审核；多语言/行业词库扩展成本。</p>
+        <p class="field"><span class="field-label">Confidence</span>79% <span class="badge badge-conf-med">Med</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-7">
+        <div class="rank">#7</div>
+        <h3>小红书笔记专用流水线</h3>
+        <p class="field"><span class="field-label">Description</span>新增 <code>xhs_note</code> pipeline（区别于泛用 <code>long_article</code>）：选题 → 爆款标题公式 → 正文（首屏钩子 + 分段）→ 封面视觉要点（3:4 构图）→ 5-3-2 标签 → 发布核对。创建项目时若仅选小红书，默认推荐此流水线；步骤文案与 AI prompt 全部 XHS-native。</p>
+        <p class="field"><span class="field-label">Axis</span>平台选择与流水线配置</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> 现有仅 <code>short_video</code> / <code>long_article</code>（<code>pipelines.py</code>），新建默认 <code>short_video</code> + <code>xiaohongshu</code> 平台（<code>ProjectsPage.tsx:39-40</code>）——平台与流水线语义错配；<code>reasoned:</code> 小红书图文笔记与短视频脚本、公众号长文的步骤结构本质不同。</p>
+        <p class="field"><span class="field-label">Rationale</span>「定向优化」的终极形态是专用流水线——让用户从创建起就走 XHS 最优路径，而非在通用流水线上靠 chip 和 checklist 补丁。</p>
+        <p class="field"><span class="field-label">Downsides</span>新 pipeline 维护成本；与多平台并行发布需协调；migration/模板文档工作量大；是 #1-#6 的 superset 而非替代。</p>
+        <p class="field"><span class="field-label">Confidence</span>81% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-high">High</span></p>
+        <div class="diagram" aria-label="XHS pipeline steps">
+          <svg viewBox="0 0 520 80" width="520" height="80" role="img">
+            <text x="10" y="16" fill="#9a9690" font-size="10" font-family="DM Sans,sans-serif">xhs_note pipeline</text>
+            <rect x="10" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#f2b84b"/><text x="44" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">选题</text>
+            <path d="M78 42 L88 42" stroke="#2a2a32" stroke-width="1"/>
+            <rect x="90" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#f2b84b"/><text x="124" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">标题</text>
+            <path d="M158 42 L168 42" stroke="#2a2a32"/>
+            <rect x="170" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#f2b84b"/><text x="204" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">正文</text>
+            <path d="M238 42 L248 42" stroke="#2a2a32"/>
+            <rect x="250" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#f2b84b"/><text x="284" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">封面</text>
+            <path d="M318 42 L328 42" stroke="#2a2a32"/>
+            <rect x="330" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#f2b84b"/><text x="364" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">标签</text>
+            <path d="M398 42 L408 42" stroke="#2a2a32"/>
+            <rect x="410" y="24" width="68" height="36" rx="4" fill="#1a1a20" stroke="#4ade80"/><text x="444" y="46" fill="#e8e6e3" font-size="9" text-anchor="middle">发布</text>
+          </svg>
+        </div>
+      </article>
+    </section>
+
+    <section>
+      <h2>Rejection Summary</h2>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Idea</th><th>Reason Rejected</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>仅增加 Emoji 到 prompt</td><td>过于表面，未解决 platform-blind 根因；被 #1 覆盖</td></tr>
+          <tr><td>2</td><td>小红书 API 自动发布</td><td>scope overrun — 无官方 API 集成基础，超出工作台定位</td></tr>
+          <tr><td>3</td><td>CES 保存价值 AI 评分</td><td>interesting 但 basis 偏 external，落地需用户反馈数据；不如量化 checklist 直接</td></tr>
+          <tr><td>4</td><td>PlatformPicker UI 重设计</td><td>纯视觉 polish，非 XHS 定向杠杆</td></tr>
+          <tr><td>5</td><td>默认平台已是小红书</td><td>already covered — ProjectsPage 已默认 xiaohongshu</td></tr>
+          <tr><td>6</td><td>跨平台一键改写（XHS→抖音）</td><td>better as brainstorm variant；当前 focus 是 XHS 定向而非多平台适配</td></tr>
+          <tr><td>7</td><td>热点趋势 API 侧栏</td><td>需外部数据源与合规，复杂度高；MVP 可用手动 chip 替代</td></tr>
+          <tr><td>8</td><td>将整个产品改为仅小红书</td><td>subject-replacement — 放弃多平台是战略 pivot 而非优化</td></tr>
+          <tr><td>9</td><td>训练 XHS 专用 fine-tune 模型</td><td>too expensive relative to prompt + pipeline 改动</td></tr>
+          <tr><td>10</td><td>Playground 默认 XHS 选题</td><td>已有 Playground；与 XHS 优化关联弱，属灵感方向非平台定向</td></tr>
+          <tr><td>11</td><td>封面 AI 生图集成</td><td>缺少图像生成基础设施；超出当前流水线能力边界</td></tr>
+          <tr><td>12</td><td>视频笔记 vs 图文笔记分流</td><td>部分被 #7 覆盖；单独做需更多产品定义</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="composition-signal">Composed 2026-06-25T12:00:00Z by ce-ideate · focus: 针对小红书平台做定向调整与优化 · raw 38 → survivors 7</footer>
+  </div>
+</body>
+</html>

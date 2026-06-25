@@ -74,6 +74,7 @@ export function ProjectDetailPage() {
   const [suggestion, setSuggestion] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
+  const [editPrimaryPlatform, setEditPrimaryPlatform] = useState<string>('')
   const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -86,8 +87,16 @@ export function ProjectDetailPage() {
       setContent(project.draft_content[project.current_step_key] ?? '')
       setEditTitle(project.title)
       setEditPlatforms(project.target_platforms)
+      setEditPrimaryPlatform(project.primary_platform_key ?? '')
     }
-  }, [project?.id, project?.current_step_key, project?.draft_content, project?.title, project?.target_platforms])
+  }, [
+    project?.id,
+    project?.current_step_key,
+    project?.draft_content,
+    project?.title,
+    project?.target_platforms,
+    project?.primary_platform_key,
+  ])
 
   function stepTitle(key: string) {
     return pipeline?.steps.find((s) => s.key === key)?.title ?? key
@@ -107,6 +116,7 @@ export function ProjectDetailPage() {
     setContent(updated.draft_content[updated.current_step_key] ?? '')
     setEditTitle(updated.title)
     setEditPlatforms(updated.target_platforms)
+    setEditPrimaryPlatform(updated.primary_platform_key ?? '')
     void queryClient.invalidateQueries({ queryKey: ['projects'] })
     void queryClient.invalidateQueries({ queryKey: ['usage'] })
   }
@@ -194,8 +204,11 @@ export function ProjectDetailPage() {
   })
 
   const updateMut = useMutation({
-    mutationFn: (payload: { title?: string; target_platform_keys?: string[] }) =>
-      updateProject(id!, payload),
+    mutationFn: (payload: {
+      title?: string
+      target_platform_keys?: string[]
+      primary_platform_key?: string | null
+    }) => updateProject(id!, payload),
     onSuccess: (updated) => {
       setActionError(null)
       applyProjectUpdate(updated)
@@ -234,20 +247,51 @@ export function ProjectDetailPage() {
     updateMut.mutate({ title: trimmed })
   }
 
-  function savePlatforms(next: string[]) {
+  function commitPlatformEdit(next: string[], primary: string) {
+    savePlatforms(next, primary)
+  }
+
+  function handleEditPlatformsChange(next: string[]) {
+    setEditPlatforms(next)
+    let primary = editPrimaryPlatform
+    if (next.length === 1) {
+      primary = next[0]!
+      setEditPrimaryPlatform(primary)
+    } else if (primary && !next.includes(primary)) {
+      primary = ''
+      setEditPrimaryPlatform('')
+    }
+    commitPlatformEdit(next, primary)
+  }
+
+  function handleEditPrimaryChange(key: string) {
+    setEditPrimaryPlatform(key)
+    commitPlatformEdit(editPlatforms, key)
+  }
+
+  function savePlatforms(next: string[], primary: string) {
     setEditPlatforms(next)
     if (next.length === 0) return
+    if (next.length > 1 && !primary) {
+      setActionError('请选择主平台')
+      return
+    }
     const changed =
       next.length !== project!.target_platforms.length ||
-      next.some((key) => !project!.target_platforms.includes(key))
+      next.some((key) => !project!.target_platforms.includes(key)) ||
+      primary !== (project!.primary_platform_key ?? '')
     if (
       changed &&
       !window.confirm('修改目标平台将清空发布核对进度，确定继续？')
     ) {
       setEditPlatforms(project!.target_platforms)
+      setEditPrimaryPlatform(project!.primary_platform_key ?? '')
       return
     }
-    updateMut.mutate({ target_platform_keys: next })
+    updateMut.mutate({
+      target_platform_keys: next,
+      primary_platform_key: next.length === 1 ? next[0] : primary,
+    })
   }
 
   if (project.status === 'completed') {
@@ -299,7 +343,9 @@ export function ProjectDetailPage() {
   const sourceParts = [
     '品牌档案',
     prevCtx.title ? `步骤${prevCtx.title}` : null,
-    platformLabels(project.target_platforms) || null,
+    project.primary_platform_key
+      ? `主平台 ${platformLabels([project.primary_platform_key])}`
+      : platformLabels(project.target_platforms) || null,
   ].filter(Boolean) as string[]
 
   const totalSteps = pipeline?.steps.length ?? 0
@@ -368,8 +414,11 @@ export function ProjectDetailPage() {
           <PlatformPicker
             options={PLATFORMS}
             value={editPlatforms}
-            onChange={savePlatforms}
+            onChange={handleEditPlatformsChange}
             legend="目标平台（前两步可修改）"
+            showPrimary
+            primaryKey={editPrimaryPlatform || null}
+            onPrimaryChange={handleEditPrimaryChange}
           />
         </section>
       )}
