@@ -47,13 +47,17 @@ async def register(
 
 
 @router.post("/login", response_model=ApiResponse[AuthResponse])
-async def login(payload: LoginRequest, db: DbSession, settings: SettingsDep) -> ApiResponse[AuthResponse]:
+async def login(
+    payload: LoginRequest, db: DbSession, settings: SettingsDep
+) -> ApiResponse[AuthResponse]:
     result = await AuthService(db, settings).login(payload.email, payload.password)
     return ApiResponse(data=result)
 
 
 @router.post("/refresh", response_model=ApiResponse[TokenPair])
-async def refresh(payload: RefreshRequest, db: DbSession, settings: SettingsDep) -> ApiResponse[TokenPair]:
+async def refresh(
+    payload: RefreshRequest, db: DbSession, settings: SettingsDep
+) -> ApiResponse[TokenPair]:
     result = await AuthService(db, settings).refresh(payload.refresh_token)
     return ApiResponse(data=result)
 

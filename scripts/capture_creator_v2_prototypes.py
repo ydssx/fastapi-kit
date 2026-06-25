@@ -7,7 +7,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -160,7 +159,7 @@ def complete_project(client: httpx.Client, token: str, project_id: str) -> None:
 def seed() -> tuple[dict[str, str], str]:
     with api_client() as client:
         main_token = register_or_login(client, MAIN_EMAIL)
-        empty_token = register_or_login(client, EMPTY_EMAIL)
+        register_or_login(client, EMPTY_EMAIL)
         quota_token = register_or_login(client, QUOTA_EMAIL)
 
         client.put(
@@ -336,7 +335,12 @@ def capture_screenshots(ids: dict[str, str]) -> None:
     login_via_ui(MAIN_EMAIL)
     run_agent(
         "eval",
-        "(()=>{const o=window.fetch.bind(window);window.fetch=(i,n)=>{const u=typeof i==='string'?i:i.url;if(String(u).includes('ai-suggest'))return new Promise(()=>{});return o(i,n)}})()",
+        (
+            "(()=>{const o=window.fetch.bind(window);window.fetch=(i,n)=>{"
+            "const u=typeof i==='string'?i:i.url;"
+            "if(String(u).includes('ai-suggest'))return new Promise(()=>{});"
+            "return o(i,n)}})()"
+        ),
     )
     run_agent("open", f"{CREATOR_BASE}/projects/{ids['wizard_id']}")
     run_agent("wait", "1200")
@@ -356,7 +360,12 @@ def main() -> int:
     state_file = OUT_DIR / ".capture-state.json"
     print("Seeding Creator v2 screenshot data…")
     ids, quota_token = seed()
-    state = {"ids": ids, "main_email": MAIN_EMAIL, "empty_email": EMPTY_EMAIL, "quota_email": QUOTA_EMAIL}
+    state = {
+        "ids": ids,
+        "main_email": MAIN_EMAIL,
+        "empty_email": EMPTY_EMAIL,
+        "quota_email": QUOTA_EMAIL,
+    }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     state_file.write_text(__import__("json").dumps(state, indent=2), encoding="utf-8")
     print("Setting AI quota exhausted for", QUOTA_EMAIL)
