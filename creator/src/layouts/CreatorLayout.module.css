@@ -125,10 +125,21 @@
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.navActiveAi {
+  composes: navActive;
+  color: var(--ai);
+  background: var(--ai-muted);
+  border-color: color-mix(in srgb, var(--ai) 22%, transparent);
+  box-shadow: inset 3px 0 0 var(--ai);
+}
+
 .navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 18px;
-  text-align: center;
-  font-size: 0.75rem;
+  height: 18px;
+  flex-shrink: 0;
   opacity: 0.85;
 }
 

@@ -1,15 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { AuthBrandMark } from '../components/AuthBrandMark'
 import { IconInput, LockIcon, MailIcon } from '../components/IconInput'
+import { StepIcon } from '../components/icons/StepIcons'
 import shared from '../styles/shared.module.css'
 import styles from './LoginPage.module.css'
 
 const PIPELINE_STEPS = [
-  { label: '选题', desc: '锁定方向，明确受众与切入点' },
-  { label: '脚本', desc: '结构化大纲，品牌语气贯穿全文' },
-  { label: '发布', desc: '多平台 checklist，一步不漏' },
-]
+  { key: 'topic', label: '选题', desc: '锁定方向，明确受众与切入点' },
+  { key: 'script', label: '脚本', desc: '结构化大纲，品牌语气贯穿全文' },
+  { key: 'publish', label: '发布', desc: '多平台 checklist，一步不漏' },
+] as const
 
 export function LoginPage() {
   const { user, loading, login, register } = useAuth()
@@ -45,6 +47,9 @@ export function LoginPage() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
+        <div className={styles.heroBrand}>
+          <AuthBrandMark />
+        </div>
         <p className={styles.kicker}>多平台创作</p>
         <h1 className={styles.heroTitle}>
           把选题到发布
@@ -52,9 +57,11 @@ export function LoginPage() {
           串成一条流水线
         </h1>
         <ol className={styles.pipeline}>
-          {PIPELINE_STEPS.map((step, i) => (
-            <li key={step.label}>
-              <span className={styles.pipelineStep}>{String(i + 1).padStart(2, '0')}</span>
+          {PIPELINE_STEPS.map((step) => (
+            <li key={step.key}>
+              <span className={styles.pipelineStep} aria-hidden>
+                <StepIcon stepKey={step.key} size={16} />
+              </span>
               <div className={styles.pipelineBody}>
                 <strong>{step.label}</strong>
                 <span>{step.desc}</span>
@@ -66,6 +73,9 @@ export function LoginPage() {
 
       <div className={styles.cardWrap}>
         <form className={styles.card} onSubmit={handleSubmit}>
+          <div className={styles.cardBrand}>
+            <AuthBrandMark compact />
+          </div>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>{mode === 'login' ? '欢迎回来' : '创建账号'}</h2>
             <p className={styles.cardSubtitle}>进入创作者工作台</p>

@@ -73,7 +73,6 @@
   border-radius: 14px;
   display: grid;
   place-items: center;
-  font-size: 1.4rem;
   color: var(--ai);
   background: var(--ai-muted);
   border: 1px solid color-mix(in srgb, var(--ai) 25%, transparent);

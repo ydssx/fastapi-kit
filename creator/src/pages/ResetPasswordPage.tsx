@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { resetPassword } from '../api/auth'
 import { IconInput, LockIcon } from '../components/IconInput'
+import { AuthBrandMark } from '../components/AuthBrandMark'
 import shared from '../styles/shared.module.css'
 import styles from './LoginPage.module.css'
 
@@ -40,6 +41,9 @@ export function ResetPasswordPage() {
     <div className={`${styles.page} ${styles.authOnly}`}>
       <div className={styles.cardWrap}>
         <form className={styles.card} onSubmit={handleSubmit}>
+          <div className={styles.cardBrand}>
+            <AuthBrandMark compact />
+          </div>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>设置新密码</h2>
             <p className={styles.cardSubtitle}>为你的账号设置一个新密码。</p>

@@ -38,6 +38,14 @@ Named CSS custom properties in the creator global stylesheet that define color, 
 
 A thin horizontal gradient accent at the top of panels and auth cards — the creator UI signature element distinguishing elevated content surfaces from the page background.
 
+### Stage Pipeline Mark
+
+The brand mark graphic: three pipeline stage bars crossed by a horizontal beam with a mint AI highlight at the center — the visual form of Stage Line on the sidebar mark, favicon, and auth surfaces.
+
+### Nav Accent Split
+
+The convention that primary navigation uses coral accent for active states while Inspiration Lab alone uses mint accent, signaling AI-adjacent surfaces consistently from sidebar through playground empty states.
+
 ### Studio Sidebar
 
 The desktop navigation pattern for the creator workbench: a fixed left column for wayfinding and account utilities, with the main canvas for page content.

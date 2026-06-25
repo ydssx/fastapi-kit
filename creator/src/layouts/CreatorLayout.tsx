@@ -4,13 +4,27 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
 import { fetchUsage } from '../api/creator'
 import { QuotaDisplay } from '../components/QuotaDisplay'
+import { CreatorMark } from '../components/icons/CreatorMark'
+import {
+  AccountIcon,
+  BrandIcon,
+  PlaygroundIcon,
+  ProjectsIcon,
+} from '../components/icons/NavIcons'
 import styles from './CreatorLayout.module.css'
 
-const NAV = [
-  { to: '/', label: '项目', icon: '◈' },
-  { to: '/playground', label: '灵感实验室', icon: '✦' },
-  { to: '/brand', label: '品牌档案', icon: '◇' },
-  { to: '/account', label: '账号', icon: '○' },
+type NavAccent = 'accent' | 'ai'
+
+const NAV: {
+  to: string
+  label: string
+  Icon: typeof ProjectsIcon
+  accent?: NavAccent
+}[] = [
+  { to: '/', label: '项目', Icon: ProjectsIcon },
+  { to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
+  { to: '/brand', label: '品牌档案', Icon: BrandIcon },
+  { to: '/account', label: '账号', Icon: AccountIcon },
 ]
 
 export function CreatorLayout() {
@@ -31,6 +45,11 @@ export function CreatorLayout() {
     )
   }
 
+  function navClassName(to: string, accent?: NavAccent) {
+    if (!isActive(to)) return styles.navLink
+    return accent === 'ai' ? styles.navActiveAi : styles.navActive
+  }
+
   function closeMenu() {
     setMenuOpen(false)
   }
@@ -41,7 +60,7 @@ export function CreatorLayout() {
         <div className={styles.sidebarTop}>
           <Link to="/" className={styles.brand} onClick={closeMenu}>
             <span className={styles.mark} aria-hidden>
-              ✦
+              <CreatorMark size={22} />
             </span>
             <div className={styles.brandText}>
               <span className={styles.brandName}>创作者工作台</span>
@@ -50,18 +69,18 @@ export function CreatorLayout() {
           </Link>
 
           <nav className={styles.nav} aria-label="主导航">
-            {NAV.map((item) => (
+            {NAV.map(({ to, label, Icon, accent }) => (
               <Link
-                key={item.to}
-                to={item.to}
-                className={isActive(item.to) ? styles.navActive : styles.navLink}
+                key={to}
+                to={to}
+                className={navClassName(to, accent)}
                 onClick={closeMenu}
-                aria-current={isActive(item.to) ? 'page' : undefined}
+                aria-current={isActive(to) ? 'page' : undefined}
               >
                 <span className={styles.navIcon} aria-hidden>
-                  {item.icon}
+                  <Icon />
                 </span>
-                <span className={styles.navLabel}>{item.label}</span>
+                <span className={styles.navLabel}>{label}</span>
               </Link>
             ))}
           </nav>
@@ -84,7 +103,7 @@ export function CreatorLayout() {
         <header className={styles.mobileHeader}>
           <Link to="/" className={styles.mobileBrand} onClick={closeMenu}>
             <span className={styles.mark} aria-hidden>
-              ✦
+              <CreatorMark size={22} />
             </span>
             <span className={styles.brandName}>创作者工作台</span>
           </Link>
@@ -106,17 +125,17 @@ export function CreatorLayout() {
         {menuOpen && (
           <div id="creator-mobile-panel" className={styles.mobilePanel}>
             <nav className={styles.mobileNav} aria-label="主导航">
-              {NAV.map((item) => (
+              {NAV.map(({ to, label, Icon, accent }) => (
                 <Link
-                  key={item.to}
-                  to={item.to}
-                  className={isActive(item.to) ? styles.navActive : styles.navLink}
+                  key={to}
+                  to={to}
+                  className={navClassName(to, accent)}
                   onClick={closeMenu}
                 >
                   <span className={styles.navIcon} aria-hidden>
-                    {item.icon}
+                    <Icon />
                   </span>
-                  <span className={styles.navLabel}>{item.label}</span>
+                  <span className={styles.navLabel}>{label}</span>
                 </Link>
               ))}
             </nav>

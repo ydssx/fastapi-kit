@@ -56,7 +56,7 @@ last_refreshed: 2026-06-25
 - **移动（<900px）**：隐藏侧栏；sticky 顶栏 + 汉堡菜单展开导航面板。
 - 在 `.shell` 上设置 `--layout-sticky-top`，供 `ProjectDetailPage` 的 `.stickyWizardHead` 使用 `top: var(--layout-sticky-top)`。
 
-导航项带图标字符与 `aria-current="page"`；激活态左侧珊瑚色条 + `--accent-muted` 背景。
+导航项带 SVG 图标与 `aria-current="page"`；激活态左侧珊瑚色条 + `--accent-muted` 背景。灵感实验室激活态单独使用 `--ai`（见 [图标体系](./creator-workbench-icon-system-stage-pipeline.md)）。
 
 ### 3. 共享样式层（`creator/src/styles/shared.module.css`）
 
@@ -148,6 +148,7 @@ cd creator && npm run build
 
 ## Related
 
+- [创作者工作台图标体系：舞台流水线 SVG](./creator-workbench-icon-system-stage-pipeline.md) — Unicode 占位 → SVG 三层图标
 - [创作者工作台前端规范](../../../creator/FRONTEND.md)
 - [Creator v2 原型索引](../../../creator/docs/prototypes/v2/README.md) — 当前截图为重设计前顶栏版
 - [Admin/Creator Caddy 尾斜杠重定向](../integration-issues/admin-caddy-path-without-trailing-slash-2026-05-18.md) — 部署路径 `https://localhost/creator/`

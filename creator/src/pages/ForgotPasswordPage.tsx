@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { forgotPassword } from '../api/auth'
 import { IconInput, MailIcon } from '../components/IconInput'
+import { AuthBrandMark } from '../components/AuthBrandMark'
 import shared from '../styles/shared.module.css'
 import styles from './LoginPage.module.css'
 
@@ -30,6 +31,9 @@ export function ForgotPasswordPage() {
     <div className={`${styles.page} ${styles.authOnly}`}>
       <div className={styles.cardWrap}>
         <form className={styles.card} onSubmit={handleSubmit}>
+          <div className={styles.cardBrand}>
+            <AuthBrandMark compact />
+          </div>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>找回密码</h2>
             <p className={styles.cardSubtitle}>输入注册邮箱，我们将发送重置链接（需已配置邮件服务）。</p>

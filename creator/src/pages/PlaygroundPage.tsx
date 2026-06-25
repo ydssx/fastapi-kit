@@ -9,6 +9,7 @@ import {
   playgroundTopics,
 } from '../api/creator'
 import { LoadingBlock } from '../components/LoadingBlock'
+import { PlaygroundIcon } from '../components/icons/NavIcons'
 import { PlaygroundHandoffModal } from '../components/PlaygroundHandoffModal'
 import type { HandoffPayload } from '../components/PlaygroundHandoffModal'
 import { PageHeader } from '../components/PageHeader'
@@ -147,7 +148,7 @@ export function PlaygroundPage() {
       {session.topics.length === 0 ? (
         <div className={styles.empty}>
           <span className={styles.emptyIcon} aria-hidden>
-            ✦
+            <PlaygroundIcon size={26} />
           </span>
           <p className={styles.emptyKicker}>灵感实验室</p>
           <h2 className={styles.emptyTitle}>不知道写什么？</h2>

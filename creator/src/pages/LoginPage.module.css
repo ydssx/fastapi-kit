@@ -12,6 +12,15 @@
   animation: stageReveal 0.6s ease-out both;
 }
 
+.heroBrand {
+  margin-bottom: var(--space-lg);
+}
+
+.cardBrand {
+  display: none;
+  justify-content: center;
+}
+
 .kicker {
   margin: 0 0 var(--space-md);
   font-family: var(--font-mono);
@@ -64,11 +73,9 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent);
   background: var(--accent-muted);
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
@@ -216,6 +223,10 @@
   margin: 0 auto;
 }
 
+.authOnly .cardBrand {
+  display: flex;
+}
+
 @media (max-width: 860px) {
   .page {
     grid-template-columns: 1fr;
@@ -226,6 +237,10 @@
 
   .hero {
     display: none;
+  }
+
+  .cardBrand {
+    display: flex;
   }
 
   .cardWrap {

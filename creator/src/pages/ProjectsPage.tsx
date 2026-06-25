@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { createProject, deleteProject, fetchPipelines, fetchProjects } from '../api/creator'
 import { EmptyState } from '../components/EmptyState'
+import { ProjectsIcon } from '../components/icons/NavIcons'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { PlatformPicker } from '../components/PlatformPicker'
@@ -203,7 +204,7 @@ export function ProjectsPage() {
           {isLoading && <LoadingBlock label="加载项目…" />}
           {!isLoading && activeProjects.length === 0 && (
             <EmptyState
-              icon="✦"
+              icon={<ProjectsIcon size={22} />}
               title="还没有项目"
               description="填写上方表单，创建你的第一条流水线。从选题到发布，按步骤推进即可。"
             />
