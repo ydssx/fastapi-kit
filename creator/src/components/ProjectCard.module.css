@@ -30,6 +30,14 @@
   transition: background 0.22s ease;
 }
 
+.cardDone {
+  background: color-mix(in srgb, var(--bg-elevated) 85%, var(--success));
+}
+
+.cardDone::before {
+  background: color-mix(in srgb, var(--success) 50%, transparent);
+}
+
 .card:hover {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
   transform: translateX(2px);
@@ -39,13 +47,28 @@
     0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
+.cardDone:hover {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--success) 8%, transparent);
+}
+
 .card:hover::before {
   background: var(--accent);
+}
+
+.cardDone:hover::before {
+  background: var(--success);
 }
 
 .card:hover .chevron {
   color: var(--accent);
   transform: translateX(4px);
+}
+
+.cardDone:hover .chevron {
+  color: var(--success);
 }
 
 .thumb {
@@ -76,18 +99,57 @@
   letter-spacing: -0.01em;
 }
 
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
 .meta {
-  display: block;
   font-size: 0.82rem;
   color: var(--text-muted);
   line-height: 1.45;
+}
+
+.time {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: color-mix(in srgb, var(--text-muted) 85%, transparent);
+  letter-spacing: 0.03em;
+}
+
+.platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.platformChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
+  border: 1px solid var(--border-subtle);
+}
+
+.platformPrimary {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  background: var(--accent-muted);
 }
 
 .progressTrack {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .progressBar {
@@ -117,32 +179,6 @@
   font-size: 0.65rem;
   color: var(--text-muted);
   letter-spacing: 0.04em;
-}
-
-.dots {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 6px;
-}
-
-.dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.dotDone {
-  background: var(--success);
-}
-
-.dotCurrent {
-  background: var(--accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
-}
-
-.dotTodo {
-  background: var(--border);
 }
 
 .chevron {
@@ -201,6 +237,11 @@
 
 @media (max-width: 560px) {
   .top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .metaRow {
     flex-direction: column;
     align-items: flex-start;
   }
