@@ -109,7 +109,8 @@ class CreatorPlaygroundService:
             ProjectCreate(
                 pipeline_id=payload.pipeline_id,
                 title=payload.title.strip(),
-                target_platform_keys=[],
+                target_platform_keys=payload.target_platform_keys,
+                primary_platform_key=payload.primary_platform_key,
             ),
         )
         project = await self.project_service._get_owned(user, project_out.id)

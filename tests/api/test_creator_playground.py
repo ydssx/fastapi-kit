@@ -98,6 +98,8 @@ async def test_playground_handoff(
             "title": "初夏通勤穿搭",
             "brief": "面向职场新人的 5 套胶囊搭配。",
             "hooks": "你是不是每天出门前都不知道穿什么？",
+            "target_platform_keys": ["xiaohongshu", "douyin"],
+            "primary_platform_key": "xiaohongshu",
         },
     )
     assert response.status_code == 200
@@ -111,6 +113,8 @@ async def test_playground_handoff(
     assert project["draft_content"]["topic"].strip()
     assert "初夏通勤" in project["draft_content"]["topic"]
     assert project["draft_content"]["hook"]
+    assert set(project["target_platforms"]) == {"xiaohongshu", "douyin"}
+    assert project["primary_platform_key"] == "xiaohongshu"
 
 
 @pytest.mark.asyncio

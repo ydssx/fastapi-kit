@@ -137,6 +137,8 @@ class PlaygroundHandoffIn(BaseModel):
     brief: str = Field(min_length=1, max_length=5000)
     hooks: str | None = Field(default=None, max_length=5000)
     raw_notes: str | None = Field(default=None, max_length=10000)
+    target_platform_keys: list[str] = Field(min_length=1)
+    primary_platform_key: str | None = None
 
 
 class PlaygroundHandoffOut(BaseModel):

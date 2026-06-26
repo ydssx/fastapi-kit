@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Pipeline } from '../types/api'
 import shared from '../styles/shared.module.css'
+import { PlatformPicker } from './PlatformPicker'
 import styles from './PlaygroundHandoffModal.module.css'
 
 const LAST_PIPELINE_KEY = 'creator-last-pipeline'
+
+const PLATFORMS = [
+  { key: 'douyin', label: '抖音', emoji: '🎵' },
+  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
+  { key: 'wechat', label: '公众号', emoji: '💬' },
+  { key: 'bilibili', label: 'B站', emoji: '📺' },
+]
 
 export interface HandoffPayload {
   pipeline_id: string
@@ -11,6 +19,8 @@ export interface HandoffPayload {
   brief: string
   hooks: string
   raw_notes: string
+  target_platform_keys: string[]
+  primary_platform_key: string | null
 }
 
 interface PlaygroundHandoffModalProps {
@@ -37,6 +47,8 @@ export function PlaygroundHandoffModal({
   loading,
 }: PlaygroundHandoffModalProps) {
   const [pipelineId, setPipelineId] = useState('')
+  const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
+  const [primaryPlatform, setPrimaryPlatform] = useState('xiaohongshu')
   const [editableBrief, setEditableBrief] = useState(brief)
   const [editableHooks, setEditableHooks] = useState(hooks)
 
@@ -44,6 +56,8 @@ export function PlaygroundHandoffModal({
     if (!open) return
     setEditableBrief(brief)
     setEditableHooks(hooks)
+    setPlatforms(['xiaohongshu'])
+    setPrimaryPlatform('xiaohongshu')
     const last = localStorage.getItem(LAST_PIPELINE_KEY)
     if (last && pipelines.some((p) => p.id === last)) {
       setPipelineId(last)
@@ -51,6 +65,19 @@ export function PlaygroundHandoffModal({
       setPipelineId('')
     }
   }, [open, brief, hooks, pipelines])
+
+  function handlePlatformsChange(next: string[]) {
+    setPlatforms(next)
+    if (next.length === 1) {
+      setPrimaryPlatform(next[0]!)
+    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
+      setPrimaryPlatform('')
+    }
+  }
+
+  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const canConfirm =
+    Boolean(pipelineId) && Boolean(editableBrief.trim()) && platforms.length > 0 && primaryReady
 
   const preview = useMemo(() => {
     const topic = `# ${title}\n\n${editableBrief}`
@@ -64,7 +91,7 @@ export function PlaygroundHandoffModal({
   if (!open) return null
 
   function confirm() {
-    if (!pipelineId) return
+    if (!canConfirm) return
     localStorage.setItem(LAST_PIPELINE_KEY, pipelineId)
     onConfirm({
       pipeline_id: pipelineId,
@@ -72,6 +99,8 @@ export function PlaygroundHandoffModal({
       brief: editableBrief,
       hooks: editableHooks,
       raw_notes: understanding ?? '',
+      target_platform_keys: platforms,
+      primary_platform_key: platforms.length === 1 ? platforms[0]! : primaryPlatform || null,
     })
   }
 
@@ -102,6 +131,16 @@ export function PlaygroundHandoffModal({
             ))}
           </select>
         </label>
+
+        <PlatformPicker
+          options={PLATFORMS}
+          value={platforms}
+          onChange={handlePlatformsChange}
+          legend="目标平台"
+          showPrimary
+          primaryKey={primaryPlatform || null}
+          onPrimaryChange={setPrimaryPlatform}
+        />
 
         <label className={styles.label}>
           选题说明（可编辑）
@@ -136,7 +175,7 @@ export function PlaygroundHandoffModal({
             type="button"
             className={shared.btnPrimary}
             onClick={confirm}
-            disabled={!pipelineId || !editableBrief.trim() || loading}
+            disabled={!canConfirm || loading}
           >
             {loading ? '创建中…' : '创建并进入项目'}
           </button>

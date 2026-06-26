@@ -145,6 +145,8 @@ export function playgroundHandoff(payload: {
   brief: string
   hooks?: string
   raw_notes?: string
+  target_platform_keys: string[]
+  primary_platform_key?: string | null
 }): Promise<PlaygroundHandoffResponse> {
   return apiFetch('/api/v1/creator/playground/handoff', {
     method: 'POST',
