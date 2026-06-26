@@ -4,7 +4,7 @@
 
 后端代码在 `app/`：`api/` 与 `api/v1/` 放路由、校验和依赖注入，`services/` 放业务逻辑，`repositories/` 放异步 SQLAlchemy 数据访问，`models/` 与 `schemas/` 分别放 ORM 与 Pydantic 模型，`core/` 放配置、安全、日志和异常，`db/` 放 session 与数据库基础设施，`cache/`、`tasks/`、`middleware/` 分别对应 Redis、Celery 和 HTTP 中间件。
 
-迁移在 `alembic/`，测试在 `tests/`（API 测试放 `tests/api/`），脚本在 `scripts/`，Docker/Caddy 配置在仓库根目录和 `docker/`。`admin/` 是管理后台，`creator/` 是创作者工作台；各自的前端约定见 `admin/FRONTEND.md` 和 `creator/FRONTEND.md`。历史方案与排查记录在 `docs/solutions/`，领域词汇在 `CONCEPTS.md`。
+迁移在 `alembic/`，测试在 `tests/`（API 测试放 `tests/api/`），脚本在 `scripts/`，Docker/Caddy 配置在仓库根目录和 `docker/`。`admin/` 是管理后台，`creator/` 是创作者工作台；各自的前端约定见 `admin/FRONTEND.md` 和 `creator/FRONTEND.md`。历史方案与排查记录在 `docs/solutions/`，按类别组织并带 YAML frontmatter（如 `module`、`tags`、`problem_type`），在实现、调试或判断已记录领域时可先搜索；领域词汇在 `CONCEPTS.md`，用于代码库定向和讨论概念时统一语义。
 
 ## 常用命令
 
