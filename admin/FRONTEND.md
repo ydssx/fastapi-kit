@@ -31,7 +31,7 @@ admin/
 │   ├── index.css       # 设计 token（:root）
 │   ├── App.tsx         # 路由表
 │   ├── api/            # 按资源拆分：auth、users、audit…
-│   ├── auth/           # AuthContext、登录态
+│   ├── auth/           # AuthProvider、authContext、useAuth
 │   ├── components/     # 可复用 UI（DataTable、PageHeader…）
 │   ├── layouts/        # AdminLayout（侧栏 + 顶栏）
 │   ├── pages/          # 路由级页面 + 同名 *.module.css
@@ -225,7 +225,7 @@ await apiFetch<UserPublic>(`/api/v1/admin/users/${id}`, {
 ## 6. 认证与路由
 
 - Token 存 `localStorage`，键名 `fastapi_kit_admin_tokens`（见 `api/client.ts`）
-- `AuthContext` 提供 `login` / `logout` / `user`
+- `AuthProvider` + `useAuth()` 提供 `login` / `logout` / `user`（context 定义在 `authContext.ts`）
 - 路由路径**不要**写 `/admin` 前缀（已由 `basename` 处理），例如 `to="/users"` 而非 `to="/admin/users"`
 - 对外访问 URL：**`https://localhost/admin/`**（无尾斜杠的 `/admin` 由 Caddy 301 到 `/admin/`）
 

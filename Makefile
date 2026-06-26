@@ -2,16 +2,17 @@
 
 UV := uv
 RUN := $(UV) run
+PYTHON := python
 
 .PHONY: help install sync dev-init dev run worker beat \
 	certs up up-ha down logs migrate rolling-update \
-	admin-dev admin-docker-dev admin-build create-admin \
-	creator-dev creator-build promote-creator-pro \
+	admin-install admin-dev admin-docker-dev admin-build create-admin \
+	admin-check creator-install creator-dev creator-build creator-check \
+	frontend-install frontend-check promote-creator-pro \
 	lint format typecheck test check ci clean
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z0-9_-]+:.*?##' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+	@$(PYTHON) -c "import pathlib,re; rows=[]; [rows.append((m.group(1),m.group(2))) for line in pathlib.Path('Makefile').read_text().splitlines() if (m:=re.match(r'^([A-Za-z0-9_-]+):.*?## (.*)', line))]; [print(f'  {name:<16} {desc}') for name,desc in sorted(rows)]"
 
 install: ## Install dependencies (dev extras)
 	$(UV) sync --all-extras
@@ -62,14 +63,30 @@ admin-dev: ## Run admin SPA dev server on host (Vite :5173, proxies /api to http
 admin-docker-dev: ## Run admin Vite in Docker (requires stack up; profile admin-dev)
 	docker compose --profile admin-dev up -d admin-dev
 
+admin-install: ## Install admin SPA dependencies
+	cd admin && npm install
+
 admin-build: ## Build admin SPA on host (optional; compose rebuilds admin into proxy image)
-	cd admin && npm ci && npm run build
+	cd admin && npm run build
+
+admin-check: ## Lint and build admin SPA
+	cd admin && npm run lint && npm run build
+
+creator-install: ## Install creator SPA dependencies
+	cd creator && npm install
 
 creator-dev: ## Run creator SPA dev server (:5174, proxies /api to https://localhost)
 	cd creator && npm run dev
 
 creator-build: ## Build creator SPA on host (optional; compose rebuilds into proxy image)
-	cd creator && npm ci && npm run build
+	cd creator && npm run build
+
+creator-check: ## Lint and build creator SPA
+	cd creator && npm run lint && npm run build
+
+frontend-check: admin-check creator-check ## Lint and build both SPAs
+
+frontend-install: admin-install creator-install ## Install both SPA dependency trees
 
 promote-creator-pro: ## Set users.plan=pro (EMAIL=...)
 	$(RUN) python scripts/promote_creator_pro.py --email "$(EMAIL)"

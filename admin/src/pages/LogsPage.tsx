@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { fetchLogs } from '../api/logs'
@@ -101,11 +101,7 @@ function RequestIdCell({ requestId }: { requestId: string | null }) {
 
 export function LogsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialParse = useRef<ReturnType<typeof parseLogsFiltersFromSearchParams> | null>(null)
-  if (initialParse.current === null) {
-    initialParse.current = parseLogsFiltersFromSearchParams(searchParams)
-  }
-  const initial = initialParse.current
+  const [initial] = useState(() => parseLogsFiltersFromSearchParams(searchParams))
 
   const [page, setPage] = useState(1)
   const [requestId, setRequestId] = useState(initial.draft.requestId)
