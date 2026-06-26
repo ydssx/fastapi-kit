@@ -107,6 +107,16 @@ export interface PlaygroundHandoffResponse {
   project_id: string
 }
 
+export interface AiVariant {
+  label: string
+  content: string
+}
+
+export interface AiSuggestResponse {
+  suggestion: string
+  variants: AiVariant[]
+}
+
 export interface BrandProfile {
   tone: string
   audience: string

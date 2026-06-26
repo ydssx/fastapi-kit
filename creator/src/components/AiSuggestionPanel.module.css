@@ -89,6 +89,70 @@
   font-size: 0.875rem;
 }
 
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.variantGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 320px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+}
+
+.variantCard {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.variantActive {
+  border-color: var(--ai);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ai) 40%, transparent);
+}
+
+.variantLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ai);
+  font-family: var(--font-mono);
+}
+
+.variantPreview {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .variantGrid {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    overflow-x: auto;
+  }
+}
+
 .preview {
   margin: 0;
   padding: 12px;

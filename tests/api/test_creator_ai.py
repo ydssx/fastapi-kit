@@ -38,8 +38,74 @@ async def test_ai_suggest_success(
     )
     assert response.status_code == 200
     assert "AI" in response.json()["data"]["suggestion"]
+    assert response.json()["data"]["variants"]
     usage = await client.get("/api/v1/creator/usage", headers=auth_headers(token))
     assert usage.json()["data"]["ai_calls"] == 1
+
+
+VARIANTS_JSON = """{"variants": [
+  {"label": "受众向", "content": "面向职场新人的穿搭指南"},
+  {"label": "结构向", "content": "3 套胶囊衣橱清单体"},
+  {"label": "语气向", "content": "轻松口语的开场选题稿"}
+]}"""
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_multi_variant_topic(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+
+    async def fake_complete(_self, _system: str, _user: str) -> str:
+        return VARIANTS_JSON
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-multi@example.com")
+    project = await create_short_video_project(client, token)
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/topic/ai-suggest",
+        headers=auth_headers(token),
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data["variants"]) == 3
+    assert data["suggestion"] == data["variants"][0]["content"]
+    usage = await client.get("/api/v1/creator/usage", headers=auth_headers(token))
+    assert usage.json()["data"]["ai_calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_script_single_variant(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+
+    async def fake_complete(_self, _system: str, _user: str) -> str:
+        return "完整口播脚本"
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-script@example.com")
+    project = await create_short_video_project(client, token)
+    for step_key, content in [("topic", "选题"), ("hook", "钩子")]:
+        await client.post(
+            f"/api/v1/creator/projects/{project['id']}/steps/{step_key}/confirm",
+            headers=auth_headers(token),
+            json={"content": content},
+        )
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/script/ai-suggest",
+        headers=auth_headers(token),
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data["variants"]) == 1
+    assert data["suggestion"] == "完整口播脚本"
 
 
 @pytest.mark.asyncio

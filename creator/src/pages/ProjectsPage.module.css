@@ -114,6 +114,31 @@
   width: 100%;
 }
 
+.seedToggle {
+  margin: -4px 0 0;
+}
+
+.seedLink {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ai);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.seedLink:hover {
+  color: color-mix(in srgb, var(--ai) 80%, white);
+}
+
+.draftWarning {
+  margin: var(--space-sm) 0 0;
+  color: var(--accent);
+  font-size: 0.8125rem;
+}
+
 .playgroundHint {
   margin: 0;
   font-size: 0.78rem;

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { createProject, deleteProject, fetchPipelines, fetchProjects } from '../api/creator'
+import { createProject, deleteProject, fetchPipelines, fetchProjects, saveDraft } from '../api/creator'
 import { EmptyState } from '../components/EmptyState'
 import { PlaygroundIcon, ProjectsIcon } from '../components/icons/NavIcons'
 import { LoadingBlock } from '../components/LoadingBlock'
@@ -15,6 +15,8 @@ import {
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
+import { TopicSeedPanel } from '../components/TopicSeedPanel'
+import type { PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
@@ -42,6 +44,9 @@ export function ProjectsPage() {
   const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
   const [primaryPlatform, setPrimaryPlatform] = useState<string>('xiaohongshu')
   const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
+  const [seedPanelOpen, setSeedPanelOpen] = useState(false)
+  const [topicDraft, setTopicDraft] = useState<string | null>(null)
+  const [seedTopic, setSeedTopic] = useState<PlaygroundTopic | null>(null)
 
   const selectedPipeline = pipelines.find((p) => p.id === pipelineId)
 
@@ -79,11 +84,33 @@ export function ProjectsPage() {
         target_platform_keys: platforms,
         primary_platform_key: platforms.length === 1 ? platforms[0] : primaryPlatform || null,
       }),
-    onSuccess: (project) => {
+    onSuccess: async (project) => {
       setQuotaError(null)
+
+      let draft = topicDraft
+      if (seedTopic && title.trim()) {
+        draft = `# ${title.trim()}\n\n${seedTopic.reason.trim()}`
+      }
+      const draftToSave = draft
+
       void queryClient.invalidateQueries({ queryKey: ['projects'] })
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
       setTitle('')
+      setTopicDraft(null)
+      setSeedTopic(null)
+      setSeedPanelOpen(false)
+
+      if (draftToSave?.trim()) {
+        try {
+          await saveDraft(project.id, 'topic', draftToSave)
+        } catch {
+          navigate(`/projects/${project.id}`, {
+            state: { draftWarning: '选题草稿未写入，请在项目内手动保存。' },
+          })
+          return
+        }
+      }
+
       navigate(`/projects/${project.id}`)
     },
     onError: (err) => {
@@ -171,6 +198,40 @@ export function ProjectsPage() {
                   autoFocus={activeProjects.length === 0}
                 />
               </label>
+              <p className={styles.seedToggle}>
+                {!seedPanelOpen ? (
+                  <button
+                    type="button"
+                    className={styles.seedLink}
+                    onClick={() => setSeedPanelOpen(true)}
+                  >
+                    只有方向？AI 帮你想标题
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.seedLink}
+                    onClick={() => setSeedPanelOpen(false)}
+                  >
+                    收起标题助手
+                  </button>
+                )}
+              </p>
+              {seedPanelOpen && (
+                <TopicSeedPanel
+                  onSelect={(topic, draft) => {
+                    setSeedTopic(topic)
+                    setTopicDraft(draft)
+                    setTitle(topic.title)
+                  }}
+                  onQuotaError={() => setQuotaError('playground')}
+                  onRegenerate={() => {
+                    setSeedTopic(null)
+                    setTopicDraft(null)
+                    setTitle('')
+                  }}
+                />
+              )}
               <label className={shared.fieldLabel}>
                 选择流水线
                 <select

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { creatorApiErrorMessage } from '../lib/errors'
 import {
@@ -34,7 +34,7 @@ import { StepWorkspace } from '../components/StepWorkspace'
 import { StepVersionHistory } from '../components/StepVersionHistory'
 import { adjustmentsForStep, shouldAutoSuggest } from '../lib/stepAiAdjustments'
 import { pipelineLabel, platformLabels } from '../lib/labels'
-import type { Project, PublishChecklistItem } from '../types/api'
+import type { AiVariant, Project, PublishChecklistItem } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
 
@@ -48,6 +48,9 @@ const PLATFORMS = [
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const draftWarning =
+    (location.state as { draftWarning?: string } | null)?.draftWarning ?? null
   const queryClient = useQueryClient()
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -72,6 +75,7 @@ export function ProjectDetailPage() {
 
   const [content, setContent] = useState('')
   const [suggestion, setSuggestion] = useState<string | null>(null)
+  const [variants, setVariants] = useState<AiVariant[]>([])
   const [editTitle, setEditTitle] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
   const [editPrimaryPlatform, setEditPrimaryPlatform] = useState<string>('')
@@ -160,6 +164,7 @@ export function ProjectDetailPage() {
       setQuotaError(null)
       setActionError(null)
       setSuggestion(data.suggestion)
+      setVariants(data.variants ?? [])
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
     },
     onError: handleApiError,
@@ -168,6 +173,7 @@ export function ProjectDetailPage() {
   useEffect(() => {
     if (!project || !step || isPublish) return
     setSuggestion(null)
+    setVariants([])
     const draft = project.draft_content[project.current_step_key] ?? ''
     if (shouldAutoSuggest(stepIndex, step.ai_enabled, !draft.trim())) {
       aiMut.mutate(undefined)
@@ -385,6 +391,12 @@ export function ProjectDetailPage() {
         </button>
       </div>
 
+      {draftWarning && (
+        <p className={shared.error} role="alert">
+          {draftWarning}
+        </p>
+      )}
+
       <header className={styles.heroCompact}>
         <div className={styles.heroCompactMain}>
           <p className={styles.meta}>
@@ -471,13 +483,14 @@ export function ProjectDetailPage() {
                   <AiSuggestionPanel
                     stepTitle={step.title}
                     suggestion={suggestion}
+                    variants={variants}
                     loading={aiMut.isPending}
                     quotaBlocked={quotaError === 'ai'}
                     sourceParts={sourceParts}
                     adjustments={adjustmentsForStep(project.current_step_key)}
-                    onAdoptAll={() => setContent(suggestion ?? '')}
-                    onInsert={() =>
-                      setContent((c) => (c ? `${c}\n\n${suggestion}` : (suggestion ?? '')))
+                    onAdoptAll={(text) => setContent(text)}
+                    onInsert={(text) =>
+                      setContent((c) => (c ? `${c}\n\n${text}` : text))
                     }
                     onRegenerate={() => aiMut.mutate(undefined)}
                     onAdjust={(adj) => aiMut.mutate(adj)}

@@ -1,8 +1,9 @@
 import type {
+  AiSuggestResponse,
   BrandProfile,
   Pipeline,
-  PlaygroundMessage,
   PlaygroundHandoffResponse,
+  PlaygroundMessage,
   PlaygroundRefineResponse,
   PlaygroundTopic,
   PlaygroundTopicsResponse,
@@ -62,8 +63,8 @@ export function aiSuggest(
   projectId: string,
   stepKey: string,
   adjustment?: string,
-): Promise<{ suggestion: string }> {
-  return apiFetch<{ suggestion: string }>(
+): Promise<AiSuggestResponse> {
+  return apiFetch<AiSuggestResponse>(
     `/api/v1/creator/projects/${projectId}/steps/${stepKey}/ai-suggest`,
     {
       method: 'POST',
@@ -125,8 +126,11 @@ export function fetchUsage(): Promise<Usage> {
   return apiFetch<Usage>('/api/v1/creator/usage')
 }
 
-export function playgroundTopics(): Promise<PlaygroundTopicsResponse> {
-  return apiFetch('/api/v1/creator/playground/topics', { method: 'POST' })
+export function playgroundTopics(payload?: { seed?: string }): Promise<PlaygroundTopicsResponse> {
+  return apiFetch('/api/v1/creator/playground/topics', {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+  })
 }
 
 export function playgroundRefine(payload: {

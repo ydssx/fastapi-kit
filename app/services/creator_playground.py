@@ -67,7 +67,11 @@ class CreatorPlaygroundService:
         system, user_prompt = build_topics_prompt(brand, seed)
         try:
             raw = await self.llm.complete(system, user_prompt)
-            topics = parse_topics_json(raw)
+            seed_text = seed.strip() if seed else ""
+            if seed_text:
+                topics = parse_topics_json(raw, min_count=3, max_count=3)
+            else:
+                topics = parse_topics_json(raw)
         except AppException:
             raise
         except ValueError as exc:

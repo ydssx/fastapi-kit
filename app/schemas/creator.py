@@ -111,6 +111,10 @@ class PlaygroundTopic(BaseModel):
     reason: str = Field(max_length=500)
 
 
+class PlaygroundTopicsIn(BaseModel):
+    seed: str | None = Field(default=None, max_length=500)
+
+
 class PlaygroundTopicsOut(BaseModel):
     topics: list[PlaygroundTopic]
     brand_empty: bool = False
@@ -149,8 +153,14 @@ class AiSuggestIn(BaseModel):
     adjustment: str | None = Field(default=None, max_length=100)
 
 
+class AiVariantOut(BaseModel):
+    label: str
+    content: str
+
+
 class AiSuggestOut(BaseModel):
     suggestion: str
+    variants: list[AiVariantOut] = Field(default_factory=list)
 
 
 class CreatorMetricsSummary(BaseModel):

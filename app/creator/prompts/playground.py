@@ -21,18 +21,29 @@ def _brand_block(brand: BrandProfileOut) -> str:
 
 
 def build_topics_prompt(brand: BrandProfileOut, seed: str | None = None) -> tuple[str, str]:
-    system = (
-        "你是中文内容策划助手，帮助创作者在完全空白时找到可执行的选题方向。"
-        "只输出 JSON，不要 markdown 代码块或解释。"
-        '格式: {"topics": [{"title": "短标题", "reason": "一句话理由"}]}'
-        "生成 5 到 10 条互不重复的选题。"
-    )
+    seed_text = seed.strip() if seed else ""
+    if seed_text:
+        system = (
+            "你是中文内容策划助手，帮助创作者根据模糊方向生成可执行的选题标题。"
+            "只输出 JSON，不要 markdown 代码块或解释。"
+            '格式: {"topics": [{"title": "短标题", "reason": "一句话理由"}]}'
+            "生成恰好 3 条互不重复的选题。"
+        )
+        user_status = "用户已有大致方向，需要 3 个具体选题标题候选。"
+    else:
+        system = (
+            "你是中文内容策划助手，帮助创作者在完全空白时找到可执行的选题方向。"
+            "只输出 JSON，不要 markdown 代码块或解释。"
+            '格式: {"topics": [{"title": "短标题", "reason": "一句话理由"}]}'
+            "生成 5 到 10 条互不重复的选题。"
+        )
+        user_status = "用户状态：完全不知道写什么，需要选题清单。"
     user_parts = [
-        "用户状态：完全不知道写什么，需要选题清单。",
+        user_status,
         _brand_block(brand),
     ]
-    if seed and seed.strip():
-        user_parts.append(f"\n用户补充方向: {seed.strip()}")
+    if seed_text:
+        user_parts.append(f"\n用户补充方向: {seed_text}")
     user_parts.append("\n请生成选题 JSON。")
     return system, "\n".join(user_parts)
 
@@ -62,7 +73,12 @@ def build_refine_prompt(
     return system, "\n".join(user_parts)
 
 
-def parse_topics_json(raw: str) -> list[PlaygroundTopic]:
+def parse_topics_json(
+    raw: str,
+    *,
+    min_count: int = 5,
+    max_count: int = 10,
+) -> list[PlaygroundTopic]:
     text = raw.strip()
     fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
     if fence:
@@ -79,9 +95,9 @@ def parse_topics_json(raw: str) -> list[PlaygroundTopic]:
         reason = str(item.get("reason", "")).strip()
         if title and reason:
             topics.append(PlaygroundTopic(title=title[:200], reason=reason[:500]))
-    if len(topics) < 5:
-        raise ValueError("expected at least 5 topics")
-    return topics[:10]
+    if len(topics) < min_count:
+        raise ValueError(f"expected at least {min_count} topics")
+    return topics[:max_count]
 
 
 def extract_understanding(reply: str) -> tuple[str, str | None]:

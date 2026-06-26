@@ -7,6 +7,7 @@ from app.schemas.creator import (
     PlaygroundHandoffOut,
     PlaygroundRefineIn,
     PlaygroundRefineOut,
+    PlaygroundTopicsIn,
     PlaygroundTopicsOut,
 )
 from app.services.creator_playground import CreatorPlaygroundService
@@ -18,8 +19,10 @@ router = APIRouter()
 async def playground_topics(
     user: CurrentUser,
     db: DbSession,
+    body: PlaygroundTopicsIn | None = None,
 ) -> ApiResponse[PlaygroundTopicsOut]:
-    data = await CreatorPlaygroundService(db).generate_topics(user)
+    seed = body.seed if body is not None else None
+    data = await CreatorPlaygroundService(db).generate_topics(user, seed)
     return ApiResponse(data=data)
 
 

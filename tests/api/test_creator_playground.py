@@ -52,6 +52,41 @@ async def test_playground_topics_success(
     assert usage.json()["data"]["playground_calls_limit"] == 30
 
 
+SEED_TOPICS_JSON = """{"topics": [
+  {"title": "职场通勤 3 套", "reason": "贴合 seed 方向"},
+  {"title": "小个子显高穿搭", "reason": "细分受众"},
+  {"title": "平价胶囊衣橱", "reason": "清单体易传播"}
+]}"""
+
+
+@pytest.mark.asyncio
+async def test_playground_topics_with_seed(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    captured: list[str] = []
+
+    async def fake_complete(_self, _system: str, user: str) -> str:
+        captured.append(user)
+        return SEED_TOPICS_JSON
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "pg-seed@example.com")
+    response = await client.post(
+        "/api/v1/creator/playground/topics",
+        headers=auth_headers(token),
+        json={"seed": "职场穿搭"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data["topics"]) == 3
+    assert captured
+    assert "职场穿搭" in captured[0]
+
+
 @pytest.mark.asyncio
 async def test_playground_refine(
     client: AsyncClient,
