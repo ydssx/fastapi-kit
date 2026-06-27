@@ -7,11 +7,13 @@
   flex-direction: column;
   gap: var(--space-md);
   min-height: 0;
+  position: relative;
+  z-index: 6;
 }
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-sm);
 }
@@ -58,6 +60,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
 }
 
 .skeletonLine,
@@ -96,61 +102,128 @@
   line-height: 1.4;
 }
 
-.variantGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.multiLayout {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  max-height: 320px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
+  min-height: 0;
 }
 
-.variantCard {
+.variantTabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.variantTab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0;
-  padding: 10px;
+  padding: 8px 10px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
   text-align: left;
   cursor: pointer;
-  scroll-snap-align: start;
   transition:
     border-color 0.15s ease,
+    background 0.15s ease,
     box-shadow 0.15s ease;
 }
 
-.variantActive {
-  border-color: var(--ai);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ai) 40%, transparent);
+.variantTab:hover {
+  border-color: color-mix(in srgb, var(--ai) 35%, var(--border));
+  background: color-mix(in srgb, var(--ai-muted) 30%, var(--surface));
 }
 
-.variantLabel {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.75rem;
+.variantTabActive {
+  border-color: var(--ai);
+  background: color-mix(in srgb, var(--ai-muted) 55%, var(--surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ai) 35%, transparent);
+}
+
+.variantTabMark {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--ai);
-  font-family: var(--font-mono);
+  background: color-mix(in srgb, var(--ai) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ai) 25%, transparent);
 }
 
-.variantPreview {
-  margin: 0;
+.variantTabActive .variantTabMark {
+  background: var(--ai);
+  color: var(--bg);
+  border-color: transparent;
+}
+
+.variantTabLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.variantTabSkeleton {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.variantDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  min-height: 0;
+}
+
+.variantDetailLead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.variantDetailBody {
+  margin: 0;
+  color: var(--text-muted);
   font-family: var(--font);
   font-size: 0.8125rem;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 160px;
+  max-height: min(280px, 40vh);
   overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .variantGrid {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-    overflow-x: auto;
-  }
 }
 
 .preview {
@@ -165,7 +238,7 @@
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 280px;
+  max-height: min(280px, 40vh);
   overflow-y: auto;
 }
 
@@ -203,6 +276,13 @@
   color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .variantTab {
+    flex: 0 0 auto;
+    min-width: min(140px, 42vw);
+  }
 }
 
 @keyframes shimmer {

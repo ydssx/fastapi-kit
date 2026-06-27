@@ -10,6 +10,8 @@
 
 .aiCol {
   min-width: 0;
+  position: relative;
+  z-index: 6;
 }
 
 @media (min-width: 900px) {

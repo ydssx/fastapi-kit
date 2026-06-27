@@ -20,6 +20,18 @@ interface AiSuggestionPanelProps {
   onToggleMobile?: () => void
 }
 
+const VARIANT_MARKS = ['A', 'B', 'C'] as const
+
+function previewLead(content: string, maxLen = 72): string {
+  const line = content
+    .split('\n')
+    .map((s) => s.trim())
+    .find((s) => s.length > 0)
+  if (!line) return ''
+  if (line.length <= maxLen) return line
+  return `${line.slice(0, maxLen)}…`
+}
+
 export function AiSuggestionPanel({
   stepTitle,
   suggestion,
@@ -41,9 +53,15 @@ export function AiSuggestionPanel({
   useEffect(() => {
     setSelectedIndex(0)
   }, [variants])
-  const activeVariants = multiMode ? variants : suggestion?.trim() ? [{ label: '建议', content: suggestion }] : []
+
+  const activeVariants = multiMode
+    ? variants
+    : suggestion?.trim()
+      ? [{ label: '建议', content: suggestion }]
+      : []
   const safeIndex = Math.min(selectedIndex, Math.max(activeVariants.length - 1, 0))
-  const selectedContent = activeVariants[safeIndex]?.content ?? ''
+  const selected = activeVariants[safeIndex]
+  const selectedContent = selected?.content ?? ''
   const hasSuggestion = !!selectedContent.trim()
   const showBody = !mobileCollapsed
 
@@ -53,7 +71,7 @@ export function AiSuggestionPanel({
         <div>
           <h3 className={styles.title}>AI 建议 · {stepTitle}</h3>
           {multiMode && !loading && !quotaBlocked && (
-            <p className={styles.subtitle}>本次生成包含 3 个角度，消耗 1 次 AI 额度</p>
+            <p className={styles.subtitle}>3 个角度可对比，本次消耗 1 次 AI 额度</p>
           )}
         </div>
         {onToggleMobile && (
@@ -72,11 +90,28 @@ export function AiSuggestionPanel({
         <div className={styles.body}>
           {loading && (
             <div className={styles.loading} role="status" aria-live="polite">
-              <div className={styles.skeleton}>
-                <span className={styles.skeletonLine} />
-                <span className={styles.skeletonLine} />
-                <span className={styles.skeletonLineShort} />
-              </div>
+              {multiMode ? (
+                <>
+                  <div className={styles.variantTabs} aria-hidden>
+                    {VARIANT_MARKS.map((mark) => (
+                      <span key={mark} className={styles.variantTabSkeleton}>
+                        {mark}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={styles.skeleton}>
+                    <span className={styles.skeletonLine} />
+                    <span className={styles.skeletonLine} />
+                    <span className={styles.skeletonLineShort} />
+                  </div>
+                </>
+              ) : (
+                <div className={styles.skeleton}>
+                  <span className={styles.skeletonLine} />
+                  <span className={styles.skeletonLine} />
+                  <span className={styles.skeletonLineShort} />
+                </div>
+              )}
               <p className={styles.loadingText}>正在结合品牌档案生成…</p>
             </div>
           )}
@@ -86,20 +121,47 @@ export function AiSuggestionPanel({
           {!loading && !quotaBlocked && (
             <>
               {multiMode ? (
-                <div className={styles.variantGrid} role="listbox" aria-label="AI 方案">
-                  {variants.map((variant, index) => (
-                    <button
-                      key={`${variant.label}-${index}`}
-                      type="button"
-                      role="option"
-                      aria-selected={index === safeIndex}
-                      className={`${styles.variantCard} ${index === safeIndex ? styles.variantActive : ''}`}
-                      onClick={() => setSelectedIndex(index)}
-                    >
-                      <span className={styles.variantLabel}>{variant.label}</span>
-                      <pre className={styles.variantPreview}>{variant.content}</pre>
-                    </button>
-                  ))}
+                <div className={styles.multiLayout}>
+                  <div
+                    className={styles.variantTabs}
+                    role="tablist"
+                    aria-label="AI 方案"
+                  >
+                    {variants.map((variant, index) => {
+                      const active = index === safeIndex
+                      const mark = VARIANT_MARKS[index] ?? String(index + 1)
+                      return (
+                        <button
+                          key={`${variant.label}-${index}`}
+                          type="button"
+                          role="tab"
+                          id={`ai-variant-tab-${index}`}
+                          aria-selected={active}
+                          aria-controls={`ai-variant-panel-${index}`}
+                          className={`${styles.variantTab} ${active ? styles.variantTabActive : ''}`}
+                          onClick={() => setSelectedIndex(index)}
+                        >
+                          <span className={styles.variantTabMark}>{mark}</span>
+                          <span className={styles.variantTabLabel}>{variant.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div
+                    className={styles.variantDetail}
+                    role="tabpanel"
+                    id={`ai-variant-panel-${safeIndex}`}
+                    aria-labelledby={`ai-variant-tab-${safeIndex}`}
+                  >
+                    {selected && (
+                      <>
+                        <p className={styles.variantDetailLead}>
+                          {previewLead(selected.content) || selected.label}
+                        </p>
+                        <pre className={styles.variantDetailBody}>{selected.content}</pre>
+                      </>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <pre className={styles.preview}>
@@ -114,7 +176,7 @@ export function AiSuggestionPanel({
                   onClick={() => onAdoptAll(selectedContent)}
                   disabled={!hasSuggestion}
                 >
-                  采纳全部
+                  {multiMode ? '采纳当前方案' : '采纳全部'}
                 </button>
                 <button
                   type="button"
