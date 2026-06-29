@@ -28,6 +28,10 @@ Persistent creator settings (tone, audience, taboos, structure preferences) inje
 
 The terminal pipeline step variant: per-target-platform tasks the user marks complete before the project status becomes completed.
 
+### Publish Sprint Hub
+
+The Creator Workbench projects-home framing where near-publish content projects are prioritized over recency or creation. Its job is to help creators resume the content project most likely to reach the Publish Checklist next.
+
 ## Creator UI vocabulary
 
 ### Design Tokens

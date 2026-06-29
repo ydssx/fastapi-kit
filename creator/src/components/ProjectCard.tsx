@@ -63,12 +63,14 @@ export function ProjectCard({
               {pipelineTitle ?? pipelineLabel(project.pipeline_id)}
               {onPublishStep ? (
                 <> · 发布核对</>
-              ) : (
+              ) : totalSteps > 0 ? (
                 <>
                   {' · 第 '}
                   {stepNum}/{totalSteps} 步
                   {stepTitle ? ` · ${stepTitle}` : ''}
                 </>
+              ) : (
+                stepTitle ? ` · ${stepTitle}` : ''
               )}
             </span>
             <time className={styles.time} dateTime={project.updated_at}>

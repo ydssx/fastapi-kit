@@ -4,14 +4,31 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
-  gap: var(--space-xl);
+  grid-template-columns: minmax(0, 1.12fr) minmax(272px, 340px);
+  gap: clamp(var(--space-lg), 3vw, var(--space-2xl));
   align-items: start;
 }
 
 .createAside {
   position: sticky;
   top: calc(var(--layout-sticky-top, 0px) + var(--space-md));
+}
+
+.createAside::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * clamp(12px, 1.5vw, 20px));
+  top: 8%;
+  bottom: 8%;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--border-subtle) 15%,
+    var(--border-subtle) 85%,
+    transparent
+  );
+  pointer-events: none;
 }
 
 .hero {
@@ -57,6 +74,25 @@
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.2;
+}
+
+.createLead {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.heroSecondary {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, color-mix(in srgb, var(--accent) 5%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 96%, var(--bg-elevated));
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.heroSecondary::before {
+  opacity: 0.45;
 }
 
 .createGrid {
@@ -133,12 +169,6 @@
   color: color-mix(in srgb, var(--ai) 80%, white);
 }
 
-.draftWarning {
-  margin: var(--space-sm) 0 0;
-  color: var(--accent);
-  font-size: 0.8125rem;
-}
-
 .playgroundHint {
   margin: 0;
   font-size: 0.78rem;
@@ -164,7 +194,7 @@
 .projectsMain {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: clamp(var(--space-lg), 4vw, var(--space-2xl));
   min-width: 0;
 }
 
@@ -172,15 +202,113 @@
   composes: section from '../styles/shared.module.css';
 }
 
+.sectionHint {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  max-width: 36rem;
+}
+
 .sectionCount {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
   border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.sprintSection {
+  position: relative;
+  padding-left: clamp(14px, 2vw, 20px);
+}
+
+.sprintSection::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 20%, transparent),
+    var(--accent) 35%,
+    color-mix(in srgb, var(--success) 70%, var(--accent)) 85%,
+    color-mix(in srgb, var(--success) 50%, transparent)
+  );
+}
+
+.sprintKicker {
+  margin: 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.sprintHead .sectionCount {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  background: var(--accent-muted);
+}
+
+.sprintLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: var(--space-md);
+  align-items: start;
+}
+
+.sprintSpotlight {
+  min-width: 0;
+}
+
+.sprintQueue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-elevated) 55%, var(--surface));
+}
+
+.queueHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.queueTitle {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+}
+
+.queueMeta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .list {
@@ -199,21 +327,33 @@
 }
 
 .completedSection .listPanel {
-  background: color-mix(in srgb, var(--surface) 92%, var(--success));
-  border-color: color-mix(in srgb, var(--success) 12%, var(--border-subtle));
+  background: color-mix(in srgb, var(--surface) 94%, var(--success));
+  border-color: color-mix(in srgb, var(--success) 10%, var(--border-subtle));
 }
 
 .completedSection .listPanel::before {
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--success) 45%, transparent) 50%,
+    color-mix(in srgb, var(--success) 35%, transparent) 50%,
     transparent
   );
+  opacity: 0.5;
 }
 
 .completedSection {
-  opacity: 0.92;
+  opacity: 0.88;
+}
+
+.completedSection .sectionCount {
+  color: color-mix(in srgb, var(--success) 80%, var(--text-muted));
+  border-color: color-mix(in srgb, var(--success) 15%, var(--border-subtle));
+}
+
+@media (max-width: 1080px) {
+  .sprintLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 960px) {
@@ -223,5 +363,31 @@
 
   .createAside {
     position: static;
+  }
+
+  .createAside::before {
+    display: none;
+  }
+
+  .sprintSection {
+    padding-left: 0;
+  }
+
+  .sprintSection::before {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace {
+    gap: var(--space-xl);
+  }
+
+  .heroSecondary {
+    order: 2;
+  }
+
+  .projectsMain {
+    order: 1;
   }
 }

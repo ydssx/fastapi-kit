@@ -10,11 +10,13 @@ import { PageHeader } from '../components/PageHeader'
 import { PipelineThumbnail } from '../components/PipelineThumbnail'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { ProjectCard } from '../components/ProjectCard'
+import { ProjectSprintCard } from '../components/ProjectSprintCard'
 import {
   QuotaLimitNotice,
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
+import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
 import { TopicSeedPanel } from '../components/TopicSeedPanel'
 import type { PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
@@ -61,20 +63,15 @@ export function ProjectsPage() {
 
   const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
 
-  const activeProjects = useMemo(
-    () =>
-      projects
-        .filter((p) => p.status !== 'completed')
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    [projects],
-  )
-  const completedProjects = useMemo(
-    () =>
-      projects
-        .filter((p) => p.status === 'completed')
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    [projects],
-  )
+  const priorityView = useMemo(() => buildProjectPriorityView(projects, pipelines), [projects, pipelines])
+  const activeProjects = priorityView.activeProjects
+  const sprintProjects = priorityView.sprintProjects
+  const otherActiveProjects = priorityView.otherActiveProjects
+  const completedProjects = priorityView.completedProjects
+  const featuredSprintProject = sprintProjects[0]
+  const sprintQueue = sprintProjects.slice(1)
+  const hasActiveProjects = activeProjects.length > 0
+  const hasSprintProjects = sprintProjects.length > 0
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -140,21 +137,16 @@ export function ProjectsPage() {
     if (canCreate) createMut.mutate()
   }
 
-  function renderProjectCards(items: typeof projects) {
-    return items.map((p) => {
-      const pipeline = pipelines.find((pl) => pl.id === p.pipeline_id)
-      const stepTitle =
-        pipeline?.steps.find((s) => s.key === p.current_step_key)?.title ?? p.current_step_key
-      const stepNum = (pipeline?.steps.findIndex((s) => s.key === p.current_step_key) ?? 0) + 1
-      const total = pipeline?.steps.length ?? 0
+  function renderProjectCards(items: RankedProject[]) {
+    return items.map((item) => {
       return (
         <ProjectCard
-          key={p.id}
-          project={p}
-          pipelineTitle={pipeline?.title}
-          stepTitle={stepTitle}
-          stepNum={stepNum}
-          totalSteps={total}
+          key={item.project.id}
+          project={item.project}
+          pipelineTitle={item.pipeline?.title}
+          stepTitle={item.stepTitle}
+          stepNum={item.stepNum}
+          totalSteps={item.totalSteps}
           onDelete={handleDeleteProject}
           deleting={deleteMut.isPending}
         />
@@ -166,7 +158,7 @@ export function ProjectsPage() {
     <div className={`${shared.page} ${styles.page}`}>
       <PageHeader
         title="内容项目"
-        description="通过流水线式的创作流程，高效完成优质内容的策划与制作。"
+        description="优先推进最接近发布的项目，一眼看清下一步该做什么。"
         actions={
           <Link to="/playground" className={`${shared.btnGhost} ${styles.headerAction}`}>
             <PlaygroundIcon size={16} />
@@ -176,13 +168,123 @@ export function ProjectsPage() {
       />
 
       <div className={styles.workspace}>
+        <div className={styles.projectsMain}>
+          {isLoading && (
+            <section className={styles.section}>
+              <div className={styles.listPanel}>
+                <LoadingBlock label="加载项目…" />
+              </div>
+            </section>
+          )}
+
+          {!isLoading && hasSprintProjects && featuredSprintProject && (
+            <section className={`${styles.section} ${styles.sprintSection}`}>
+              <div className={`${shared.sectionHead} ${styles.sprintHead}`}>
+                <div>
+                  <p className={styles.sprintKicker}>冲刺优先</p>
+                  <h2 className={shared.panelTitle}>发布冲刺</h2>
+                  <p className={styles.sectionHint}>先把最接近发布的项目推过终点线。</p>
+                </div>
+                <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
+              </div>
+              <div className={styles.sprintLayout}>
+                <div className={styles.sprintSpotlight}>
+                  <ProjectSprintCard item={featuredSprintProject} featured />
+                </div>
+                {sprintQueue.length > 0 && (
+                  <div className={styles.sprintQueue}>
+                    <div className={styles.queueHead}>
+                      <h3 className={styles.queueTitle}>接下来可继续推进</h3>
+                      <span className={styles.queueMeta}>{sprintQueue.length} 个</span>
+                    </div>
+                    <div className={styles.queueList}>
+                      {sprintQueue.map((item) => (
+                        <ProjectSprintCard key={item.project.id} item={item} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {!isLoading && !hasActiveProjects && (
+            <section className={styles.section}>
+              <div className={shared.sectionHead}>
+                <h2 className={shared.panelTitle}>开始你的第一个内容项目</h2>
+              </div>
+              <div className={styles.listPanel}>
+                <EmptyState
+                  icon={<ProjectsIcon size={22} />}
+                  title="还没有项目"
+                  description="填写左侧表单创建第一条流水线，或先去灵感实验室生成选题。"
+                >
+                  <Link to="/playground" className={shared.btnSecondary}>
+                    去灵感实验室
+                  </Link>
+                </EmptyState>
+              </div>
+            </section>
+          )}
+
+          {!isLoading && hasActiveProjects && !hasSprintProjects && (
+            <section className={styles.section}>
+              <div className={shared.sectionHead}>
+                <div>
+                  <h2 className={shared.panelTitle}>继续创作</h2>
+                  <p className={styles.sectionHint}>这些项目还没进入最后冲刺阶段，继续把它们往前推。</p>
+                </div>
+                <span className={styles.sectionCount}>{activeProjects.length} 个</span>
+              </div>
+              <div className={styles.listPanel}>
+                <ul className={styles.list}>{renderProjectCards(activeProjects)}</ul>
+              </div>
+            </section>
+          )}
+
+          {!isLoading && hasSprintProjects && otherActiveProjects.length > 0 && (
+            <section className={styles.section}>
+              <div className={shared.sectionHead}>
+                <div>
+                  <h2 className={shared.panelTitle}>其他进行中的项目</h2>
+                  <p className={styles.sectionHint}>这些项目仍可继续创作，但暂时不在发布冲刺区。</p>
+                </div>
+                <span className={styles.sectionCount}>{otherActiveProjects.length} 个</span>
+              </div>
+              <div className={styles.listPanel}>
+                <ul className={styles.list}>{renderProjectCards(otherActiveProjects)}</ul>
+              </div>
+            </section>
+          )}
+
+          {!isLoading && completedProjects.length > 0 && (
+            <section className={`${styles.section} ${styles.completedSection} ${shared.noPageStagger}`}>
+              <div className={shared.sectionHead}>
+                <h2 className={shared.panelTitle}>已完成</h2>
+                <span className={styles.sectionCount}>{completedProjects.length} 个</span>
+              </div>
+              <div className={styles.listPanel}>
+                <ul className={styles.list}>{renderProjectCards(completedProjects)}</ul>
+              </div>
+            </section>
+          )}
+        </div>
+
         <aside className={styles.createAside}>
-          <section className={styles.hero} aria-labelledby="create-project-heading">
+          <section
+            className={`${styles.hero} ${hasActiveProjects ? styles.heroSecondary : ''}`}
+            aria-labelledby="create-project-heading"
+          >
             <div>
-              <p className={styles.heroKicker}>开始创作</p>
+              <p className={styles.heroKicker}>{hasActiveProjects ? '新的方向' : '开始创作'}</p>
               <h2 id="create-project-heading" className={styles.heroTitle}>
                 新建内容项目
               </h2>
+              <p className={styles.createLead}>
+                {hasActiveProjects
+                  ? '先冲刺临近发布的项目，新的想法也可以随时在这里开启。'
+                  : '定下主题、平台和流水线，马上开始下一条内容的创作。'}
+              </p>
             </div>
             <form className={styles.createGrid} onSubmit={handleCreateSubmit}>
               <label className={shared.fieldLabel}>
@@ -195,7 +297,7 @@ export function ProjectsPage() {
                     setQuotaError(null)
                     setTitle(e.target.value)
                   }}
-                  autoFocus={activeProjects.length === 0}
+                  autoFocus={!hasActiveProjects}
                 />
               </label>
               <p className={styles.seedToggle}>
@@ -283,46 +385,6 @@ export function ProjectsPage() {
             )}
           </section>
         </aside>
-
-        <div className={styles.projectsMain}>
-          <section className={styles.section}>
-            <div className={shared.sectionHead}>
-              <h2 className={shared.panelTitle}>进行中的项目</h2>
-              {!isLoading && activeProjects.length > 0 && (
-                <span className={styles.sectionCount}>{activeProjects.length} 个</span>
-              )}
-            </div>
-            <div className={styles.listPanel}>
-              {isLoading && <LoadingBlock label="加载项目…" />}
-              {!isLoading && activeProjects.length === 0 && (
-                <EmptyState
-                  icon={<ProjectsIcon size={22} />}
-                  title="还没有项目"
-                  description="填写左侧表单创建第一条流水线，或先去灵感实验室生成选题。"
-                >
-                  <Link to="/playground" className={shared.btnSecondary}>
-                    去灵感实验室
-                  </Link>
-                </EmptyState>
-              )}
-              {!isLoading && activeProjects.length > 0 && (
-                <ul className={styles.list}>{renderProjectCards(activeProjects)}</ul>
-              )}
-            </div>
-          </section>
-
-          {!isLoading && completedProjects.length > 0 && (
-            <section className={`${styles.section} ${styles.completedSection} ${shared.noPageStagger}`}>
-              <div className={shared.sectionHead}>
-                <h2 className={shared.panelTitle}>已完成</h2>
-                <span className={styles.sectionCount}>{completedProjects.length} 个</span>
-              </div>
-              <div className={styles.listPanel}>
-                <ul className={styles.list}>{renderProjectCards(completedProjects)}</ul>
-              </div>
-            </section>
-          )}
-        </div>
       </div>
     </div>
   )
