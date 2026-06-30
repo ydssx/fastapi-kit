@@ -109,7 +109,6 @@ export function AuditLogsPage() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="审计日志"
         description="手动刷新；筛选后导出 CSV，单次最多 5000 行"
         actions={
           <button
@@ -228,7 +227,7 @@ export function AuditLogsPage() {
                 value: selected.request_id ? (
                   <span className={styles.requestIdCell}>
                     <span className={styles.mono}>{selected.request_id}</span>
-                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
+                    <CopyTextButton value={selected.request_id} label="复制 Request ID" compact />
                   </span>
                 ) : (
                   '—'

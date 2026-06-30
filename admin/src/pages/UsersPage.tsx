@@ -106,7 +106,7 @@ export function UsersPage() {
 
   return (
     <div className={shared.page}>
-      <PageHeader title="用户管理" description="手动刷新；点击邮箱查看详情与审计记录" />
+      <PageHeader description="手动刷新；点击邮箱查看详情与审计记录" />
 
       <form
         className={shared.toolbar}

@@ -1,29 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import { CheckIcon, CopyIcon } from './icons/CopyIcons'
 import styles from './CopyJsonButton.module.css'
-
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <rect x="9" y="9" width="13" height="13" rx="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  )
-}
 
 type CopyTextButtonProps = {
   value: string
   label?: string
+  /** 表格行内等紧凑场景：无边框、更小尺寸 */
+  compact?: boolean
 }
 
-export function CopyTextButton({ value, label = '复制' }: CopyTextButtonProps) {
+export function CopyTextButton({ value, label = '复制', compact = false }: CopyTextButtonProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const copyResetTimer = useRef<number | null>(null)
 
@@ -55,7 +41,7 @@ export function CopyTextButton({ value, label = '复制' }: CopyTextButtonProps)
   return (
     <button
       type="button"
-      className={`${styles.iconBtn} ${copyState === 'copied' ? styles.iconBtnSuccess : ''} ${copyState === 'failed' ? styles.iconBtnError : ''}`}
+      className={`${styles.iconBtn} ${compact ? styles.iconBtnCompact : ''} ${copyState === 'copied' ? styles.iconBtnSuccess : ''} ${copyState === 'failed' ? styles.iconBtnError : ''}`}
       onClick={() => void copy()}
       aria-label={stateLabel}
       title={stateLabel}

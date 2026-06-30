@@ -1,9 +1,9 @@
 .wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: 0 10px 28px rgba(17, 24, 39, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .wrapScroll {
@@ -19,22 +19,25 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
 }
 
 .table th {
   text-align: left;
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 1rem;
   font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #f8fafc, var(--surface-muted));
+  background: var(--surface-muted);
   white-space: nowrap;
 }
 
 .table td {
-  padding: 0.72rem 1rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.68rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
   vertical-align: top;
 }
 
@@ -52,7 +55,7 @@
 
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .empty {

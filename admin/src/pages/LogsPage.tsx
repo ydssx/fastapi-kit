@@ -94,7 +94,7 @@ function RequestIdCell({ requestId }: { requestId: string | null }) {
   return (
     <span className={styles.requestIdCell}>
       <span className={styles.code}>{requestId}</span>
-      <CopyTextButton value={requestId} label="复制 Request ID" />
+      <CopyTextButton value={requestId} label="复制 Request ID" compact />
     </span>
   )
 }
@@ -210,7 +210,6 @@ export function LogsPage() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="应用日志"
         description="只读查询；每 30 秒自动刷新；需启用 ops profile 启动 Loki 与 Promtail"
         actions={
           <button
@@ -227,8 +226,8 @@ export function LogsPage() {
       {lokiUnavailable && (
         <p className={shared.notice}>
           日志聚合未配置或不可用。请执行：
-          <code className={styles.code}> docker compose --profile ops up -d loki promtail </code>
-          并在 API 环境变量中设置 <code className={styles.code}>LOKI_URL=http://loki:3100</code>。
+          <code className={shared.codeInline}> docker compose --profile ops up -d loki promtail </code>
+          并在 API 环境变量中设置 <code className={shared.codeInline}>LOKI_URL=http://loki:3100</code>。
         </p>
       )}
 
@@ -355,7 +354,7 @@ export function LogsPage() {
                 value: selected.request_id ? (
                   <span className={styles.requestIdCell}>
                     <span className={styles.code}>{selected.request_id}</span>
-                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
+                    <CopyTextButton value={selected.request_id} label="复制 Request ID" compact />
                   </span>
                 ) : (
                   '—'

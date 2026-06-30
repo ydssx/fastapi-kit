@@ -62,7 +62,7 @@ export function UserDetailPage() {
   if (isLoading) {
     return (
       <div className={shared.page}>
-        <PageHeader title="用户详情" description="加载中…" />
+        <PageHeader description="加载中…" />
         <LoadingBlock />
       </div>
     )
@@ -71,7 +71,7 @@ export function UserDetailPage() {
     return (
       <div className={shared.page}>
         <p className={shared.errorText}>加载失败</p>
-        <Link to="/users" className={styles.back}>
+        <Link to="/users" className={shared.link}>
           返回用户列表
         </Link>
       </div>
@@ -84,13 +84,13 @@ export function UserDetailPage() {
         title={user.email}
         description={`注册于 ${new Date(user.created_at).toLocaleString('zh-CN')}`}
         actions={
-          <Link to="/users" className={styles.back}>
+          <Link to="/users" className={shared.link}>
             ← 返回列表
           </Link>
         }
       />
 
-      <section className={styles.card}>
+      <section className={`${shared.panel} ${styles.card}`}>
         <dl className={styles.meta}>
           <div>
             <dt>角色</dt>

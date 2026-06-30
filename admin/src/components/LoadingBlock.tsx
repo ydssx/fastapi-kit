@@ -6,7 +6,7 @@ interface LoadingBlockProps {
 
 export function LoadingBlock({ label = '加载中…' }: LoadingBlockProps) {
   return (
-    <div className={shared.loading} role="status" aria-live="polite">
+    <div className={shared.loadingPanel} role="status" aria-live="polite">
       <span className={shared.spinner} aria-hidden />
       {label}
     </div>

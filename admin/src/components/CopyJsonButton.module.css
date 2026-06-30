@@ -2,6 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 2rem;
   height: 2rem;
   padding: 0;
@@ -10,12 +11,10 @@
   background: var(--surface);
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.iconBtn:hover {
-  background: var(--surface-hover);
-  color: var(--text);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .iconBtn svg {
@@ -23,12 +22,48 @@
   height: 1rem;
 }
 
+.iconBtn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--signal);
+}
+
+.iconBtnCompact {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 4px;
+}
+
+.iconBtnCompact svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.iconBtnCompact:hover {
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+  border-color: transparent;
+}
+
 .iconBtnSuccess {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--signal-deep);
+  border-color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.iconBtnCompact.iconBtnSuccess {
+  border-color: transparent;
 }
 
 .iconBtnError {
   color: var(--danger);
-  border-color: var(--danger-border, var(--danger));
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.iconBtnCompact.iconBtnError {
+  border-color: transparent;
+  background: var(--danger-bg);
 }
