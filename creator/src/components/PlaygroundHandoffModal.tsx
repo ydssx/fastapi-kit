@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Pipeline } from '../types/api'
+import type { Pipeline, PlaygroundOutline } from '../types/api'
+import {
+  formatOutlineMarkdown,
+  outlineHandoffStepKey,
+  outlineHandoffStepLabel,
+} from '../utils/playgroundOutline'
 import shared from '../styles/shared.module.css'
 import { PlatformPicker } from './PlatformPicker'
 import styles from './PlaygroundHandoffModal.module.css'
@@ -17,8 +22,9 @@ export interface HandoffPayload {
   pipeline_id: string
   title: string
   brief: string
-  hooks: string
-  raw_notes: string
+  hooks?: string
+  outline?: PlaygroundOutline
+  raw_notes?: string
   target_platform_keys: string[]
   primary_platform_key: string | null
 }
@@ -29,6 +35,7 @@ interface PlaygroundHandoffModalProps {
   brief: string
   hooks: string
   understanding: string | null
+  outline: PlaygroundOutline | null
   pipelines: Pipeline[]
   onClose: () => void
   onConfirm: (payload: HandoffPayload) => void
@@ -41,6 +48,7 @@ export function PlaygroundHandoffModal({
   brief,
   hooks,
   understanding,
+  outline,
   pipelines,
   onClose,
   onConfirm,
@@ -51,11 +59,13 @@ export function PlaygroundHandoffModal({
   const [primaryPlatform, setPrimaryPlatform] = useState('xiaohongshu')
   const [editableBrief, setEditableBrief] = useState(brief)
   const [editableHooks, setEditableHooks] = useState(hooks)
+  const [editableOutlineText, setEditableOutlineText] = useState('')
 
   useEffect(() => {
     if (!open) return
     setEditableBrief(brief)
     setEditableHooks(hooks)
+    setEditableOutlineText(outline ? formatOutlineMarkdown(outline) : '')
     setPlatforms(['xiaohongshu'])
     setPrimaryPlatform('xiaohongshu')
     const last = localStorage.getItem(LAST_PIPELINE_KEY)
@@ -64,7 +74,7 @@ export function PlaygroundHandoffModal({
     } else {
       setPipelineId('')
     }
-  }, [open, brief, hooks, pipelines])
+  }, [open, brief, hooks, outline, pipelines])
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
@@ -76,32 +86,63 @@ export function PlaygroundHandoffModal({
   }
 
   const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const hasOutlinePayload = Boolean(outline)
   const canConfirm =
-    Boolean(pipelineId) && Boolean(editableBrief.trim()) && platforms.length > 0 && primaryReady
+    Boolean(pipelineId) &&
+    Boolean(editableBrief.trim()) &&
+    platforms.length > 0 &&
+    primaryReady &&
+    (!hasOutlinePayload || Boolean(editableOutlineText.trim()))
 
   const preview = useMemo(() => {
-    const topic = `# ${title}\n\n${editableBrief}`
-    const hookLine = editableHooks.trim()
-      ? `\n\n→ hook/outline 步: ${editableHooks.trim().slice(0, 120)}…`
-      : ''
+    const topicBlock = `→ topic 步\n# ${title}\n\n${editableBrief}`
+    const outlineStep = pipelineId
+      ? outlineHandoffStepLabel(pipelineId)
+      : 'hook / outline 步'
+    const outlineBlock = hasOutlinePayload
+      ? `\n\n→ ${outlineStep}\n${editableOutlineText.trim().slice(0, 280)}${
+          editableOutlineText.trim().length > 280 ? '…' : ''
+        }`
+      : editableHooks.trim()
+        ? `\n\n→ ${outlineStep}\n${editableHooks.trim().slice(0, 280)}${
+            editableHooks.trim().length > 280 ? '…' : ''
+          }`
+        : ''
     const note = understanding ? `\n\n（理解: ${understanding}）` : ''
-    return `${topic}${note}${hookLine}`
-  }, [title, editableBrief, editableHooks, understanding])
+    return `${topicBlock}${note}${outlineBlock}`
+  }, [
+    title,
+    editableBrief,
+    editableHooks,
+    editableOutlineText,
+    understanding,
+    pipelineId,
+    hasOutlinePayload,
+  ])
 
   if (!open) return null
 
   function confirm() {
     if (!canConfirm) return
     localStorage.setItem(LAST_PIPELINE_KEY, pipelineId)
-    onConfirm({
+    const payload: HandoffPayload = {
       pipeline_id: pipelineId,
       title,
       brief: editableBrief,
-      hooks: editableHooks,
       raw_notes: understanding ?? '',
       target_platform_keys: platforms,
       primary_platform_key: platforms.length === 1 ? platforms[0]! : primaryPlatform || null,
-    })
+    }
+    if (outline) {
+      payload.outline = outline
+      const defaultText = formatOutlineMarkdown(outline)
+      if (editableOutlineText.trim() !== defaultText) {
+        payload.hooks = editableOutlineText.trim()
+      }
+    } else if (editableHooks.trim()) {
+      payload.hooks = editableHooks
+    }
+    onConfirm(payload)
   }
 
   return (
@@ -114,7 +155,9 @@ export function PlaygroundHandoffModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="handoff-title">进入流水线</h2>
-        <p className={shared.muted}>选择流水线并确认将注入项目的草稿内容。</p>
+        <p className={shared.muted}>
+          选择流水线并确认将注入项目的草稿内容。结构化大纲会写入 topic 摘要与对应早期步骤。
+        </p>
 
         <label className={styles.label}>
           流水线
@@ -143,7 +186,7 @@ export function PlaygroundHandoffModal({
         />
 
         <label className={styles.label}>
-          选题说明（可编辑）
+          选题说明 → topic 步（可编辑）
           <textarea
             className={styles.textarea}
             rows={4}
@@ -152,15 +195,27 @@ export function PlaygroundHandoffModal({
           />
         </label>
 
-        <label className={styles.label}>
-          钩子/角度（可编辑，可选）
-          <textarea
-            className={styles.textarea}
-            rows={3}
-            value={editableHooks}
-            onChange={(e) => setEditableHooks(e.target.value)}
-          />
-        </label>
+        {hasOutlinePayload ? (
+          <label className={styles.label}>
+            结构化大纲 → {pipelineId ? outlineHandoffStepKey(pipelineId) : 'hook/outline'} 步（可编辑）
+            <textarea
+              className={styles.textarea}
+              rows={8}
+              value={editableOutlineText}
+              onChange={(e) => setEditableOutlineText(e.target.value)}
+            />
+          </label>
+        ) : (
+          <label className={styles.label}>
+            钩子/角度 → hook/outline 步（可编辑，可选）
+            <textarea
+              className={styles.textarea}
+              rows={3}
+              value={editableHooks}
+              onChange={(e) => setEditableHooks(e.target.value)}
+            />
+          </label>
+        )}
 
         <div className={styles.preview}>
           <strong>映射预览</strong>

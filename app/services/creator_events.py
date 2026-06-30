@@ -32,8 +32,22 @@ class CreatorEventService:
         created = await self.events.count_by_type_since("project.created", since)
         completed = await self.events.count_by_type_since("project.completed", since)
         sessions = await self.events.count_by_type_since("user.session", since)
+        outline_generated = await self.events.count_by_type_since(
+            "playground.outline_generated", since
+        )
+        outline_refined = await self.events.count_by_type_since(
+            "playground.outline_refined", since
+        )
+        outline_handoff = await self.events.count_outline_handoff_since(since)
+        outline_handoff_completed = await self.events.count_outline_handoff_completed_since(
+            since
+        )
         return CreatorMetricsSummary(
             project_created=created,
             project_completed=completed,
             user_sessions=sessions,
+            outline_generated=outline_generated,
+            outline_refined=outline_refined,
+            outline_handoff=outline_handoff,
+            outline_handoff_completed=outline_handoff_completed,
         )

@@ -4,9 +4,14 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(272px, 340px);
-  gap: clamp(var(--space-lg), 3vw, var(--space-2xl));
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: clamp(var(--space-lg), 2.5vw, var(--space-xl));
   align-items: start;
+}
+
+.workspaceWithSprint {
+  grid-template-columns: minmax(0, min(100%, 52rem)) minmax(300px, 360px);
+  justify-content: space-between;
 }
 
 .createAside {
@@ -89,6 +94,8 @@
     color-mix(in srgb, var(--surface) 96%, var(--bg-elevated));
   border-color: var(--border-subtle);
   box-shadow: var(--shadow-sm);
+  padding: clamp(18px, 2.5vw, 24px);
+  gap: var(--space-sm);
 }
 
 .heroSecondary::before {
@@ -254,10 +261,28 @@
   color: var(--accent);
 }
 
+.sprintHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+}
+
+.sprintTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
 .sprintHead .sectionCount {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
   background: var(--accent-muted);
+}
+
+.sprintHead .sectionHint {
+  margin-top: 4px;
 }
 
 .sprintLayout {
@@ -265,6 +290,15 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
   gap: var(--space-md);
   align-items: start;
+}
+
+.sprintLayoutSingle {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 40rem;
+}
+
+.sprintLayoutSingle .sprintSpotlight {
+  width: 100%;
 }
 
 .sprintSpotlight {
@@ -351,8 +385,17 @@
 }
 
 @media (max-width: 1080px) {
+  .workspaceWithSprint {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    justify-content: initial;
+  }
+
   .sprintLayout {
     grid-template-columns: 1fr;
+  }
+
+  .sprintLayoutSingle {
+    max-width: none;
   }
 }
 

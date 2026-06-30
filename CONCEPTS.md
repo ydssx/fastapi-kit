@@ -20,6 +20,10 @@ A single stage inside a content pipeline. Projects track a current step key and 
 
 The pre-pipeline playground where users generate and refine topic ideas from brand context before handing off into a new content project. Uses playground-specific API quotas separate from in-pipeline AI calls.
 
+### Structured Outline
+
+A pre-pipeline Inspiration Lab artifact that turns a selected topic into an executable content structure: central angle or claim, opening hook, 3-5 section or segment points, and closing CTA or takeaway. It is refined before handoff and remains distinct from pipeline scripts or full article drafts.
+
 ### Brand Profile
 
 Persistent creator settings (tone, audience, taboos, structure preferences) injected into AI suggestions across the lab and pipeline steps.

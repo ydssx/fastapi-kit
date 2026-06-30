@@ -40,3 +40,35 @@ class CreatorEventRepository:
             )
         )
         return int(result.scalar_one())
+
+    async def count_outline_handoff_since(self, since: datetime) -> int:
+        result = await self.session.execute(
+            select(func.count())
+            .select_from(CreatorEvent)
+            .where(
+                CreatorEvent.event_type == "playground.handoff",
+                CreatorEvent.created_at >= since,
+                CreatorEvent.payload["outline_included"].as_boolean().is_(True),
+            )
+        )
+        return int(result.scalar_one())
+
+    async def count_outline_handoff_completed_since(self, since: datetime) -> int:
+        handoff = CreatorEvent.__table__.alias("handoff")
+        completed = CreatorEvent.__table__.alias("completed")
+        result = await self.session.execute(
+            select(func.count(func.distinct(handoff.c.project_id)))
+            .select_from(handoff)
+            .join(
+                completed,
+                (handoff.c.project_id == completed.c.project_id)
+                & (completed.c.event_type == "project.completed"),
+            )
+            .where(
+                handoff.c.event_type == "playground.handoff",
+                handoff.c.created_at >= since,
+                handoff.c.payload["outline_included"].as_boolean().is_(True),
+                completed.c.created_at >= since,
+            )
+        )
+        return int(result.scalar_one())

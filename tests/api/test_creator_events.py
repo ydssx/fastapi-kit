@@ -53,3 +53,70 @@ async def test_creator_metrics_summary(client: AsyncClient, db_engine) -> None:
     assert data["project_created"] >= 1
     assert data["project_completed"] >= 1
     assert data["user_sessions"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_creator_metrics_outline_events(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+    db_engine,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    outline_json = """{
+      "central_claim": "测试主张",
+      "opening_hook": "测试钩子",
+      "sections": [
+        {"title": "一", "summary": "要点一"},
+        {"title": "二", "summary": "要点二"},
+        {"title": "三", "summary": "要点三"}
+      ],
+      "closing_cta": "测试结尾"
+    }"""
+
+    async def fake_complete(_self, _system: str, _user: str) -> str:
+        return outline_json
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-outline-metrics@example.com")
+    headers = auth_headers(token)
+    topic = {"title": "测试选题", "reason": "测试理由"}
+
+    outline_resp = await client.post(
+        "/api/v1/creator/playground/outline",
+        headers=headers,
+        json={"selected_topic": topic},
+    )
+    assert outline_resp.status_code == 200
+    outline = outline_resp.json()["data"]["outline"]
+
+    handoff_resp = await client.post(
+        "/api/v1/creator/playground/handoff",
+        headers=headers,
+        json={
+            "pipeline_id": "short_video",
+            "title": topic["title"],
+            "brief": topic["reason"],
+            "outline": outline,
+            "target_platform_keys": ["xiaohongshu"],
+            "primary_platform_key": "xiaohongshu",
+        },
+    )
+    assert handoff_resp.status_code == 200
+
+    admin_email = "admin-outline-metrics@example.com"
+    await register_token(client, admin_email)
+    await _make_admin(db_engine, admin_email)
+    admin_login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": admin_email, "password": "securepass123"},
+    )
+    admin_token = admin_login.json()["data"]["tokens"]["access_token"]
+    summary = await client.get(
+        "/api/v1/admin/creator-metrics/summary",
+        headers=auth_headers(admin_token),
+    )
+    data = summary.json()["data"]
+    assert data["outline_generated"] >= 1
+    assert data["outline_handoff"] >= 1

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { PlaygroundMessage, PlaygroundTopic } from '../types/api'
+import type { PlaygroundMessage, PlaygroundOutline, PlaygroundTopic } from '../types/api'
 
 const STORAGE_KEY = 'creator-playground-session'
 
@@ -9,6 +9,8 @@ export interface PlaygroundSession {
   messages: PlaygroundMessage[]
   understanding: string | null
   brandEmpty: boolean
+  outline: PlaygroundOutline | null
+  outlineMessages: PlaygroundMessage[]
 }
 
 const EMPTY: PlaygroundSession = {
@@ -17,6 +19,8 @@ const EMPTY: PlaygroundSession = {
   messages: [],
   understanding: null,
   brandEmpty: false,
+  outline: null,
+  outlineMessages: [],
 }
 
 function loadSession(): PlaygroundSession {

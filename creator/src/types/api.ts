@@ -103,6 +103,27 @@ export interface PlaygroundRefineResponse {
   understanding: string | null
 }
 
+export interface PlaygroundOutlineSection {
+  title: string
+  summary: string
+}
+
+export interface PlaygroundOutline {
+  central_claim: string
+  opening_hook: string
+  sections: PlaygroundOutlineSection[]
+  closing_cta: string
+}
+
+export interface PlaygroundOutlineGenerateResponse {
+  outline: PlaygroundOutline
+  brand_empty: boolean
+}
+
+export interface PlaygroundOutlineRefineResponse {
+  outline: PlaygroundOutline
+}
+
 export interface PlaygroundHandoffResponse {
   project_id: string
 }

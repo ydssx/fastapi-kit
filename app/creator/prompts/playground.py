@@ -1,7 +1,13 @@
 import json
 import re
 
-from app.schemas.creator import BrandProfileOut, PlaygroundMessage, PlaygroundTopic
+from app.schemas.creator import (
+    BrandProfileOut,
+    PlaygroundMessage,
+    PlaygroundOutline,
+    PlaygroundOutlineSection,
+    PlaygroundTopic,
+)
 
 
 def _brand_block(brand: BrandProfileOut) -> str:
@@ -108,3 +114,121 @@ def extract_understanding(reply: str) -> tuple[str, str | None]:
         understanding = reply[idx + len(marker) :].strip()
         return body, understanding or None
     return reply.strip(), None
+
+
+_OUTLINE_JSON_HINT = (
+    '格式: {"central_claim": "核心主张", "opening_hook": "开头钩子", '
+    '"sections": [{"title": "段落标题", "summary": "要点说明"}], '
+    '"closing_cta": "结尾 CTA 或 takeaway"}。sections 必须 3 到 5 条。'
+)
+
+
+def build_outline_generate_prompt(
+    brand: BrandProfileOut,
+    selected_topic: PlaygroundTopic,
+) -> tuple[str, str]:
+    system = (
+        "你是中文内容策划助手，帮助创作者把选题变成可执行的结构化大纲。"
+        "大纲是 pre-pipeline 结构稿，不是完整脚本或正文。"
+        "只输出 JSON，不要 markdown 代码块或解释。"
+        + _OUTLINE_JSON_HINT
+    )
+    user_parts = [
+        f"已选选题: {selected_topic.title}",
+        f"理由: {selected_topic.reason}",
+        _brand_block(brand),
+        "\n请生成结构化大纲 JSON。",
+    ]
+    return system, "\n".join(user_parts)
+
+
+def build_outline_refine_prompt(
+    brand: BrandProfileOut,
+    selected_topic: PlaygroundTopic,
+    outline: PlaygroundOutline,
+    messages: list[PlaygroundMessage],
+) -> tuple[str, str]:
+    system = (
+        "你是中文内容策划助手，帮助用户 refine 结构化大纲。"
+        "根据用户反馈更新大纲，保持结构化 JSON 输出，不要 markdown 代码块或解释。"
+        + _OUTLINE_JSON_HINT
+    )
+    user_parts = [
+        f"已选选题: {selected_topic.title}",
+        f"理由: {selected_topic.reason}",
+        _brand_block(brand),
+        f"\n当前大纲 JSON:\n{outline.model_dump_json()}",
+    ]
+    if messages:
+        user_parts.append("\n对话历史:")
+        for msg in messages:
+            role = "用户" if msg.role == "user" else "助手"
+            user_parts.append(f"{role}: {msg.content}")
+    user_parts.append("\n请输出更新后的结构化大纲 JSON。")
+    return system, "\n".join(user_parts)
+
+
+def _extract_json_text(raw: str) -> str:
+    text = raw.strip()
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+    if fence:
+        text = fence.group(1).strip()
+    return text
+
+
+def parse_outline_json(raw: str) -> PlaygroundOutline:
+    data = json.loads(_extract_json_text(raw))
+    if not isinstance(data, dict):
+        raise ValueError("outline must be an object")
+    central_claim = str(data.get("central_claim", "")).strip()
+    opening_hook = str(data.get("opening_hook", "")).strip()
+    closing_cta = str(data.get("closing_cta", "")).strip()
+    sections_raw = data.get("sections", [])
+    if not central_claim or not opening_hook or not closing_cta:
+        raise ValueError("outline missing required fields")
+    if not isinstance(sections_raw, list):
+        raise ValueError("sections must be a list")
+    sections: list[PlaygroundOutlineSection] = []
+    for item in sections_raw:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title", "")).strip()
+        summary = str(item.get("summary", "")).strip()
+        if title and summary:
+            sections.append(
+                PlaygroundOutlineSection(title=title[:200], summary=summary[:1000])
+            )
+    if len(sections) < 3:
+        raise ValueError("expected at least 3 sections")
+    return PlaygroundOutline(
+        central_claim=central_claim[:500],
+        opening_hook=opening_hook[:2000],
+        sections=sections[:5],
+        closing_cta=closing_cta[:2000],
+    )
+
+
+def format_outline_markdown(outline: PlaygroundOutline) -> str:
+    lines = [
+        f"## 核心主张\n{outline.central_claim}",
+        f"\n## 开头钩子\n{outline.opening_hook}",
+        "\n## 段落要点",
+    ]
+    for index, section in enumerate(outline.sections, start=1):
+        lines.append(f"\n### {index}. {section.title}\n{section.summary}")
+    lines.append(f"\n## 结尾 CTA\n{outline.closing_cta}")
+    return "\n".join(lines)
+
+
+def format_outline_topic_context(outline: PlaygroundOutline) -> str:
+    section_lines = [f"- {section.title}: {section.summary}" for section in outline.sections]
+    return "\n".join(
+        [
+            "## 结构化大纲（来自灵感实验室）",
+            f"**主张：** {outline.central_claim}",
+            f"**钩子：** {outline.opening_hook}",
+            "**要点：**",
+            *section_lines,
+            f"**结尾：** {outline.closing_cta}",
+        ]
+    )

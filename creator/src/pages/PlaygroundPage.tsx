@@ -5,6 +5,8 @@ import { ApiError } from '../api/client'
 import {
   fetchPipelines,
   playgroundHandoff,
+  playgroundOutlineGenerate,
+  playgroundOutlineRefine,
   playgroundRefine,
   playgroundTopics,
 } from '../api/creator'
@@ -13,6 +15,7 @@ import { PlaygroundIcon } from '../components/icons/NavIcons'
 import { PlaygroundHandoffModal } from '../components/PlaygroundHandoffModal'
 import type { HandoffPayload } from '../components/PlaygroundHandoffModal'
 import { PageHeader } from '../components/PageHeader'
+import { PlaygroundOutlinePanel } from '../components/PlaygroundOutlinePanel'
 import { PlaygroundRefinePanel } from '../components/PlaygroundRefinePanel'
 import {
   PlaygroundTopicCards,
@@ -20,15 +23,23 @@ import {
 } from '../components/PlaygroundTopicCards'
 import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
 import { usePlaygroundSession } from '../hooks/usePlaygroundSession'
-import type { PlaygroundTopic } from '../types/api'
+import type { PlaygroundMessage, PlaygroundOutline, PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './PlaygroundPage.module.css'
+
+function hasOutlineSession(
+  outline: PlaygroundOutline | null,
+  outlineMessages: PlaygroundMessage[],
+) {
+  return outline !== null || outlineMessages.length > 0
+}
 
 export function PlaygroundPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { session, setSession, resetSession, exportSession } = usePlaygroundSession()
   const [handoffOpen, setHandoffOpen] = useState(false)
+  const [outlineViewOpen, setOutlineViewOpen] = useState(false)
   const [quotaError, setQuotaError] = useState<'ai' | 'projects' | 'playground' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -36,6 +47,13 @@ export function PlaygroundPage() {
     queryKey: ['pipelines'],
     queryFn: fetchPipelines,
   })
+
+  const quotaBlocked = quotaError === 'playground'
+
+  function confirmClearOutline(actionLabel: string): boolean {
+    if (!hasOutlineSession(session.outline, session.outlineMessages)) return true
+    return window.confirm(`${actionLabel}将清空当前结构化大纲，是否继续？`)
+  }
 
   const topicsMut = useMutation({
     mutationFn: () => playgroundTopics(),
@@ -49,7 +67,10 @@ export function PlaygroundPage() {
         messages: [],
         understanding: null,
         brandEmpty: data.brand_empty,
+        outline: null,
+        outlineMessages: [],
       }))
+      setOutlineViewOpen(false)
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
     },
     onError: (err: unknown) => {
@@ -95,10 +116,75 @@ export function PlaygroundPage() {
     },
   })
 
+  const outlineGenerateMut = useMutation({
+    mutationFn: () => {
+      if (!session.selectedTopic) throw new Error('请先选择选题')
+      return playgroundOutlineGenerate({ selected_topic: session.selectedTopic })
+    },
+    onSuccess: (data) => {
+      setQuotaError(null)
+      setActionError(null)
+      setSession((prev) => ({
+        ...prev,
+        outline: data.outline,
+        outlineMessages: [],
+        brandEmpty: data.brand_empty || prev.brandEmpty,
+      }))
+      setOutlineViewOpen(true)
+      void queryClient.invalidateQueries({ queryKey: ['usage'] })
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        const kind = quotaLimitKindFromCode(err.code)
+        if (kind) {
+          setQuotaError(kind)
+          return
+        }
+      }
+      setActionError(err instanceof Error ? err.message : '大纲生成失败，请重试')
+    },
+  })
+
+  const outlineRefineMut = useMutation({
+    mutationFn: (text: string) => {
+      if (!session.selectedTopic || !session.outline) throw new Error('请先生成大纲')
+      const nextMessages = [...session.outlineMessages, { role: 'user' as const, content: text }]
+      return playgroundOutlineRefine({
+        selected_topic: session.selectedTopic,
+        outline: session.outline,
+        messages: nextMessages,
+      }).then((data) => ({ data, nextMessages }))
+    },
+    onSuccess: ({ data, nextMessages }) => {
+      setQuotaError(null)
+      setActionError(null)
+      setSession((prev) => ({
+        ...prev,
+        outline: data.outline,
+        outlineMessages: [
+          ...nextMessages,
+          { role: 'assistant', content: '已根据你的反馈更新结构化大纲。' },
+        ],
+      }))
+      void queryClient.invalidateQueries({ queryKey: ['usage'] })
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        const kind = quotaLimitKindFromCode(err.code)
+        if (kind) {
+          setQuotaError(kind)
+          return
+        }
+      }
+      setActionError(err instanceof Error ? err.message : '大纲调整失败，请重试')
+    },
+  })
+
   const handoffMut = useMutation({
     mutationFn: (payload: HandoffPayload) => playgroundHandoff(payload),
     onSuccess: (data) => {
       resetSession()
+      setOutlineViewOpen(false)
       void queryClient.invalidateQueries({ queryKey: ['projects'] })
       navigate(`/projects/${data.project_id}`)
     },
@@ -108,30 +194,43 @@ export function PlaygroundPage() {
   })
 
   function selectTopic(topic: PlaygroundTopic) {
-    if (
+    const topicChanged =
       session.selectedTopic &&
-      session.messages.length > 0 &&
       (session.selectedTopic.title !== topic.title ||
         session.selectedTopic.reason !== topic.reason)
-    ) {
+
+    if (topicChanged && session.messages.length > 0) {
       const ok = window.confirm('切换选题将清空当前选题的 refine 对话，是否继续？')
       if (!ok) return
     }
+    if (topicChanged && !confirmClearOutline('切换选题')) return
+
     setSession((prev) => ({
       ...prev,
       selectedTopic: topic,
-      messages: [],
-      understanding: null,
+      messages: topicChanged ? [] : prev.messages,
+      understanding: topicChanged ? null : prev.understanding,
+      outline: topicChanged ? null : prev.outline,
+      outlineMessages: topicChanged ? [] : prev.outlineMessages,
     }))
+    if (topicChanged) {
+      setOutlineViewOpen(false)
+    }
+  }
+
+  function handleRegenerateTopics() {
+    if (!confirmClearOutline('换一批选题')) return
+    topicsMut.mutate()
   }
 
   const brief = session.understanding ?? session.selectedTopic?.reason ?? ''
+  const showOutlineWorkspace = Boolean(session.selectedTopic && outlineViewOpen)
 
   return (
     <div className={styles.page}>
       <PageHeader
         title="灵感实验室"
-        description="完全不知道写什么？先生成选题清单，多轮 refine 后再进入流水线。"
+        description="生成选题、打磨结构化大纲，满意后再 handoff 到内容流水线。"
       />
 
       <div className={styles.persistWarn} role="status">
@@ -173,37 +272,66 @@ export function PlaygroundPage() {
             </p>
           ) : null}
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>选题清单</h2>
-            <PlaygroundTopicCards
-              topics={session.topics}
-              selected={session.selectedTopic}
-              onSelect={selectTopic}
-            />
-            <PlaygroundTopicCardsActions
-              onRegenerate={() => topicsMut.mutate()}
-              loading={topicsMut.isPending}
-            />
-          </section>
+          {!showOutlineWorkspace ? (
+            <>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>选题清单</h2>
+                <PlaygroundTopicCards
+                  topics={session.topics}
+                  selected={session.selectedTopic}
+                  onSelect={selectTopic}
+                />
+                <PlaygroundTopicCardsActions
+                  onRegenerate={handleRegenerateTopics}
+                  loading={topicsMut.isPending}
+                />
+              </section>
 
-          {session.selectedTopic ? (
+              {session.selectedTopic ? (
+                <section className={styles.refineSection}>
+                  <h2 className={styles.sectionTitle}>Refine：{session.selectedTopic.title}</h2>
+                  <PlaygroundRefinePanel
+                    messages={session.messages}
+                    understanding={session.understanding}
+                    loading={refineMut.isPending}
+                    onSend={(text) => refineMut.mutate(text)}
+                  />
+                  <div className={shared.btnRow}>
+                    <button
+                      type="button"
+                      className={shared.btnPrimary}
+                      onClick={() => setOutlineViewOpen(true)}
+                    >
+                      {session.outline ? '继续编辑大纲' : '进入结构化大纲'}
+                    </button>
+                    {!session.outline ? (
+                      <button
+                        type="button"
+                        className={shared.btnGhost}
+                        onClick={() => setHandoffOpen(true)}
+                      >
+                        跳过大纲，直接 handoff
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+            </>
+          ) : session.selectedTopic ? (
             <section className={styles.refineSection}>
-              <h2 className={styles.sectionTitle}>Refine：{session.selectedTopic.title}</h2>
-              <PlaygroundRefinePanel
-                messages={session.messages}
-                understanding={session.understanding}
-                loading={refineMut.isPending}
-                onSend={(text) => refineMut.mutate(text)}
+              <h2 className={styles.sectionTitle}>结构化大纲</h2>
+              <PlaygroundOutlinePanel
+                selectedTopic={session.selectedTopic}
+                outline={session.outline}
+                messages={session.outlineMessages}
+                generating={outlineGenerateMut.isPending}
+                refining={outlineRefineMut.isPending}
+                quotaBlocked={quotaBlocked}
+                onGenerate={() => outlineGenerateMut.mutate()}
+                onSend={(text) => outlineRefineMut.mutate(text)}
+                onHandoff={() => setHandoffOpen(true)}
+                onBackToTopics={() => setOutlineViewOpen(false)}
               />
-              <div className={shared.btnRow}>
-                <button
-                  type="button"
-                  className={shared.btnPrimary}
-                  onClick={() => setHandoffOpen(true)}
-                >
-                  进入流水线
-                </button>
-              </div>
             </section>
           ) : null}
         </>
@@ -220,6 +348,7 @@ export function PlaygroundPage() {
           brief={brief}
           hooks={session.understanding ?? ''}
           understanding={session.understanding}
+          outline={session.outline}
           pipelines={pipelines}
           onClose={() => setHandoffOpen(false)}
           onConfirm={(payload) => handoffMut.mutate(payload)}

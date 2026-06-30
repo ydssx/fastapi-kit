@@ -167,7 +167,9 @@ export function ProjectsPage() {
         }
       />
 
-      <div className={styles.workspace}>
+      <div
+        className={`${styles.workspace} ${hasSprintProjects ? styles.workspaceWithSprint : ''}`}
+      >
         <div className={styles.projectsMain}>
           {isLoading && (
             <section className={styles.section}>
@@ -179,15 +181,19 @@ export function ProjectsPage() {
 
           {!isLoading && hasSprintProjects && featuredSprintProject && (
             <section className={`${styles.section} ${styles.sprintSection}`}>
-              <div className={`${shared.sectionHead} ${styles.sprintHead}`}>
-                <div>
-                  <p className={styles.sprintKicker}>冲刺优先</p>
+              <div className={styles.sprintHead}>
+                <p className={styles.sprintKicker}>冲刺优先</p>
+                <div className={styles.sprintTitleRow}>
                   <h2 className={shared.panelTitle}>发布冲刺</h2>
-                  <p className={styles.sectionHint}>先把最接近发布的项目推过终点线。</p>
+                  <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
                 </div>
-                <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
+                <p className={styles.sectionHint}>先把最接近发布的项目推过终点线。</p>
               </div>
-              <div className={styles.sprintLayout}>
+              <div
+                className={`${styles.sprintLayout} ${
+                  sprintQueue.length === 0 ? styles.sprintLayoutSingle : ''
+                }`}
+              >
                 <div className={styles.sprintSpotlight}>
                   <ProjectSprintCard item={featuredSprintProject} featured />
                 </div>
