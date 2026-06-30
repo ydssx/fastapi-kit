@@ -20,7 +20,7 @@ tags:
   - vite
 related_components:
   - admin
-last_refreshed: 2026-06-25
+last_refreshed: 2026-06-30
 ---
 
 # 创作者工作台 UI 重设计：工作室侧栏与设计 token 体系
@@ -71,7 +71,7 @@ last_refreshed: 2026-06-25
 
 | 区域 | 文件 | 要点 |
 |------|------|------|
-| 项目首页 | `ProjectsPage.*`、`ProjectCard.*` | Hero 新建区；卡片左侧 hover 色条 + 进度条替代圆点 |
+| 项目首页 | `ProjectsPage.*`、`ProjectCard.*`、`ProjectSprintCard.*` | 双栏布局（列表 + 右侧创建区）；**发布冲刺**优先区（`ProjectSprintCard` 焦点卡 + 队列，`buildProjectPriorityView`）；其余进行中与已完成分区；卡片左侧 hover 色条 + 进度条 |
 | 登录/认证 | `LoginPage.*`、Forgot/Reset | 左侧流水线步骤示意；登录/注册分段 Tab；卡片顶线 |
 | 灵感实验室 | `PlaygroundPage.*`、TopicCards、RefinePanel | 薄荷空态；选题卡片左色条选中；对话气泡区分用户/助手 |
 | 品牌档案 | `BrandPage.*` | 桌面双栏：表单 + sticky 预览（AI 色系） |

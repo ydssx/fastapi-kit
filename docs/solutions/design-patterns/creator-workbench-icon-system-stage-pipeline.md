@@ -37,7 +37,7 @@ related_components:
 
 | 层级 | 文件 | 用途 |
 |------|------|------|
-| 品牌层 | `icons/CreatorMark.tsx`、`AuthBrandMark.tsx`、`public/favicon.svg`、`public/apple-touch-icon.png` | 侧栏 Mark、认证页、favicon |
+| 品牌层 | `icons/CreatorMark.tsx`、`components/AuthBrandMark.tsx`、`public/favicon.svg`、`public/apple-touch-icon.png` | 侧栏 Mark、认证页、favicon |
 | 导航层 | `icons/NavIcons.tsx` | 侧栏四项；灵感实验室激活态用 `navActiveAi`（`--ai`） |
 | 步骤层 | `icons/StepIcons.tsx` | `StepProgress` 按 `step_key` 渲染；完成态用 `CheckIcon` |
 
@@ -145,4 +145,3 @@ Unicode 占位符在小尺寸模糊、无法继承 token、无语义。统一 SV
 
 - `apple-touch-icon.png` 约 1.3MB（AI 生成）— 上线前需压缩或改用 SVG→PNG 脚本
 - `creator/FRONTEND.md` 尚未列出 `icons/` 与 `AuthBrandMark` — 可选文档同步
-- ESLint 在 `creator/` 因缺少 `eslint.config.*` 无法运行（既有问题，非本次引入）
