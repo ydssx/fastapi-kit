@@ -3,13 +3,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { fetchLogs } from '../api/logs'
-import { CopyJsonButton } from '../components/CopyJsonButton'
 import { CopyTextButton } from '../components/CopyTextButton'
 import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
-import { DetailMeta } from '../components/DetailMeta'
-import { JsonPreview } from '../components/JsonPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
-import { Modal } from '../components/Modal'
+import { LogDetailModal } from '../components/LogDetailModal'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import { StatusBadge } from '../components/StatusBadge'
@@ -19,6 +16,7 @@ import {
   defaultTodayRangeLocal,
   isoToDateTimeLocal,
 } from '../lib/datetime'
+import { logLevelVariant } from '../lib/logDisplay'
 import { buildLogsSearchParams } from '../lib/traceLinks'
 import shared from '../styles/shared.module.css'
 import styles from './LogsPage.module.css'
@@ -73,20 +71,6 @@ function parseLogsFiltersFromSearchParams(searchParams: URLSearchParams): {
       until: parseIsoToFilter(untilIso, untilLocal),
     },
   }
-}
-
-function logLevelVariant(level: string | null): 'ok' | 'warn' | 'error' | 'neutral' {
-  const normalized = (level ?? '').toLowerCase()
-  if (normalized === 'error' || normalized === 'critical' || normalized === 'fatal') {
-    return 'error'
-  }
-  if (normalized === 'warn' || normalized === 'warning') {
-    return 'warn'
-  }
-  if (normalized === 'info' || normalized === 'debug') {
-    return 'ok'
-  }
-  return 'neutral'
 }
 
 function RequestIdCell({ requestId }: { requestId: string | null }) {
@@ -324,54 +308,20 @@ export function LogsPage() {
         </>
       ) : null}
 
-      {selected && (
-        <Modal
-          title="日志详情"
-          titleId="log-detail-title"
-          wide
+      {selected ? (
+        <LogDetailModal
+          entry={selected}
           onClose={() => setSelected(null)}
-          headerActions={<CopyJsonButton key={selected.timestamp} value={selected.raw} />}
-        >
-          <DetailMeta
-            items={[
-              {
-                label: '时间',
-                value: new Date(selected.timestamp).toLocaleString('zh-CN'),
-              },
-              {
-                label: '级别',
-                value: selected.level ? (
-                  <StatusBadge
-                    status={selected.level.toUpperCase()}
-                    variant={logLevelVariant(selected.level)}
-                  />
-                ) : (
-                  '—'
-                ),
-              },
-              {
-                label: 'Request ID',
-                value: selected.request_id ? (
-                  <span className={styles.requestIdCell}>
-                    <span className={styles.code}>{selected.request_id}</span>
-                    <CopyTextButton value={selected.request_id} label="复制 Request ID" compact />
-                  </span>
-                ) : (
-                  '—'
-                ),
-              },
-              { label: '消息', value: selected.message ?? '—' },
-            ]}
-          />
-          <p className={shared.detailSectionLabel}>详情</p>
-          <JsonPreview value={selected.raw} />
-          <div className={shared.modalActions}>
-            <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
-              关闭
-            </button>
-          </div>
-        </Modal>
-      )}
+          onFilterByRequestId={(requestId) => {
+            setSelected(null)
+            setRequestId(requestId)
+            applyFilters({
+              ...filters,
+              request_id: requestId,
+            })
+          }}
+        />
+      ) : null}
     </div>
   )
 }

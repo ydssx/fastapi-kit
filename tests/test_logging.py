@@ -38,3 +38,26 @@ def test_setup_logging_rejects_invalid_level() -> None:
     settings = Settings(environment="test", log_level="NOT_A_LEVEL")
     with pytest.raises(ValueError, match="Invalid log level"):
         setup_logging(settings)
+
+
+@pytest.mark.parametrize(
+    ("app_level", "expected_db_level"),
+    [
+        ("DEBUG", logging.DEBUG),
+        ("INFO", logging.WARNING),
+        ("WARNING", logging.WARNING),
+    ],
+)
+def test_setup_logging_database_loggers_only_at_debug(
+    app_level: str,
+    expected_db_level: int,
+) -> None:
+    setup_logging(Settings(environment="test", log_level=app_level))
+    assert logging.getLogger("sqlalchemy.engine").level == expected_db_level
+    assert logging.getLogger("sqlalchemy.pool").level == expected_db_level
+
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        handler.close()
+    root.handlers.clear()
+    logging.shutdown()

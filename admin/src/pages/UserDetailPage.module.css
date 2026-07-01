@@ -48,3 +48,16 @@
 .toggle input {
   accent-color: var(--signal);
 }
+
+.resetSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.resetSection p {
+  margin: 0;
+  max-width: 36rem;
+  line-height: 1.5;
+}

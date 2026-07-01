@@ -9,6 +9,7 @@ import { DetailMeta } from '../components/DetailMeta'
 import { JsonPreview } from '../components/JsonPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { Modal } from '../components/Modal'
+import { ModalFooter } from '../components/ModalFooter'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import type { AuditLog } from '../types/api'
@@ -238,7 +239,7 @@ export function AuditLogsPage() {
           />
           <p className={shared.detailSectionLabel}>详情</p>
           <JsonPreview value={selected} />
-          <div className={shared.modalActions}>
+          <ModalFooter>
             {selected.request_id && (
               <Link
                 to={buildLogsPathFromAudit(selected.created_at, selected.request_id)}
@@ -250,7 +251,7 @@ export function AuditLogsPage() {
             <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
               关闭
             </button>
-          </div>
+          </ModalFooter>
         </Modal>
       )}
     </div>
