@@ -19,6 +19,7 @@ export function LoginPage() {
   const resetSuccess = (location.state as { resetSuccess?: boolean } | null)?.resetSuccess
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -27,9 +28,19 @@ export function LoginPage() {
     return <Navigate to="/" replace />
   }
 
+  function switchMode(next: 'login' | 'register') {
+    setMode(next)
+    setError(null)
+    setConfirmPassword('')
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (mode === 'register' && password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
     setSubmitting(true)
     try {
       if (mode === 'login') {
@@ -87,7 +98,7 @@ export function LoginPage() {
               role="tab"
               aria-selected={mode === 'login'}
               className={mode === 'login' ? styles.modeTabActive : styles.modeTab}
-              onClick={() => setMode('login')}
+              onClick={() => switchMode('login')}
             >
               登录
             </button>
@@ -96,7 +107,7 @@ export function LoginPage() {
               role="tab"
               aria-selected={mode === 'register'}
               className={mode === 'register' ? styles.modeTabActive : styles.modeTab}
-              onClick={() => setMode('register')}
+              onClick={() => switchMode('register')}
             >
               注册
             </button>
@@ -130,10 +141,26 @@ export function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={mode === 'register' ? 8 : undefined}
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               placeholder="请输入密码"
             />
           </label>
+          {mode === 'register' && (
+            <label className={shared.fieldLabel}>
+              确认密码
+              <IconInput
+                icon={<LockIcon />}
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="请再次输入密码"
+              />
+            </label>
+          )}
           <button type="submit" className={shared.btnPrimary} disabled={submitting}>
             {submitting ? '处理中…' : mode === 'login' ? '登录' : '创建账号'}
           </button>
