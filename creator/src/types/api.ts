@@ -144,3 +144,43 @@ export interface BrandProfile {
   taboos: string
   structure_notes: string
 }
+
+export interface MediaAsset {
+  id: string
+  original_filename: string
+  mime_type: string
+  byte_size: number
+  width: number | null
+  height: number | null
+  source: string
+  category: string
+  tags: string[]
+  status: string
+  created_at: string
+}
+
+export interface MediaAssetList {
+  items: MediaAsset[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface MediaPreview {
+  url: string
+}
+
+export interface MediaAssociation {
+  id: string
+  project_id: string
+  media_asset_id: string
+  step_key: string
+  reference_position: string
+  asset_reference: string
+  created_at: string
+}
+
+export interface ProjectMediaAssociation extends MediaAssociation {
+  asset: MediaAsset
+  is_invalid: boolean
+}

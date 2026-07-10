@@ -43,7 +43,7 @@ celery_app = Celery(
     "fastapi_kit",
     broker=str(settings.redis_url),
     backend=str(settings.redis_url),
-    include=["app.tasks.example", "app.tasks.scheduled"],
+    include=["app.tasks.example", "app.tasks.scheduled", "app.tasks.creator_media"],
 )
 
 celery_app.conf.update(

@@ -12,6 +12,8 @@ interface StepEditorPanelProps {
   savingDraft: boolean
   confirming: boolean
   editorDisabled?: boolean
+  onPickImage?: () => void
+  addingImage?: boolean
 }
 
 export function StepEditorPanel({
@@ -25,6 +27,8 @@ export function StepEditorPanel({
   savingDraft,
   confirming,
   editorDisabled = false,
+  onPickImage,
+  addingImage = false,
 }: StepEditorPanelProps) {
   return (
     <section className={shared.panel}>
@@ -50,6 +54,16 @@ export function StepEditorPanel({
         />
         <span className={styles.charCount}>{content.length} / 2000</span>
       </div>
+      {onPickImage && (
+        <button
+          type="button"
+          className={styles.assetButton}
+          onClick={onPickImage}
+          disabled={editorDisabled || addingImage}
+        >
+          {addingImage ? '正在添加图片…' : '从素材库添加图片'}
+        </button>
+      )}
       <div className={shared.btnRow}>
         <button
           type="button"

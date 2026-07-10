@@ -25,6 +25,39 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-05-21T01-59-54Z
+    environment:
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-creator-media}
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      [
+        "mc alias set local http://minio:9000 \"$${OBJECT_STORAGE_ACCESS_KEY}\" \"$${OBJECT_STORAGE_SECRET_KEY}\" && mc mb --ignore-existing \"local/$${OBJECT_STORAGE_BUCKET}\"",
+      ]
+
   migrate:
     build: .
     env_file:
@@ -50,6 +83,9 @@ services:
       LOG_FILE: logs/app.log
       TRUST_PROXY_HEADERS: "true"
       ADMIN_REPORTED_API_REPLICAS: ${SCALE_API:-1}
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
     volumes:
       - api_logs:/app/logs
     depends_on:
@@ -59,6 +95,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -127,6 +165,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fastapi_kit
       REDIS_URL: redis://redis:6379/0
       LOG_FILE: logs/celery.log
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
     volumes:
       - api_logs:/app/logs
     depends_on:
@@ -134,6 +175,8 @@ services:
         condition: service_completed_successfully
       api:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     entrypoint: ["/entrypoint.sh"]
     command: ["celery", "-A", "app.tasks.celery_app", "worker", "-l", "info"]
@@ -209,5 +252,6 @@ services:
 volumes:
   postgres_data:
   api_logs:
+  minio_data:
   loki_data:
   admin_node_modules:

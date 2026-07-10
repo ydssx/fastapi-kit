@@ -1,16 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { creatorApiErrorMessage } from '../lib/errors'
 import {
   aiSuggest,
+  associateMedia,
   completeProject,
   confirmStep,
   deleteProject,
+  disassociateMedia,
   fetchBrand,
   fetchPipelines,
   fetchProject,
+  fetchProjectMediaAssociations,
   fetchPublishChecklist,
   openStep,
   saveDraft,
@@ -20,6 +23,8 @@ import {
 import { AiSuggestionPanel } from '../components/AiSuggestionPanel'
 import { CompletedBanner } from '../components/CompletedBanner'
 import { ContextChips } from '../components/ContextChips'
+import { ImageAssetPicker } from '../components/ImageAssetPicker'
+import { ImageAssetPreview, type UsedImageAsset } from '../components/ImageAssetPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { PublishChecklist } from '../components/PublishChecklist'
@@ -40,7 +45,13 @@ import {
   type TextSelection,
 } from '../lib/editorSelection'
 import { pipelineLabel, platformLabels } from '../lib/labels'
-import type { AiVariant, Project, PublishChecklistItem } from '../types/api'
+import type {
+  AiVariant,
+  MediaAsset,
+  Project,
+  ProjectMediaAssociation,
+  PublishChecklistItem,
+} from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
 
@@ -61,6 +72,11 @@ export function ProjectDetailPage() {
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
     queryFn: () => fetchProject(id!),
+    enabled: !!id,
+  })
+  const { data: projectMediaAssociations = [] } = useQuery({
+    queryKey: ['project-media-associations', id],
+    queryFn: () => fetchProjectMediaAssociations(id!),
     enabled: !!id,
   })
   const { data: pipelines = [] } = useQuery({
@@ -88,6 +104,15 @@ export function ProjectDetailPage() {
   const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false)
+  const usedImageAssets = useMemo(
+    () =>
+      projectMediaAssociations.map((association: ProjectMediaAssociation) => ({
+        asset: association.asset,
+        association,
+      })),
+    [projectMediaAssociations],
+  )
 
   const pipeline = pipelines.find((p) => p.id === project?.pipeline_id)
   const step = pipeline?.steps.find((s) => s.key === project?.current_step_key)
@@ -187,6 +212,52 @@ export function ProjectDetailPage() {
       setSuggestion(data.suggestion)
       setVariants(data.variants ?? [])
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
+    },
+    onError: handleApiError,
+  })
+
+  const associateMediaMut = useMutation({
+    mutationFn: (asset: MediaAsset) =>
+      associateMedia(asset.id, {
+        project_id: id!,
+        step_key: project!.current_step_key,
+        reference_position: editorSelection
+          ? `${editorSelection.start}:${editorSelection.end}`
+          : 'append',
+      }).then((association) => ({ asset, association })),
+    onSuccess: ({ asset, association }) => {
+      const reference = association.asset_reference
+      if (hasActiveSelection(editorSelection, content) && editorSelection !== null) {
+        const result = applySelectionInsertion(content, editorSelection, reference)
+        setContent(result.content)
+        setEditorSelection(result.selection)
+      } else {
+        setContent((current) => (current ? `${current}\n\n${reference}` : reference))
+        setEditorSelection(null)
+      }
+      queryClient.setQueryData<ProjectMediaAssociation[]>(
+        ['project-media-associations', id],
+        (items = []) => [...items, { ...association, asset, is_invalid: false }],
+      )
+      setAssetPickerOpen(false)
+      setActionError(null)
+      void queryClient.invalidateQueries({ queryKey: ['media-assets'] })
+      void queryClient.invalidateQueries({ queryKey: ['project-media-associations', id] })
+    },
+    onError: handleApiError,
+  })
+
+  const disassociateMediaMut = useMutation({
+    mutationFn: (item: UsedImageAsset) =>
+      disassociateMedia(item.asset.id, item.association.id).then(() => item.association.id),
+    onSuccess: (associationId) => {
+      queryClient.setQueryData<ProjectMediaAssociation[]>(
+        ['project-media-associations', id],
+        (items) => items?.filter((item) => item.id !== associationId),
+      )
+      setActionError(null)
+      void queryClient.invalidateQueries({ queryKey: ['media-assets'] })
+      void queryClient.invalidateQueries({ queryKey: ['project-media-associations', id] })
     },
     onError: handleApiError,
   })
@@ -349,6 +420,14 @@ export function ProjectDetailPage() {
             />
           </label>
         </section>
+        <ImageAssetPreview
+          assets={usedImageAssets}
+          currentStepKey={project.current_step_key}
+          onRemove={(item) => disassociateMediaMut.mutate(item)}
+          removingAssociationId={
+            disassociateMediaMut.isPending ? disassociateMediaMut.variables.association.id : null
+          }
+        />
         <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
         {actionError && <p className={shared.error}>{actionError}</p>}
       </div>
@@ -393,6 +472,8 @@ export function ProjectDetailPage() {
       savingDraft={draftMut.isPending}
       confirming={confirmMut.isPending}
       editorDisabled={aiMut.isPending}
+      onPickImage={() => setAssetPickerOpen(true)}
+      addingImage={associateMediaMut.isPending}
     />
   )
 
@@ -534,7 +615,21 @@ export function ProjectDetailPage() {
         </>
       )}
 
+      <ImageAssetPreview
+        assets={usedImageAssets}
+        currentStepKey={project.current_step_key}
+        onRemove={(item) => disassociateMediaMut.mutate(item)}
+        removingAssociationId={
+          disassociateMediaMut.isPending ? disassociateMediaMut.variables.association.id : null
+        }
+      />
       <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
+      <ImageAssetPicker
+        open={assetPickerOpen}
+        onClose={() => setAssetPickerOpen(false)}
+        onSelect={(asset) => associateMediaMut.mutate(asset)}
+        selecting={associateMediaMut.isPending}
+      />
     </div>
   )
 }

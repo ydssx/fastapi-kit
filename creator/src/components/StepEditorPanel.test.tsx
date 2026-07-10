@@ -24,4 +24,24 @@ describe('StepEditorPanel', () => {
 
     expect(onSelectionChange).toHaveBeenCalledWith(1, 3)
   })
+
+  it('提供可访问的素材库入口', () => {
+    const onPickImage = vi.fn()
+    render(
+      <StepEditorPanel
+        title="开场"
+        content=""
+        onContentChange={vi.fn()}
+        onSelectionChange={vi.fn()}
+        onSaveDraft={vi.fn()}
+        onConfirm={vi.fn()}
+        onPickImage={onPickImage}
+        savingDraft={false}
+        confirming={false}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '从素材库添加图片' }))
+    expect(onPickImage).toHaveBeenCalledOnce()
+  })
 })

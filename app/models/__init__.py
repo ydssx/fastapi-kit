@@ -6,7 +6,9 @@ from app.models.creator import (
     ContentProject,
     CreatorBrandProfile,
     CreatorEvent,
+    CreatorMediaAsset,
     CreatorUsageCounter,
+    ProjectMediaAsset,
     ProjectStepArtifact,
 )
 from app.models.user import User
@@ -19,7 +21,9 @@ __all__ = [
     "ContentProject",
     "CreatorBrandProfile",
     "CreatorEvent",
+    "CreatorMediaAsset",
     "CreatorUsageCounter",
+    "ProjectMediaAsset",
     "ProjectStepArtifact",
     "User",
 ]

@@ -22,6 +22,7 @@ const NAV: {
   accent?: NavAccent
 }[] = [
   { to: '/', label: '项目', Icon: ProjectsIcon },
+  { to: '/assets', label: '图片素材库', Icon: BrandIcon },
   { to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
   { to: '/brand', label: '品牌档案', Icon: BrandIcon },
   { to: '/account', label: '账号', Icon: AccountIcon },
@@ -41,6 +42,7 @@ export function CreatorLayout() {
     return (
       location.pathname === to ||
       (to === '/' && location.pathname.startsWith('/projects')) ||
+      (to === '/assets' && location.pathname.startsWith('/assets')) ||
       (to === '/playground' && location.pathname.startsWith('/playground'))
     )
   }

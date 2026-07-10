@@ -21,3 +21,25 @@
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+.assetButton {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assetButton:hover,
+.assetButton:focus-visible {
+  text-decoration: underline;
+}
+
+.assetButton:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}

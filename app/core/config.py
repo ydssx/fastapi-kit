@@ -69,6 +69,21 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     llm_timeout_seconds: float = 60.0
 
+    object_storage_endpoint: str | None = None
+    object_storage_region: str = "us-east-1"
+    object_storage_bucket: str = "creator-media"
+    object_storage_access_key: str | None = None
+    object_storage_secret_key: str | None = None
+    object_storage_presign_ttl_seconds: int = Field(default=900, ge=1, le=604800)
+    creator_media_max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
+    creator_media_max_width: int = Field(default=8192, ge=1)
+    creator_media_max_height: int = Field(default=8192, ge=1)
+    image_generation_api_key: str | None = None
+    image_generation_base_url: str = "https://api.openai.com/v1"
+    image_generation_model: str = "gpt-image-2"
+    image_generation_timeout_seconds: float = Field(default=90.0, gt=0)
+    image_generation_max_prompt_chars: int = Field(default=4000, ge=1)
+
     creator_free_completed_projects_per_month: int = 2
     creator_free_ai_calls_per_month: int = 50
     creator_free_playground_calls_per_month: int = 30

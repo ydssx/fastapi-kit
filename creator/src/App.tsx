@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { CreatorLayout } from './layouts/CreatorLayout'
 import { AccountPage } from './pages/AccountPage'
+import { AssetLibraryPage } from './pages/AssetLibraryPage'
 import { BrandPage } from './pages/BrandPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { LoginPage } from './pages/LoginPage'
@@ -24,6 +25,7 @@ export default function App() {
               <Route index element={<ProjectsPage />} />
               <Route path="playground" element={<PlaygroundPage />} />
               <Route path="projects/:id" element={<ProjectDetailPage />} />
+              <Route path="assets" element={<AssetLibraryPage />} />
               <Route path="brand" element={<BrandPage />} />
               <Route path="account" element={<AccountPage />} />
             </Route>
