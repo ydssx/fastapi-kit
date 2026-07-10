@@ -111,6 +111,14 @@ def mock_celery_task(monkeypatch: pytest.MonkeyPatch) -> None:
         "app.tasks.example.send_notification.delay",
         lambda *_args, **_kwargs: None,
     )
+    monkeypatch.setattr(
+        "app.tasks.creator_media.delete_creator_media_object.delay",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "app.tasks.creator_media.generate_creator_image.delay",
+        lambda *_args, **_kwargs: None,
+    )
 
 
 @pytest_asyncio.fixture

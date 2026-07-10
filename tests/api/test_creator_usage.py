@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from tests.api.creator_helpers import (
     advance_to_publish_step,
     auth_headers,
+    check_all_publish_items,
     create_short_video_project,
     register_token,
 )
@@ -17,6 +18,7 @@ async def test_complete_project_quota(client: AsyncClient) -> None:
     for i in range(2):
         project = await create_short_video_project(client, token, title=f"项目{i}")
         await advance_to_publish_step(client, token, project["id"], "short_video")
+        await check_all_publish_items(client, token, project["id"])
         complete = await client.post(
             f"/api/v1/creator/projects/{project['id']}/complete",
             headers=headers,
@@ -25,6 +27,7 @@ async def test_complete_project_quota(client: AsyncClient) -> None:
 
     project3 = await create_short_video_project(client, token, title="项目3")
     await advance_to_publish_step(client, token, project3["id"], "short_video")
+    await check_all_publish_items(client, token, project3["id"])
     blocked = await client.post(
         f"/api/v1/creator/projects/{project3['id']}/complete",
         headers=headers,

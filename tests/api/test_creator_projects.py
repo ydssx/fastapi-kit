@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from tests.api.creator_helpers import (
     advance_to_publish_step,
     auth_headers,
+    check_all_publish_items,
     create_short_video_project,
     register_token,
 )
@@ -213,6 +214,7 @@ async def test_completed_project_patch_title_only(client: AsyncClient) -> None:
     headers = auth_headers(token)
 
     await advance_to_publish_step(client, token, project_id, "short_video")
+    await check_all_publish_items(client, token, project_id)
 
     complete = await client.post(
         f"/api/v1/creator/projects/{project_id}/complete",

@@ -6,6 +6,7 @@ from app.repositories.user import UserRepository
 from tests.api.creator_helpers import (
     advance_to_publish_step,
     auth_headers,
+    check_all_publish_items,
     create_short_video_project,
     register_token,
 )
@@ -26,10 +27,12 @@ async def test_creator_metrics_summary(client: AsyncClient, db_engine) -> None:
     token = await register_token(client, "creator-metrics@example.com")
     project = await create_short_video_project(client, token)
     await advance_to_publish_step(client, token, project["id"], "short_video")
-    await client.post(
+    await check_all_publish_items(client, token, project["id"])
+    complete = await client.post(
         f"/api/v1/creator/projects/{project['id']}/complete",
         headers=auth_headers(token),
     )
+    assert complete.status_code == 200
     await client.post(
         "/api/v1/auth/login",
         json={"email": "creator-metrics@example.com", "password": "securepass123"},

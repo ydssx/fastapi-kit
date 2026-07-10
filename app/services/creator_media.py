@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.object_storage import ObjectStorageClient
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException
+from app.core.logging import get_logger
 from app.models.creator import CreatorMediaAsset, ProjectMediaAsset
 from app.repositories.creator_media_asset import CreatorMediaAssetRepository
 from app.services.creator_media_import import (
@@ -14,6 +15,8 @@ from app.services.creator_media_import import (
     ValidatedImage,
     validate_image,
 )
+
+logger = get_logger(__name__)
 
 
 class CreatorMediaService:
@@ -247,4 +250,10 @@ class CreatorMediaService:
     def _schedule_cleanup(object_key: str) -> None:
         from app.tasks.creator_media import delete_creator_media_object
 
-        delete_creator_media_object.delay(object_key)
+        try:
+            delete_creator_media_object.delay(object_key)
+        except Exception:
+            logger.exception(
+                "failed_to_schedule_media_object_cleanup",
+                object_key=object_key,
+            )

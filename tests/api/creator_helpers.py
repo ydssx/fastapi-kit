@@ -61,3 +61,24 @@ async def advance_to_publish_step(
             json={"content": content},
         )
         assert confirm.status_code == 200, confirm.text
+
+
+async def check_all_publish_items(
+    client: AsyncClient,
+    token: str,
+    project_id: str,
+) -> None:
+    headers = auth_headers(token)
+    checklist = await client.get(
+        f"/api/v1/creator/projects/{project_id}/publish-checklist",
+        headers=headers,
+    )
+    assert checklist.status_code == 200, checklist.text
+    items = checklist.json()["data"]
+    checked_keys = [f"{item['platform']}:{item['item_key']}" for item in items]
+    updated = await client.patch(
+        f"/api/v1/creator/projects/{project_id}/publish-checklist",
+        headers=headers,
+        json={"checked_keys": checked_keys},
+    )
+    assert updated.status_code == 200, updated.text
