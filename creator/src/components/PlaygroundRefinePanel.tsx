@@ -29,7 +29,7 @@ export function PlaygroundRefinePanel({
     <div className={styles.panel}>
       <div className={styles.messages} aria-live="polite">
         {messages.length === 0 ? (
-          <p className={shared.muted}>选中选题后，在这里多轮 refine，直到满意再进入流水线。</p>
+          <p className={shared.muted}>选中选题后，在这里多轮优化想法，满意后再交接到项目。</p>
         ) : (
           messages.map((msg, idx) => (
             <div

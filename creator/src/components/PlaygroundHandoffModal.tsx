@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { Pipeline, PlaygroundOutline } from '../types/api'
 import {
   formatOutlineMarkdown,
@@ -54,6 +54,7 @@ export function PlaygroundHandoffModal({
   onConfirm,
   loading,
 }: PlaygroundHandoffModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   const [pipelineId, setPipelineId] = useState('')
   const [platforms, setPlatforms] = useState<string[]>(['xiaohongshu'])
   const [primaryPlatform, setPrimaryPlatform] = useState('xiaohongshu')
@@ -75,6 +76,25 @@ export function PlaygroundHandoffModal({
       setPipelineId('')
     }
   }, [open, brief, hooks, outline, pipelines])
+
+  useEffect(() => {
+    if (!open) return
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    dialogRef.current?.focus()
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      previouslyFocused?.focus()
+    }
+  }, [open, onClose])
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
@@ -145,18 +165,44 @@ export function PlaygroundHandoffModal({
     onConfirm(payload)
   }
 
+  function trapFocus(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Tab') return
+    const focusable = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    )
+    if (focusable.length === 0) {
+      event.preventDefault()
+      return
+    }
+
+    const first = focusable[0]!
+    const last = focusable[focusable.length - 1]!
+    if (event.shiftKey && (document.activeElement === event.currentTarget || document.activeElement === first)) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
       <div
         className={styles.modal}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="handoff-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={trapFocus}
       >
-        <h2 id="handoff-title">进入流水线</h2>
+        <h2 id="handoff-title">交接到项目</h2>
         <p className={shared.muted}>
-          选择流水线并确认将注入项目的草稿内容。结构化大纲会写入 topic 摘要与对应早期步骤。
+          确认将主题、目标平台和大纲交接到新项目。创建后可在项目中继续编辑。
         </p>
 
         <label className={styles.label}>
@@ -218,7 +264,7 @@ export function PlaygroundHandoffModal({
         )}
 
         <div className={styles.preview}>
-          <strong>映射预览</strong>
+          <strong>将写入项目</strong>
           <pre>{preview}</pre>
         </div>
 

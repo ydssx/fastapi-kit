@@ -51,9 +51,8 @@
 }
 
 .titleInputCompact:hover,
-.titleInputCompact:focus {
+.titleInputCompact:focus-visible {
   border-bottom-color: var(--border);
-  outline: none;
 }
 
 .stickyWizardHead {

@@ -79,3 +79,20 @@ async def test_publish_checklist_replace_clears_unchecked(client: AsyncClient) -
     checked = patch_one.json()["data"]
     assert len([i for i in checked if i["checked"]]) == 1
     assert checked[0]["platform"] == items[1]["platform"]
+
+
+@pytest.mark.asyncio
+async def test_complete_project_rejects_incomplete_publish_checklist(client: AsyncClient) -> None:
+    token = await register_token(client, "creator-incomplete-publish@example.com")
+    project = await create_short_video_project(client, token)
+    await advance_to_publish_step(client, token, project["id"], "short_video")
+
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/complete",
+        headers=auth_headers(token),
+    )
+
+    assert response.status_code == 400
+    body = response.json()
+    assert body["code"] == 40019
+    assert body["message"] == "Complete all publish checklist items before finishing the project"

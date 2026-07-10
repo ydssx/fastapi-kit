@@ -131,6 +131,7 @@ export function CreatorLayout() {
                   to={to}
                   className={navClassName(to, accent)}
                   onClick={closeMenu}
+                  aria-current={isActive(to) ? 'page' : undefined}
                 >
                   <span className={styles.navIcon} aria-hidden>
                     <Icon />

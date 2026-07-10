@@ -28,6 +28,12 @@ export function PublishChecklist({ items, onToggle, onComplete, completing }: Pu
     acc[item.platform_label].push(item)
     return acc
   }, {})
+  const pendingPlatformLabels = Object.entries(byPlatform)
+    .filter(([, platformItems]) => platformItems.some((item) => !item.checked))
+    .map(([platformLabel, platformItems]) => {
+      const count = platformItems.filter((item) => !item.checked).length
+      return `${platformLabel}还有 ${count} 项待完成`
+    })
 
   return (
     <section className={shared.panel}>
@@ -38,6 +44,11 @@ export function PublishChecklist({ items, onToggle, onComplete, completing }: Pu
         </p>
       )}
       <p className={styles.hint}>勾选各平台发布项，全部完成后可结束项目。</p>
+      {pending > 0 && (
+        <p className={styles.hint} role="status">
+          {pendingPlatformLabels.join('；')}
+        </p>
+      )}
       {Object.entries(byPlatform).map(([platformLabel, platformItems]) => (
         <div key={platformLabel} className={styles.group}>
           <h3 className={styles.groupTitle}>{platformLabel}</h3>
@@ -57,7 +68,7 @@ export function PublishChecklist({ items, onToggle, onComplete, completing }: Pu
         <button
           type="button"
           className={shared.btnPrimary}
-          disabled={completing}
+          disabled={completing || pending > 0}
           onClick={onComplete}
         >
           {completing ? '提交中…' : '完成项目'}

@@ -17,6 +17,17 @@
   --success: #6ee7a8;
   --danger: #f87171;
   --warn: #fbbf24;
+  --action-required: var(--accent);
+  --ai-ready: var(--ai);
+  --risk: var(--warn);
+  --thumb-video-start: #3d3530;
+  --thumb-video-mid: #252018;
+  --thumb-video-end: #1a1612;
+  --thumb-garment-light: #c4b5a0;
+  --thumb-garment-dark: #8a7d6c;
+  --thumb-garment-shadow: #9a8b78;
+  --thumb-plant-light: #6b9b6e;
+  --thumb-plant-dark: #3d6b42;
   --quota-high: color-mix(in srgb, var(--warn) 18%, transparent);
   --glow-accent: color-mix(in srgb, var(--accent) 30%, transparent);
   --glass: color-mix(in srgb, var(--bg-elevated) 85%, transparent);
@@ -45,9 +56,9 @@
   --stage-line: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--accent) 55%, transparent) 20%,
-    color-mix(in srgb, var(--accent) 80%, transparent) 50%,
-    color-mix(in srgb, var(--accent) 55%, transparent) 80%,
+    color-mix(in srgb, var(--action-required) 55%, transparent) 20%,
+    color-mix(in srgb, var(--ai-ready) 80%, transparent) 50%,
+    color-mix(in srgb, var(--action-required) 55%, transparent) 80%,
     transparent
   );
 }

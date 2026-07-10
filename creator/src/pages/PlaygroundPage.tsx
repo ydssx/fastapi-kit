@@ -112,7 +112,7 @@ export function PlaygroundPage() {
           return
         }
       }
-      setActionError(err instanceof Error ? err.message : 'Refine 失败，请重试')
+      setActionError(err instanceof Error ? err.message : '优化想法失败，请重试')
     },
   })
 
@@ -230,12 +230,12 @@ export function PlaygroundPage() {
     <div className={styles.page}>
       <PageHeader
         title="灵感实验室"
-        description="生成选题、打磨结构化大纲，满意后再 handoff 到内容流水线。"
+        description="生成选题、打磨结构化大纲，满意后再交接到内容流水线。"
       />
 
       <div className={styles.persistWarn} role="status">
         <span className={styles.persistLabel}>提示</span>
-        刷新页面可能丢失未导出的 Playground 会话。
+        关闭此标签页可能丢失未交接的内容。
         <button type="button" className={styles.linkBtn} onClick={exportSession}>
           导出会话 JSON
         </button>
@@ -289,7 +289,7 @@ export function PlaygroundPage() {
 
               {session.selectedTopic ? (
                 <section className={styles.refineSection}>
-                  <h2 className={styles.sectionTitle}>Refine：{session.selectedTopic.title}</h2>
+                  <h2 className={styles.sectionTitle}>优化想法：{session.selectedTopic.title}</h2>
                   <PlaygroundRefinePanel
                     messages={session.messages}
                     understanding={session.understanding}
@@ -310,7 +310,7 @@ export function PlaygroundPage() {
                         className={shared.btnGhost}
                         onClick={() => setHandoffOpen(true)}
                       >
-                        跳过大纲，直接 handoff
+                        跳过大纲，直接交接到项目
                       </button>
                     ) : null}
                   </div>

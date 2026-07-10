@@ -18,7 +18,12 @@
 }
 
 .video {
-  background: linear-gradient(165deg, #3d3530 0%, #252018 45%, #1a1612 100%);
+  background: linear-gradient(
+    165deg,
+    var(--thumb-video-start) 0%,
+    var(--thumb-video-mid) 45%,
+    var(--thumb-video-end) 100%
+  );
 }
 
 .article {
@@ -70,8 +75,8 @@
   width: 28%;
   height: 38%;
   border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(180deg, #c4b5a0, #8a7d6c);
-  box-shadow: 14px 4px 0 -2px #9a8b78;
+  background: linear-gradient(180deg, var(--thumb-garment-light), var(--thumb-garment-dark));
+  box-shadow: 14px 4px 0 -2px var(--thumb-garment-shadow);
 }
 
 .plant {
@@ -81,9 +86,9 @@
   width: 22%;
   height: 22%;
   border-radius: 50% 50% 40% 40%;
-  background: linear-gradient(180deg, #6b9b6e, #3d6b42);
+  background: linear-gradient(180deg, var(--thumb-plant-light), var(--thumb-plant-dark));
 }
 
 .lg .garment {
-  box-shadow: 18px 6px 0 -2px #9a8b78;
+  box-shadow: 18px 6px 0 -2px var(--thumb-garment-shadow);
 }

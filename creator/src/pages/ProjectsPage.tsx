@@ -157,8 +157,12 @@ export function ProjectsPage() {
   return (
     <div className={`${shared.page} ${styles.page}`}>
       <PageHeader
-        title="内容项目"
-        description="优先推进最接近发布的项目，一眼看清下一步该做什么。"
+        title="今天的创作队列"
+        description={
+          hasSprintProjects
+            ? `${sprintProjects.length} 个项目需要你的注意，先推进最接近发布的内容。`
+            : '当前没有发布阻塞，选择一个项目继续推进。'
+        }
         actions={
           <Link to="/playground" className={`${shared.btnGhost} ${styles.headerAction}`}>
             <PlaygroundIcon size={16} />
@@ -223,7 +227,7 @@ export function ProjectsPage() {
                 <EmptyState
                   icon={<ProjectsIcon size={22} />}
                   title="还没有项目"
-                  description="填写左侧表单创建第一条流水线，或先去灵感实验室生成选题。"
+                  description="创建第一条流水线，或先去灵感实验室生成选题。"
                 >
                   <Link to="/playground" className={shared.btnSecondary}>
                     去灵感实验室

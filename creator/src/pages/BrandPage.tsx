@@ -81,7 +81,9 @@ export function BrandPage() {
           <p className={styles.previewLabel}>实时预览</p>
           <h2 className={shared.panelTitle}>语气效果</h2>
           {showUpdatedNotice && (
-            <p className={shared.notice}>品牌档案已更新，后续 AI 建议将应用新约束</p>
+            <p className={shared.notice} role="status">
+              品牌档案已更新，后续 AI 建议将应用新约束
+            </p>
           )}
           <p className={styles.previewSentence}>{buildPreview(form)}</p>
           {previewChips.length > 0 && (
@@ -107,7 +109,11 @@ export function BrandPage() {
         >
           {saveMut.isPending ? '保存中…' : '保存档案'}
         </button>
-        {saveMut.isSuccess && <span className={styles.ok}>已保存</span>}
+        {saveMut.isSuccess && (
+          <span className={styles.ok} role="status">
+            已保存
+          </span>
+        )}
       </div>
     </div>
   )

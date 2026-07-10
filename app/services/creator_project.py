@@ -335,6 +335,20 @@ class CreatorProjectService:
             )
 
         pipeline = get_pipeline(project.pipeline_id)
+        checklist = build_publish_checklist(project.target_platforms)
+        checklist_state = project.publish_checklist_state or {}
+        pending_items = [
+            item
+            for item in checklist
+            if not checklist_state.get(f"{item['platform']}:{item['item_key']}", False)
+        ]
+        if pending_items:
+            raise AppException(
+                "Complete all publish checklist items before finishing the project",
+                code=40019,
+                status_code=400,
+            )
+
         for step in pipeline.steps:
             if step.key == "publish":
                 continue

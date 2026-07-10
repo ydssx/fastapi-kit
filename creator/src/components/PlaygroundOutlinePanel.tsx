@@ -93,7 +93,7 @@ export function PlaygroundOutlinePanel({
 
           <div className={styles.messages} aria-live="polite">
             {messages.length === 0 ? (
-              <p className={shared.muted}>对大纲不满意？在这里多轮 refine，直到可以 handoff。</p>
+              <p className={shared.muted}>对大纲不满意？在这里多轮优化想法，直到可以交接到项目。</p>
             ) : (
               messages.map((msg, idx) => (
                 <div
@@ -135,7 +135,7 @@ export function PlaygroundOutlinePanel({
                 返回选题探索
               </button>
               <button type="button" className={shared.btnPrimary} onClick={onHandoff}>
-                进入流水线
+                交接到项目
               </button>
             </div>
           </div>

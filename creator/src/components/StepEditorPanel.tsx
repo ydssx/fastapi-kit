@@ -6,6 +6,7 @@ interface StepEditorPanelProps {
   decisionHint?: string
   content: string
   onContentChange: (value: string) => void
+  onSelectionChange: (selectionStart: number, selectionEnd: number) => void
   onSaveDraft: () => void
   onConfirm: () => void
   savingDraft: boolean
@@ -18,6 +19,7 @@ export function StepEditorPanel({
   decisionHint,
   content,
   onContentChange,
+  onSelectionChange,
   onSaveDraft,
   onConfirm,
   savingDraft,
@@ -37,7 +39,11 @@ export function StepEditorPanel({
           className={shared.textarea}
           rows={12}
           value={content}
-          onChange={(e) => onContentChange(e.target.value)}
+          onChange={(e) => {
+            onContentChange(e.target.value)
+            onSelectionChange(e.target.selectionStart, e.target.selectionEnd)
+          }}
+          onSelect={(e) => onSelectionChange(e.currentTarget.selectionStart, e.currentTarget.selectionEnd)}
           placeholder={`撰写「${title}」…`}
           disabled={editorDisabled}
           maxLength={2000}

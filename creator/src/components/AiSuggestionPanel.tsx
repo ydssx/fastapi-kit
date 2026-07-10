@@ -14,6 +14,8 @@ interface AiSuggestionPanelProps {
   adjustments: { label: string; adjustment: string }[]
   onAdoptAll: (content: string) => void
   onInsert: (content: string) => void
+  hasActiveSelection: boolean
+  onReplaceSelection: (content: string) => void
   onRegenerate: () => void
   onAdjust: (adjustment: string) => void
   mobileCollapsed?: boolean
@@ -42,6 +44,8 @@ export function AiSuggestionPanel({
   adjustments,
   onAdoptAll,
   onInsert,
+  hasActiveSelection,
+  onReplaceSelection,
   onRegenerate,
   onAdjust,
   mobileCollapsed = false,
@@ -178,14 +182,35 @@ export function AiSuggestionPanel({
                 >
                   {multiMode ? '采纳当前方案' : '采纳全部'}
                 </button>
-                <button
-                  type="button"
-                  className={shared.btn}
-                  onClick={() => onInsert(selectedContent)}
-                  disabled={!hasSuggestion}
-                >
-                  插入光标处
-                </button>
+                {hasActiveSelection ? (
+                  <>
+                    <button
+                      type="button"
+                      className={shared.btn}
+                      onClick={() => onInsert(selectedContent)}
+                      disabled={!hasSuggestion}
+                    >
+                      插入选区
+                    </button>
+                    <button
+                      type="button"
+                      className={shared.btnGhost}
+                      onClick={() => onReplaceSelection(selectedContent)}
+                      disabled={!hasSuggestion}
+                    >
+                      替换选区
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className={shared.btn}
+                    onClick={() => onInsert(selectedContent)}
+                    disabled={!hasSuggestion}
+                  >
+                    插入到末尾
+                  </button>
+                )}
                 <button type="button" className={shared.btnGhost} onClick={onRegenerate}>
                   换一版
                 </button>

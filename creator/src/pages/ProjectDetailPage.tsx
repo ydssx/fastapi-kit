@@ -33,6 +33,12 @@ import { StepProgress } from '../components/StepProgress'
 import { StepWorkspace } from '../components/StepWorkspace'
 import { StepVersionHistory } from '../components/StepVersionHistory'
 import { adjustmentsForStep, shouldAutoSuggest } from '../lib/stepAiAdjustments'
+import {
+  applySelectionInsertion,
+  captureSelection,
+  hasActiveSelection,
+  type TextSelection,
+} from '../lib/editorSelection'
 import { pipelineLabel, platformLabels } from '../lib/labels'
 import type { AiVariant, Project, PublishChecklistItem } from '../types/api'
 import shared from '../styles/shared.module.css'
@@ -81,6 +87,7 @@ export function ProjectDetailPage() {
   const [editPrimaryPlatform, setEditPrimaryPlatform] = useState<string>('')
   const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
 
   const pipeline = pipelines.find((p) => p.id === project?.pipeline_id)
   const step = pipeline?.steps.find((s) => s.key === project?.current_step_key)
@@ -89,6 +96,7 @@ export function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       setContent(project.draft_content[project.current_step_key] ?? '')
+      setEditorSelection(null)
       setEditTitle(project.title)
       setEditPlatforms(project.target_platforms)
       setEditPrimaryPlatform(project.primary_platform_key ?? '')
@@ -137,6 +145,19 @@ export function ProjectDetailPage() {
       return
     }
     setActionError(err instanceof Error ? err.message : '操作失败')
+  }
+
+  function applyAiText(text: string, mode: 'insert' | 'replace') {
+    if (!hasActiveSelection(editorSelection, content) || editorSelection === null) {
+      setContent((current) => (current ? `${current}\n\n${text}` : text))
+      setEditorSelection(null)
+      return
+    }
+
+    const insertion = mode === 'insert' ? `${text}\n\n` : text
+    const result = applySelectionInsertion(content, editorSelection, insertion)
+    setContent(result.content)
+    setEditorSelection(result.selection)
   }
 
   const draftMut = useMutation({
@@ -362,7 +383,11 @@ export function ProjectDetailPage() {
       title={step?.title ?? project.current_step_key}
       decisionHint={step?.description}
       content={content}
-      onContentChange={setContent}
+      onContentChange={(nextContent) => {
+        setContent(nextContent)
+        setEditorSelection(null)
+      }}
+      onSelectionChange={(start, end) => setEditorSelection(captureSelection(content, start, end))}
       onSaveDraft={() => draftMut.mutate()}
       onConfirm={() => confirmMut.mutate()}
       savingDraft={draftMut.isPending}
@@ -489,9 +514,9 @@ export function ProjectDetailPage() {
                     sourceParts={sourceParts}
                     adjustments={adjustmentsForStep(project.current_step_key)}
                     onAdoptAll={(text) => setContent(text)}
-                    onInsert={(text) =>
-                      setContent((c) => (c ? `${c}\n\n${text}` : text))
-                    }
+                    hasActiveSelection={hasActiveSelection(editorSelection, content)}
+                    onInsert={(text) => applyAiText(text, 'insert')}
+                    onReplaceSelection={(text) => applyAiText(text, 'replace')}
                     onRegenerate={() => aiMut.mutate(undefined)}
                     onAdjust={(adj) => aiMut.mutate(adj)}
                   />
