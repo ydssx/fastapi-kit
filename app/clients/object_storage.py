@@ -47,7 +47,7 @@ class ObjectStorageClient:
 
     async def preview_url(self, key: str) -> str:
         try:
-            async with self._client() as client:
+            async with self._client(public=True) as client:
                 return str(
                     await client.generate_presigned_url(
                         "get_object",
@@ -58,11 +58,14 @@ class ObjectStorageClient:
         except (BotoCoreError, ClientError) as exc:
             raise self._storage_error() from exc
 
-    def _client(self) -> Any:
+    def _client(self, *, public: bool = False) -> Any:
         self._validate_configuration()
+        endpoint = self._settings.object_storage_endpoint
+        if public:
+            endpoint = self._settings.object_storage_public_endpoint or endpoint
         return self._session.client(
             "s3",
-            endpoint_url=self._settings.object_storage_endpoint,
+            endpoint_url=endpoint,
             region_name=self._settings.object_storage_region,
             aws_access_key_id=self._settings.object_storage_access_key,
             aws_secret_access_key=self._settings.object_storage_secret_key,

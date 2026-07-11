@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
 
     object_storage_endpoint: str | None = None
+    # Browser-facing base URL for presigned previews. Defaults to endpoint when unset.
+    # In Docker Compose the API talks to http://minio:9000 internally, but browsers need
+    # http://localhost:9000 (or another published host).
+    object_storage_public_endpoint: str | None = None
     object_storage_region: str = "us-east-1"
     object_storage_bucket: str = "creator-media"
     object_storage_access_key: str | None = None

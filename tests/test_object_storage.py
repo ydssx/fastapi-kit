@@ -55,8 +55,10 @@ class FakeS3Context:
 class FakeSession:
     def __init__(self, client: FakeS3Client) -> None:
         self._s3_client = client
+        self.client_kwargs: list[dict[str, object]] = []
 
-    def client(self, _service_name: str, **_kwargs: object) -> FakeS3Context:
+    def client(self, _service_name: str, **kwargs: object) -> FakeS3Context:
+        self.client_kwargs.append(kwargs)
         return FakeS3Context(self._s3_client)
 
 
@@ -69,12 +71,14 @@ class FailingS3Client(FakeS3Client):
 async def test_object_storage_uses_replaceable_s3_session() -> None:
     settings = Settings(
         object_storage_endpoint="http://minio:9000",
+        object_storage_public_endpoint="http://localhost:9000",
         object_storage_bucket="creator-media",
         object_storage_access_key="minioadmin",
         object_storage_secret_key="minioadmin",
     )
     fake_s3 = FakeS3Client()
-    storage = ObjectStorageClient(settings, session=FakeSession(fake_s3))
+    session = FakeSession(fake_s3)
+    storage = ObjectStorageClient(settings, session=session)
 
     await storage.upload("assets/example.png", b"image-data", content_type="image/png")
 
@@ -83,6 +87,12 @@ async def test_object_storage_uses_replaceable_s3_session() -> None:
 
     await storage.delete("assets/example.png")
     assert fake_s3.objects == {}
+    assert [kwargs["endpoint_url"] for kwargs in session.client_kwargs] == [
+        "http://minio:9000",
+        "http://minio:9000",
+        "http://localhost:9000",
+        "http://minio:9000",
+    ]
 
 
 @pytest.mark.asyncio
