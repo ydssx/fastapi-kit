@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { createProject, deleteProject, fetchPipelines, fetchProjects, saveDraft } from '../api/creator'
@@ -16,22 +16,18 @@ import {
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
+import { CREATOR_PLATFORMS } from '../lib/platforms'
 import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
 import { TopicSeedPanel } from '../components/TopicSeedPanel'
 import type { PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
-const PLATFORMS = [
-  { key: 'douyin', label: '抖音', emoji: '🎵' },
-  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
-  { key: 'wechat', label: '公众号', emoji: '💬' },
-  { key: 'bilibili', label: 'B站', emoji: '📺' },
-]
-
 export function ProjectsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { confirm, dialog } = useConfirmDialog()
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: fetchProjects,
@@ -49,6 +45,7 @@ export function ProjectsPage() {
   const [seedPanelOpen, setSeedPanelOpen] = useState(false)
   const [topicDraft, setTopicDraft] = useState<string | null>(null)
   const [seedTopic, setSeedTopic] = useState<PlaygroundTopic | null>(null)
+  const [createExpanded, setCreateExpanded] = useState(true)
 
   const selectedPipeline = pipelines.find((p) => p.id === pipelineId)
 
@@ -72,6 +69,14 @@ export function ProjectsPage() {
   const sprintQueue = sprintProjects.slice(1)
   const hasActiveProjects = activeProjects.length > 0
   const hasSprintProjects = sprintProjects.length > 0
+  const collapseCreateByDefault = hasSprintProjects
+
+  useEffect(() => {
+    if (collapseCreateByDefault) setCreateExpanded(false)
+    else setCreateExpanded(true)
+  }, [collapseCreateByDefault])
+
+  const showCreateForm = !collapseCreateByDefault || createExpanded
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -124,8 +129,15 @@ export function ProjectsPage() {
     },
   })
 
-  function handleDeleteProject(projectId: string) {
-    if (!window.confirm('确定删除此项目？此操作不可恢复。')) return
+  async function handleDeleteProject(projectId: string) {
+    const ok = await confirm({
+      title: '删除项目',
+      message: '确定删除此项目？此操作不可恢复。',
+      confirmLabel: '删除项目',
+      cancelLabel: '取消',
+      variant: 'danger',
+    })
+    if (!ok) return
     deleteMut.mutate(projectId)
   }
 
@@ -156,12 +168,15 @@ export function ProjectsPage() {
 
   return (
     <div className={`${shared.page} ${styles.page}`}>
+      {dialog}
       <PageHeader
         title="今天的创作队列"
         description={
           hasSprintProjects
             ? `${sprintProjects.length} 个项目需要你的注意，先推进最接近发布的内容。`
-            : '当前没有发布阻塞，选择一个项目继续推进。'
+            : hasActiveProjects
+              ? '从下方继续推进，或右侧新建一条。'
+              : '还没有进行中的项目，从右侧新建，或先去灵感实验室找选题。'
         }
         actions={
           <Link to="/playground" className={`${shared.btnGhost} ${styles.headerAction}`}>
@@ -186,7 +201,6 @@ export function ProjectsPage() {
           {!isLoading && hasSprintProjects && featuredSprintProject && (
             <section className={`${styles.section} ${styles.sprintSection}`}>
               <div className={styles.sprintHead}>
-                <p className={styles.sprintKicker}>冲刺优先</p>
                 <div className={styles.sprintTitleRow}>
                   <h2 className={shared.panelTitle}>发布冲刺</h2>
                   <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
@@ -282,21 +296,48 @@ export function ProjectsPage() {
 
         <aside className={styles.createAside}>
           <section
-            className={`${styles.hero} ${hasActiveProjects ? styles.heroSecondary : ''}`}
+            className={`${styles.hero} ${
+              hasActiveProjects || collapseCreateByDefault ? styles.heroSecondary : ''
+            } ${collapseCreateByDefault && !showCreateForm ? styles.heroCollapsed : ''}`}
             aria-labelledby="create-project-heading"
           >
             <div>
-              <p className={styles.heroKicker}>{hasActiveProjects ? '新的方向' : '开始创作'}</p>
+              <p className={styles.heroKicker}>
+                {collapseCreateByDefault ? '稍后新建' : hasActiveProjects ? '新的方向' : '开始创作'}
+              </p>
               <h2 id="create-project-heading" className={styles.heroTitle}>
                 新建内容项目
               </h2>
               <p className={styles.createLead}>
-                {hasActiveProjects
-                  ? '先冲刺临近发布的项目，新的想法也可以随时在这里开启。'
-                  : '定下主题、平台和流水线，马上开始下一条内容的创作。'}
+                {collapseCreateByDefault
+                  ? '先把冲刺区推过终点线；新想法需要时再展开。'
+                  : hasActiveProjects
+                    ? '先冲刺临近发布的项目，新的想法也可以随时在这里开启。'
+                    : '定下主题、平台和流水线，马上开始下一条内容的创作。'}
               </p>
             </div>
+            {collapseCreateByDefault && !showCreateForm ? (
+              <button
+                type="button"
+                className={shared.btnSecondary}
+                onClick={() => setCreateExpanded(true)}
+              >
+                + 新建项目
+              </button>
+            ) : null}
+            {showCreateForm ? (
             <form className={styles.createGrid} onSubmit={handleCreateSubmit}>
+              {collapseCreateByDefault ? (
+                <div className={styles.createCollapseRow}>
+                  <button
+                    type="button"
+                    className={styles.seedLink}
+                    onClick={() => setCreateExpanded(false)}
+                  >
+                    收起新建
+                  </button>
+                </div>
+              ) : null}
               <label className={shared.fieldLabel}>
                 项目主题
                 <input
@@ -307,7 +348,7 @@ export function ProjectsPage() {
                     setQuotaError(null)
                     setTitle(e.target.value)
                   }}
-                  autoFocus={!hasActiveProjects}
+                  autoFocus={!hasActiveProjects || createExpanded}
                 />
               </label>
               <p className={styles.seedToggle}>
@@ -371,7 +412,7 @@ export function ProjectsPage() {
                 </div>
               )}
               <PlatformPicker
-                options={PLATFORMS}
+                options={CREATOR_PLATFORMS}
                 value={platforms}
                 onChange={handlePlatformsChange}
                 legend="发布平台"
@@ -389,6 +430,7 @@ export function ProjectsPage() {
                 </p>
               </div>
             </form>
+            ) : null}
             {quotaError && <QuotaLimitNotice kind={quotaError} />}
             {createMut.isError && !quotaError && (
               <p className={shared.error}>{(createMut.error as Error).message}</p>

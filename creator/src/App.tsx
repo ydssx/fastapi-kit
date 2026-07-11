@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ToastProvider } from './components/Toast'
 import { CreatorLayout } from './layouts/CreatorLayout'
 import { AccountPage } from './pages/AccountPage'
 import { AssetLibraryPage } from './pages/AssetLibraryPage'
@@ -16,22 +17,24 @@ export default function App() {
   return (
     <BrowserRouter basename="/creator">
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<CreatorLayout />}>
-              <Route index element={<ProjectsPage />} />
-              <Route path="playground" element={<PlaygroundPage />} />
-              <Route path="projects/:id" element={<ProjectDetailPage />} />
-              <Route path="assets" element={<AssetLibraryPage />} />
-              <Route path="brand" element={<BrandPage />} />
-              <Route path="account" element={<AccountPage />} />
+        <ToastProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<CreatorLayout />}>
+                <Route index element={<ProjectsPage />} />
+                <Route path="playground" element={<PlaygroundPage />} />
+                <Route path="projects/:id" element={<ProjectDetailPage />} />
+                <Route path="assets" element={<AssetLibraryPage />} />
+                <Route path="brand" element={<BrandPage />} />
+                <Route path="account" element={<AccountPage />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   )

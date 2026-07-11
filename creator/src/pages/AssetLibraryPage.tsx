@@ -12,6 +12,7 @@ import {
 import { EmptyState } from '../components/EmptyState'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { useMediaPreview } from '../hooks/useMediaPreview'
 import type { MediaAsset } from '../types/api'
 import shared from '../styles/shared.module.css'
@@ -55,6 +56,7 @@ function MediaThumbnail({ asset }: { asset: MediaAsset }) {
 
 export function AssetLibraryPage() {
   const queryClient = useQueryClient()
+  const { confirm, dialog } = useConfirmDialog()
   const [filters, setFilters] = useState<MediaFilters>({ tags: [] })
   const [keywordDraft, setKeywordDraft] = useState('')
   const [categoryDraft, setCategoryDraft] = useState('')
@@ -197,8 +199,16 @@ export function AssetLibraryPage() {
     if (editFilename.trim() && editCategory.trim()) updateMutation.mutate()
   }
 
-  function handleDelete() {
-    if (!selectedAsset || !window.confirm(`确定删除「${selectedAsset.original_filename}」？`)) return
+  async function handleDelete() {
+    if (!selectedAsset) return
+    const ok = await confirm({
+      title: '删除素材',
+      message: `确定删除「${selectedAsset.original_filename}」？此操作不可恢复。`,
+      confirmLabel: '删除素材',
+      cancelLabel: '取消',
+      variant: 'danger',
+    })
+    if (!ok) return
     deleteMutation.mutate(selectedAsset.id)
   }
 
@@ -206,6 +216,7 @@ export function AssetLibraryPage() {
 
   return (
     <div className={`${shared.page} ${styles.page}`}>
+      {dialog}
       <PageHeader
         title="图片素材库"
         description="像翻接触印样一样浏览图片，上传、导入或生成后，随时插入创作步骤。"

@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fetchBrand, updateBrand } from '../api/creator'
 import type { BrandProfile } from '../types/api'
 import { BrandField } from '../components/BrandField'
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../components/Toast'
 import shared from '../styles/shared.module.css'
 import styles from './BrandPage.module.css'
 
@@ -28,16 +30,16 @@ const PREVIEW_CHIPS: { key: keyof BrandProfile; label: string }[] = [
 ]
 
 function buildPreview(form: BrandProfile): string {
-  const tone = form.tone.trim() || '（未设置语气）'
-  const aud = form.audience.trim() || '（未设置受众）'
+  const tone = form.tone.trim() || '你习惯的表达方式'
+  const aud = form.audience.trim() || '你的读者'
   return `示例：面向${aud}，用${tone}的语气开场——「嘿，今天想跟你聊一个很多人忽略的细节…」`
 }
 
 export function BrandPage() {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const { data } = useQuery({ queryKey: ['brand'], queryFn: fetchBrand })
   const [form, setForm] = useState<BrandProfile>(empty)
-  const [showUpdatedNotice, setShowUpdatedNotice] = useState(false)
 
   useEffect(() => {
     if (data) setForm(data)
@@ -47,8 +49,7 @@ export function BrandPage() {
     mutationFn: () => updateBrand(form),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['brand'] })
-      setShowUpdatedNotice(true)
-      setTimeout(() => setShowUpdatedNotice(false), 3000)
+      showToast('品牌档案已更新')
     },
   })
 
@@ -80,11 +81,12 @@ export function BrandPage() {
         <section className={`${shared.panel} ${styles.preview} ${styles.previewSticky}`}>
           <p className={styles.previewLabel}>实时预览</p>
           <h2 className={shared.panelTitle}>语气效果</h2>
-          {showUpdatedNotice && (
-            <p className={shared.notice} role="status">
-              品牌档案已更新，后续 AI 建议将应用新约束
-            </p>
-          )}
+          <p className={styles.previewHint}>
+            将用于选题、大纲与步骤 AI。
+            <Link to="/playground" className={styles.previewLink}>
+              去灵感实验室试试
+            </Link>
+          </p>
           <p className={styles.previewSentence}>{buildPreview(form)}</p>
           {previewChips.length > 0 && (
             <div className={styles.previewChips}>
@@ -109,11 +111,6 @@ export function BrandPage() {
         >
           {saveMut.isPending ? '保存中…' : '保存档案'}
         </button>
-        {saveMut.isSuccess && (
-          <span className={styles.ok} role="status">
-            已保存
-          </span>
-        )}
       </div>
     </div>
   )

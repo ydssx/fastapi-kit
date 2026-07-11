@@ -14,6 +14,10 @@ import { LoadingBlock } from '../components/LoadingBlock'
 import { PlaygroundIcon } from '../components/icons/NavIcons'
 import { PlaygroundHandoffModal } from '../components/PlaygroundHandoffModal'
 import type { HandoffPayload } from '../components/PlaygroundHandoffModal'
+import {
+  PlaygroundProgress,
+  resolvePlaygroundStage,
+} from '../components/PlaygroundProgress'
 import { PageHeader } from '../components/PageHeader'
 import { PlaygroundOutlinePanel } from '../components/PlaygroundOutlinePanel'
 import { PlaygroundRefinePanel } from '../components/PlaygroundRefinePanel'
@@ -22,6 +26,7 @@ import {
   PlaygroundTopicCardsActions,
 } from '../components/PlaygroundTopicCards'
 import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { usePlaygroundSession } from '../hooks/usePlaygroundSession'
 import type { PlaygroundMessage, PlaygroundOutline, PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
@@ -37,6 +42,7 @@ function hasOutlineSession(
 export function PlaygroundPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { confirm, dialog } = useConfirmDialog()
   const { session, setSession, resetSession, exportSession } = usePlaygroundSession()
   const [handoffOpen, setHandoffOpen] = useState(false)
   const [outlineViewOpen, setOutlineViewOpen] = useState(false)
@@ -50,9 +56,15 @@ export function PlaygroundPage() {
 
   const quotaBlocked = quotaError === 'playground'
 
-  function confirmClearOutline(actionLabel: string): boolean {
+  async function confirmClearOutline(actionLabel: string): Promise<boolean> {
     if (!hasOutlineSession(session.outline, session.outlineMessages)) return true
-    return window.confirm(`${actionLabel}将清空当前结构化大纲，是否继续？`)
+    return confirm({
+      title: '清空结构化大纲',
+      message: `${actionLabel}将清空当前结构化大纲，是否继续？`,
+      confirmLabel: '继续',
+      cancelLabel: '取消',
+      variant: 'danger',
+    })
   }
 
   const topicsMut = useMutation({
@@ -193,17 +205,23 @@ export function PlaygroundPage() {
     },
   })
 
-  function selectTopic(topic: PlaygroundTopic) {
+  async function selectTopic(topic: PlaygroundTopic) {
     const topicChanged =
       session.selectedTopic &&
       (session.selectedTopic.title !== topic.title ||
         session.selectedTopic.reason !== topic.reason)
 
     if (topicChanged && session.messages.length > 0) {
-      const ok = window.confirm('切换选题将清空当前选题的 refine 对话，是否继续？')
+      const ok = await confirm({
+        title: '切换选题',
+        message: '切换选题将清空当前选题的 refine 对话，是否继续？',
+        confirmLabel: '切换选题',
+        cancelLabel: '取消',
+        variant: 'danger',
+      })
       if (!ok) return
     }
-    if (topicChanged && !confirmClearOutline('切换选题')) return
+    if (topicChanged && !(await confirmClearOutline('切换选题'))) return
 
     setSession((prev) => ({
       ...prev,
@@ -218,20 +236,33 @@ export function PlaygroundPage() {
     }
   }
 
-  function handleRegenerateTopics() {
-    if (!confirmClearOutline('换一批选题')) return
+  async function handleRegenerateTopics() {
+    if (!(await confirmClearOutline('换一批选题'))) return
     topicsMut.mutate()
   }
 
   const brief = session.understanding ?? session.selectedTopic?.reason ?? ''
   const showOutlineWorkspace = Boolean(session.selectedTopic && outlineViewOpen)
+  const playgroundStage = resolvePlaygroundStage({
+    hasTopics: session.topics.length > 0,
+    hasSelectedTopic: Boolean(session.selectedTopic),
+    outlineOpen: showOutlineWorkspace,
+  })
 
   return (
     <div className={styles.page}>
+      {dialog}
       <PageHeader
         title="灵感实验室"
         description="生成选题、打磨结构化大纲，满意后再交接到内容流水线。"
       />
+
+      {session.topics.length > 0 ? (
+        <PlaygroundProgress
+          current={playgroundStage.current}
+          completed={playgroundStage.completed}
+        />
+      ) : null}
 
       <div className={styles.persistWarn} role="status">
         <span className={styles.persistLabel}>提示</span>
@@ -279,10 +310,10 @@ export function PlaygroundPage() {
                 <PlaygroundTopicCards
                   topics={session.topics}
                   selected={session.selectedTopic}
-                  onSelect={selectTopic}
+                  onSelect={(topic) => void selectTopic(topic)}
                 />
                 <PlaygroundTopicCardsActions
-                  onRegenerate={handleRegenerateTopics}
+                  onRegenerate={() => void handleRegenerateTopics()}
                   loading={topicsMut.isPending}
                 />
               </section>
@@ -296,7 +327,7 @@ export function PlaygroundPage() {
                     loading={refineMut.isPending}
                     onSend={(text) => refineMut.mutate(text)}
                   />
-                  <div className={shared.btnRow}>
+                  <div className={styles.refineActions}>
                     <button
                       type="button"
                       className={shared.btnPrimary}
@@ -307,10 +338,10 @@ export function PlaygroundPage() {
                     {!session.outline ? (
                       <button
                         type="button"
-                        className={shared.btnGhost}
+                        className={styles.skipOutline}
                         onClick={() => setHandoffOpen(true)}
                       >
-                        跳过大纲，直接交接到项目
+                        跳过大纲，直接交接
                       </button>
                     ) : null}
                   </div>

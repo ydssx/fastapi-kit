@@ -113,6 +113,8 @@ describe('ProjectDetailPage', () => {
     await waitFor(() => {
       expect(associateMedia).toHaveBeenCalledWith('asset-1', expect.objectContaining({ reference_position: 'append' }))
     })
-    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toContain('asset://asset-1')
+    expect(
+      (screen.getByPlaceholderText(/撰写/) as HTMLTextAreaElement).value,
+    ).toContain('asset://asset-1')
   })
 })

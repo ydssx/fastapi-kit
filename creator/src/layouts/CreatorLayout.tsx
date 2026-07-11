@@ -7,6 +7,7 @@ import { QuotaDisplay } from '../components/QuotaDisplay'
 import { CreatorMark } from '../components/icons/CreatorMark'
 import {
   AccountIcon,
+  AssetsIcon,
   BrandIcon,
   PlaygroundIcon,
   ProjectsIcon,
@@ -23,7 +24,7 @@ const NAV: {
   accent?: NavAccent
 }[] = [
   { to: '/', label: '项目', Icon: ProjectsIcon },
-  { to: '/assets', label: '图片素材库', Icon: BrandIcon },
+  { to: '/assets', label: '图片素材库', Icon: AssetsIcon },
   { to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
   { to: '/brand', label: '品牌档案', Icon: BrandIcon },
 ]
@@ -31,11 +32,14 @@ const NAV: {
 function UserMenu({
   email,
   usage,
+  showQuota = false,
   onLogout,
   onNavigate,
 }: {
   email: string | undefined
   usage?: Usage
+  /** Show usage inside menu (mobile). Desktop shows quota in top bar. */
+  showQuota?: boolean
   onLogout: () => void
   onNavigate?: () => void
 }) {
@@ -82,7 +86,7 @@ function UserMenu({
       </button>
       {open && (
         <div id={menuId} className={styles.userPopover} role="menu" aria-label="账号菜单">
-          {usage && (
+          {showQuota && usage && (
             <div className={styles.userQuota}>
               <p className={styles.userQuotaLabel}>本月用量</p>
               <QuotaDisplay usage={usage} compact embedded />
@@ -181,6 +185,11 @@ export function CreatorLayout() {
       <div className={styles.content}>
         <header className={styles.topBar}>
           <div className={styles.topBarSpacer} aria-hidden />
+          {usage && (
+            <div className={styles.topQuota}>
+              <QuotaDisplay usage={usage} compact />
+            </div>
+          )}
           <UserMenu email={user?.email} usage={usage} onLogout={logout} />
         </header>
 
@@ -193,7 +202,13 @@ export function CreatorLayout() {
           </Link>
 
           <div className={styles.mobileHeaderActions}>
-            <UserMenu email={user?.email} usage={usage} onLogout={logout} onNavigate={closeMenu} />
+            <UserMenu
+              email={user?.email}
+              usage={usage}
+              showQuota
+              onLogout={logout}
+              onNavigate={closeMenu}
+            />
             <button
               type="button"
               className={styles.menuBtn}

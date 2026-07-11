@@ -70,18 +70,26 @@ export function AiSuggestionPanel({
   const showBody = !mobileCollapsed
 
   return (
-    <aside className={styles.panel} aria-label="AI 建议">
+    <aside
+      className={`${styles.panel} ${mobileCollapsed ? styles.panelCollapsed : ''}`}
+      aria-label="AI 建议"
+    >
       <div className={styles.header}>
         <div>
-          <h3 className={styles.title}>AI 建议 · {stepTitle}</h3>
-          {multiMode && !loading && !quotaBlocked && (
+          <h3 className={styles.title}>
+            {mobileCollapsed ? '要 AI 建议' : `AI 建议 · ${stepTitle}`}
+          </h3>
+          {mobileCollapsed && (
+            <p className={styles.collapsedHint}>展开后可生成、对比并采用草稿</p>
+          )}
+          {multiMode && !loading && !quotaBlocked && !mobileCollapsed && (
             <p className={styles.subtitle}>3 个角度可对比，本次消耗 1 次 AI 额度</p>
           )}
         </div>
         {onToggleMobile && (
           <button
             type="button"
-            className={styles.toggle}
+            className={`${styles.toggle} ${mobileCollapsed ? styles.toggleMint : ''}`}
             onClick={onToggleMobile}
             aria-expanded={!mobileCollapsed}
           >

@@ -6,7 +6,7 @@
 
 .legend {
   margin-bottom: var(--space-sm);
-  font-size: 0.8rem;
+  font-size: var(--text-label);
   font-weight: 500;
   color: var(--text-muted);
   letter-spacing: 0.02em;
@@ -28,7 +28,7 @@
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--text-label);
   font-weight: 500;
   transition:
     border-color 0.15s ease,
@@ -70,7 +70,7 @@
 .primaryLabel {
   display: block;
   margin-bottom: var(--space-sm);
-  font-size: 0.8rem;
+  font-size: var(--text-label);
   color: var(--text-muted);
 }
 
@@ -84,7 +84,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.85rem;
+  font-size: var(--text-label);
   color: var(--text);
   cursor: pointer;
 }

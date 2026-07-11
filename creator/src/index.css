@@ -37,9 +37,16 @@
   --font: 'Outfit', system-ui, sans-serif;
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --text-display: clamp(1.75rem, 3.5vw, 2.25rem);
+  --text-title: 1.25rem;
+  --text-body: 0.925rem;
+  --text-label: 0.78rem;
+  --text-meta: 0.68rem;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28);
   --shadow-glow: 0 0 60px color-mix(in srgb, var(--accent) 10%, transparent);
+  --overlay: color-mix(in srgb, var(--bg) 72%, transparent);
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;

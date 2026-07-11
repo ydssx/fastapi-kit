@@ -105,8 +105,8 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, var(--text-muted));
   border-radius: 10px;
-  background: #0c0d12;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent);
   transition:
     border-color 0.2s ease,
     transform 0.2s ease,
@@ -118,7 +118,7 @@
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
   transform: translateY(-2px);
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.35),
+    var(--shadow-card),
     inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
@@ -142,7 +142,11 @@
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(135deg, #14161e 0%, #0d0f14 100%);
+    linear-gradient(
+      135deg,
+      var(--bg-elevated) 0%,
+      color-mix(in srgb, var(--bg) 88%, var(--surface)) 100%
+    );
 }
 
 .thumbnail,
@@ -208,7 +212,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 28px 10px 10px;
-  background: linear-gradient(180deg, transparent, rgba(6, 7, 10, 0.92));
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg) 92%, transparent));
   opacity: 0;
   transform: translateY(4px);
   transition:
@@ -480,7 +484,7 @@
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #0c0d12;
+  background: var(--bg);
 }
 
 .detailPreview .thumbnail,

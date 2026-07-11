@@ -102,6 +102,16 @@
   opacity: 0.45;
 }
 
+.heroCollapsed {
+  gap: var(--space-md);
+}
+
+.createCollapseRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(-1 * var(--space-xs));
+}
+
 .createGrid {
   display: flex;
   flex-direction: column;
@@ -366,13 +376,8 @@
 }
 
 .completedSection .listPanel::before {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--success) 35%, transparent) 50%,
-    transparent
-  );
-  opacity: 0.5;
+  background: color-mix(in srgb, var(--border) 55%, var(--success));
+  opacity: 0.9;
 }
 
 .completedSection {

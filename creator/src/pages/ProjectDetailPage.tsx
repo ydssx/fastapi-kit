@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { creatorApiErrorMessage } from '../lib/errors'
@@ -33,10 +33,12 @@ import {
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
-import { StepEditorPanel } from '../components/StepEditorPanel'
+import { StepEditorPanel, type DraftSaveStatus } from '../components/StepEditorPanel'
 import { StepProgress } from '../components/StepProgress'
 import { StepWorkspace } from '../components/StepWorkspace'
 import { StepVersionHistory } from '../components/StepVersionHistory'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
+import { useToast } from '../components/Toast'
 import { adjustmentsForStep, shouldAutoSuggest } from '../lib/stepAiAdjustments'
 import {
   applySelectionInsertion,
@@ -45,6 +47,7 @@ import {
   type TextSelection,
 } from '../lib/editorSelection'
 import { pipelineLabel, platformLabels } from '../lib/labels'
+import { CREATOR_PLATFORMS } from '../lib/platforms'
 import type {
   AiVariant,
   MediaAsset,
@@ -55,17 +58,12 @@ import type {
 import shared from '../styles/shared.module.css'
 import styles from './ProjectDetailPage.module.css'
 
-const PLATFORMS = [
-  { key: 'douyin', label: '抖音', emoji: '🎵' },
-  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
-  { key: 'wechat', label: '公众号', emoji: '💬' },
-  { key: 'bilibili', label: 'B站', emoji: '📺' },
-]
-
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const { confirm, dialog } = useConfirmDialog()
+  const { showToast } = useToast()
   const draftWarning =
     (location.state as { draftWarning?: string } | null)?.draftWarning ?? null
   const queryClient = useQueryClient()
@@ -105,6 +103,12 @@ export function ProjectDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
   const [assetPickerOpen, setAssetPickerOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [draftSaveError, setDraftSaveError] = useState(false)
+  const [draftSavedFlash, setDraftSavedFlash] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
+  const moreMenuId = useId()
+  const autosaveSkipRef = useRef(false)
   const usedImageAssets = useMemo(
     () =>
       projectMediaAssociations.map((association: ProjectMediaAssociation) => ({
@@ -120,16 +124,22 @@ export function ProjectDetailPage() {
 
   useEffect(() => {
     if (project) {
+      autosaveSkipRef.current = true
       setContent(project.draft_content[project.current_step_key] ?? '')
       setEditorSelection(null)
+      setDraftSaveError(false)
+      setDraftSavedFlash(false)
+    }
+  }, [project?.id, project?.current_step_key])
+
+  useEffect(() => {
+    if (project) {
       setEditTitle(project.title)
       setEditPlatforms(project.target_platforms)
       setEditPrimaryPlatform(project.primary_platform_key ?? '')
     }
   }, [
     project?.id,
-    project?.current_step_key,
-    project?.draft_content,
     project?.title,
     project?.target_platforms,
     project?.primary_platform_key,
@@ -148,9 +158,12 @@ export function ProjectDetailPage() {
     return { title: prev.title, summary: art?.content }
   }
 
-  function applyProjectUpdate(updated: Project) {
+  function applyProjectUpdate(updated: Project, options?: { syncContent?: boolean }) {
     queryClient.setQueryData(['project', id], updated)
-    setContent(updated.draft_content[updated.current_step_key] ?? '')
+    if (options?.syncContent !== false) {
+      autosaveSkipRef.current = true
+      setContent(updated.draft_content[updated.current_step_key] ?? '')
+    }
     setEditTitle(updated.title)
     setEditPlatforms(updated.target_platforms)
     setEditPrimaryPlatform(updated.primary_platform_key ?? '')
@@ -186,12 +199,19 @@ export function ProjectDetailPage() {
   }
 
   const draftMut = useMutation({
-    mutationFn: () => saveDraft(id!, project!.current_step_key, content),
-    onSuccess: (updated) => {
+    mutationFn: ({ text }: { text: string; toast?: boolean }) =>
+      saveDraft(id!, project!.current_step_key, text),
+    onSuccess: (updated, vars) => {
       setActionError(null)
-      applyProjectUpdate(updated)
+      setDraftSaveError(false)
+      setDraftSavedFlash(true)
+      applyProjectUpdate(updated, { syncContent: false })
+      if (vars.toast) showToast('草稿已保存')
     },
-    onError: handleApiError,
+    onError: (err) => {
+      setDraftSaveError(true)
+      handleApiError(err)
+    },
   })
 
   const confirmMut = useMutation({
@@ -199,7 +219,10 @@ export function ProjectDetailPage() {
     onSuccess: (updated) => {
       setQuotaError(null)
       setActionError(null)
+      setDraftSaveError(false)
+      setDraftSavedFlash(false)
       applyProjectUpdate(updated)
+      showToast('已进入下一步')
     },
     onError: handleApiError,
   })
@@ -326,6 +349,62 @@ export function ProjectDetailPage() {
     onError: handleApiError,
   })
 
+  useEffect(() => {
+    if (!moreOpen) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [moreOpen])
+
+  const serverDraft =
+    project && !isPublish ? (project.draft_content[project.current_step_key] ?? '') : ''
+  const isDraftDirty = Boolean(
+    project && project.status !== 'completed' && !isPublish && content !== serverDraft,
+  )
+
+  useEffect(() => {
+    if (isDraftDirty) setDraftSavedFlash(false)
+  }, [isDraftDirty])
+
+  useEffect(() => {
+    if (!draftSavedFlash) return
+    const timer = window.setTimeout(() => setDraftSavedFlash(false), 2500)
+    return () => window.clearTimeout(timer)
+  }, [draftSavedFlash])
+
+  useEffect(() => {
+    if (autosaveSkipRef.current) {
+      autosaveSkipRef.current = false
+      return
+    }
+    if (!project || isPublish || project.status === 'completed') return
+    if (!isDraftDirty) return
+    if (confirmMut.isPending || aiMut.isPending || draftMut.isPending) return
+
+    const text = content
+    const timer = window.setTimeout(() => {
+      draftMut.mutate({ text, toast: false })
+    }, 1100)
+    return () => window.clearTimeout(timer)
+  }, [
+    aiMut.isPending,
+    confirmMut.isPending,
+    content,
+    draftMut,
+    isDraftDirty,
+    isPublish,
+    project,
+  ])
+
   if (isLoading || !project) {
     return (
       <div className={styles.loadingWrap}>
@@ -334,8 +413,16 @@ export function ProjectDetailPage() {
     )
   }
 
-  function handleDelete() {
-    if (!window.confirm('确定删除此项目？此操作不可恢复。')) return
+  async function handleDelete() {
+    setMoreOpen(false)
+    const ok = await confirm({
+      title: '删除项目',
+      message: '确定删除此项目？此操作不可恢复。',
+      confirmLabel: '删除项目',
+      cancelLabel: '取消',
+      variant: 'danger',
+    })
+    if (!ok) return
     deleteMut.mutate()
   }
 
@@ -367,7 +454,7 @@ export function ProjectDetailPage() {
     commitPlatformEdit(editPlatforms, key)
   }
 
-  function savePlatforms(next: string[], primary: string) {
+  async function savePlatforms(next: string[], primary: string) {
     setEditPlatforms(next)
     if (next.length === 0) return
     if (next.length > 1 && !primary) {
@@ -378,13 +465,19 @@ export function ProjectDetailPage() {
       next.length !== project!.target_platforms.length ||
       next.some((key) => !project!.target_platforms.includes(key)) ||
       primary !== (project!.primary_platform_key ?? '')
-    if (
-      changed &&
-      !window.confirm('修改目标平台将清空发布核对进度，确定继续？')
-    ) {
-      setEditPlatforms(project!.target_platforms)
-      setEditPrimaryPlatform(project!.primary_platform_key ?? '')
-      return
+    if (changed) {
+      const ok = await confirm({
+        title: '修改目标平台',
+        message: '修改目标平台将清空发布核对进度，确定继续？',
+        confirmLabel: '继续修改',
+        cancelLabel: '取消',
+        variant: 'danger',
+      })
+      if (!ok) {
+        setEditPlatforms(project!.target_platforms)
+        setEditPrimaryPlatform(project!.primary_platform_key ?? '')
+        return
+      }
     }
     updateMut.mutate({
       target_platform_keys: next,
@@ -392,21 +485,46 @@ export function ProjectDetailPage() {
     })
   }
 
+  function renderMoreMenu() {
+    return (
+      <div className={styles.moreMenu} ref={moreRef}>
+        <button
+          type="button"
+          className={styles.moreTrigger}
+          aria-expanded={moreOpen}
+          aria-controls={moreMenuId}
+          aria-haspopup="menu"
+          onClick={() => setMoreOpen((v) => !v)}
+          aria-label="更多操作"
+        >
+          ⋯
+        </button>
+        {moreOpen && (
+          <div id={moreMenuId} className={styles.morePopover} role="menu">
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.moreDanger}
+              onClick={() => void handleDelete()}
+              disabled={deleteMut.isPending}
+            >
+              删除项目
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (project.status === 'completed') {
     return (
       <div className={`${shared.page} ${styles.page}`}>
+        {dialog}
         <div className={styles.toolbar}>
           <Link to="/" className={shared.backLink}>
             ← 返回列表
           </Link>
-          <button
-            type="button"
-            className={shared.btnGhost}
-            onClick={handleDelete}
-            disabled={deleteMut.isPending}
-          >
-            删除项目
-          </button>
+          {renderMoreMenu()}
         </div>
         <CompletedBanner title={project.title} />
         <section className={styles.metaEdit}>
@@ -457,6 +575,16 @@ export function ProjectDetailPage() {
   const totalSteps = pipeline?.steps.length ?? 0
   const showPlatformPicker = canEditPlatforms && stepIndex <= 1
 
+  const draftStatus: DraftSaveStatus = draftMut.isPending
+    ? 'saving'
+    : draftSaveError && isDraftDirty
+      ? 'error'
+      : isDraftDirty
+        ? 'dirty'
+        : draftSavedFlash
+          ? 'saved'
+          : 'idle'
+
   const editorPanel = (
     <StepEditorPanel
       title={step?.title ?? project.current_step_key}
@@ -467,10 +595,11 @@ export function ProjectDetailPage() {
         setEditorSelection(null)
       }}
       onSelectionChange={(start, end) => setEditorSelection(captureSelection(content, start, end))}
-      onSaveDraft={() => draftMut.mutate()}
+      onSaveDraft={() => draftMut.mutate({ text: content, toast: true })}
       onConfirm={() => confirmMut.mutate()}
       savingDraft={draftMut.isPending}
       confirming={confirmMut.isPending}
+      draftStatus={draftStatus}
       editorDisabled={aiMut.isPending}
       onPickImage={() => setAssetPickerOpen(true)}
       addingImage={associateMediaMut.isPending}
@@ -483,18 +612,12 @@ export function ProjectDetailPage() {
 
   return (
     <div className={`${shared.page} ${styles.page}`}>
+      {dialog}
       <div className={styles.toolbar}>
         <Link to="/" className={shared.backLink}>
           ← 返回列表
         </Link>
-        <button
-          type="button"
-          className={shared.btnGhost}
-          onClick={handleDelete}
-          disabled={deleteMut.isPending}
-        >
-          删除项目
-        </button>
+        {renderMoreMenu()}
       </div>
 
       {draftWarning && (
@@ -528,17 +651,28 @@ export function ProjectDetailPage() {
       </header>
 
       {showPlatformPicker && (
-        <section className={styles.metaEdit}>
-          <PlatformPicker
-            options={PLATFORMS}
-            value={editPlatforms}
-            onChange={handleEditPlatformsChange}
-            legend="目标平台（前两步可修改）"
-            showPrimary
-            primaryKey={editPrimaryPlatform || null}
-            onPrimaryChange={handleEditPrimaryChange}
-          />
-        </section>
+        <details className={styles.platformFold}>
+          <summary className={styles.platformFoldSummary}>
+            <span className={styles.platformFoldLabel}>目标平台</span>
+            <span className={styles.platformFoldValue}>
+              {platformLabels(editPlatforms.length > 0 ? editPlatforms : project.target_platforms)}
+              {editPrimaryPlatform || project.primary_platform_key
+                ? ` · 主平台 ${platformLabels([editPrimaryPlatform || project.primary_platform_key!])}`
+                : ''}
+            </span>
+          </summary>
+          <div className={styles.metaEdit}>
+            <PlatformPicker
+              options={CREATOR_PLATFORMS}
+              value={editPlatforms}
+              onChange={handleEditPlatformsChange}
+              legend="目标平台（前两步可修改）"
+              showPrimary
+              primaryKey={editPrimaryPlatform || null}
+              onPrimaryChange={handleEditPrimaryChange}
+            />
+          </div>
+        </details>
       )}
 
       {isPublish ? (

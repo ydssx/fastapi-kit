@@ -154,7 +154,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-md);
+  gap: 10px;
   min-height: 56px;
   padding: 10px clamp(20px, 4vw, 48px);
   border-bottom: 1px solid var(--border-subtle);
@@ -164,6 +164,10 @@
 
 .topBarSpacer {
   flex: 1;
+}
+
+.topQuota {
+  flex-shrink: 0;
 }
 
 .userMenu {
@@ -176,7 +180,8 @@
   align-items: center;
   gap: 8px;
   max-width: 100%;
-  padding: 7px 10px;
+  min-height: 38px;
+  padding: 7px 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface) 70%, transparent);
@@ -214,12 +219,11 @@
 .email {
   flex: 1;
   min-width: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-label);
   color: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--font-mono);
 }
 
 .userChevron {

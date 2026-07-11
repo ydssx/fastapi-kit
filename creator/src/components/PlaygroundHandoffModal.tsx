@@ -5,18 +5,12 @@ import {
   outlineHandoffStepKey,
   outlineHandoffStepLabel,
 } from '../utils/playgroundOutline'
+import { CREATOR_PLATFORMS } from '../lib/platforms'
 import shared from '../styles/shared.module.css'
 import { PlatformPicker } from './PlatformPicker'
 import styles from './PlaygroundHandoffModal.module.css'
 
 const LAST_PIPELINE_KEY = 'creator-last-pipeline'
-
-const PLATFORMS = [
-  { key: 'douyin', label: '抖音', emoji: '🎵' },
-  { key: 'xiaohongshu', label: '小红书', emoji: '📕' },
-  { key: 'wechat', label: '公众号', emoji: '💬' },
-  { key: 'bilibili', label: 'B站', emoji: '📺' },
-]
 
 export interface HandoffPayload {
   pipeline_id: string
@@ -222,7 +216,7 @@ export function PlaygroundHandoffModal({
         </label>
 
         <PlatformPicker
-          options={PLATFORMS}
+          options={CREATOR_PLATFORMS}
           value={platforms}
           onChange={handlePlatformsChange}
           legend="目标平台"

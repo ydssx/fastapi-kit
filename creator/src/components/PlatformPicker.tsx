@@ -51,7 +51,11 @@ export function PlatformPicker({
               onClick={() => toggle(p.key)}
               aria-pressed={active}
             >
-              {p.emoji && <span className={styles.emoji}>{p.emoji}</span>}
+              {p.emoji ? (
+                <span className={styles.emoji} aria-hidden>
+                  {p.emoji}
+                </span>
+              ) : null}
               {p.label}
               {active && (
                 <span className={styles.check} aria-hidden>

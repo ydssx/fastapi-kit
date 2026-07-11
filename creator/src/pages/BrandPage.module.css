@@ -46,6 +46,12 @@
 }
 
 .preview::before {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: auto;
+  height: 2px;
   background: linear-gradient(
     90deg,
     transparent,
@@ -61,6 +67,20 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ai);
+}
+
+.previewHint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.previewLink {
+  margin-left: 6px;
+  color: var(--ai);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .previewSentence {

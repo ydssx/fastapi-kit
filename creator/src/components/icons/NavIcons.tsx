@@ -69,6 +69,36 @@ export function PlaygroundIcon(props: IconProps) {
   )
 }
 
+export function AssetsIcon(props: IconProps) {
+  return (
+    <IconShell {...props}>
+      <rect
+        x="3.5"
+        y="5"
+        width="13"
+        height="13"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M7.5 3.5h11A1.5 1.5 0 0 1 20 5v11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <circle cx="8.2" cy="9.2" r="1.3" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="m6.5 15.5 2.8-3.2 2.2 2.1 2.5-3.4 2.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconShell>
+  )
+}
+
 export function BrandIcon(props: IconProps) {
   return (
     <IconShell {...props}>

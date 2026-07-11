@@ -1,6 +1,8 @@
 import shared from '../styles/shared.module.css'
 import styles from './StepEditorPanel.module.css'
 
+export type DraftSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+
 interface StepEditorPanelProps {
   title: string
   decisionHint?: string
@@ -11,9 +13,25 @@ interface StepEditorPanelProps {
   onConfirm: () => void
   savingDraft: boolean
   confirming: boolean
+  draftStatus?: DraftSaveStatus
   editorDisabled?: boolean
   onPickImage?: () => void
   addingImage?: boolean
+}
+
+function draftStatusLabel(status: DraftSaveStatus): string | null {
+  switch (status) {
+    case 'saving':
+      return '保存中…'
+    case 'saved':
+      return '已保存'
+    case 'dirty':
+      return '未保存更改'
+    case 'error':
+      return '自动保存失败'
+    default:
+      return null
+  }
 }
 
 export function StepEditorPanel({
@@ -26,13 +44,28 @@ export function StepEditorPanel({
   onConfirm,
   savingDraft,
   confirming,
+  draftStatus = 'idle',
   editorDisabled = false,
   onPickImage,
   addingImage = false,
 }: StepEditorPanelProps) {
+  const statusLabel = draftStatusLabel(draftStatus)
+
   return (
-    <section className={shared.panel}>
-      <h2 className={shared.panelTitle}>{title}</h2>
+    <section className={`${shared.panel} ${shared.panelStage} ${styles.panel}`}>
+      <div className={styles.head}>
+        <h2 className={shared.panelTitle}>{title}</h2>
+        {statusLabel && (
+          <span
+            className={`${styles.draftStatus} ${
+              draftStatus === 'error' ? styles.draftError : ''
+            } ${draftStatus === 'saved' ? styles.draftSaved : ''}`}
+            role="status"
+          >
+            {statusLabel}
+          </span>
+        )}
+      </div>
       {decisionHint && (
         <p className={styles.hint}>
           本步你要决定：<span className={styles.decision}>{decisionHint}</span>
@@ -64,14 +97,14 @@ export function StepEditorPanel({
           {addingImage ? '正在添加图片…' : '从素材库添加图片'}
         </button>
       )}
-      <div className={shared.btnRow}>
+      <div className={styles.actions}>
         <button
           type="button"
           className={shared.btnGhost}
           onClick={onSaveDraft}
-          disabled={savingDraft || editorDisabled}
+          disabled={savingDraft || editorDisabled || draftStatus === 'saved' || draftStatus === 'idle'}
         >
-          {savingDraft ? '保存中…' : '暂存草稿'}
+          {savingDraft ? '保存中…' : '保存草稿'}
         </button>
         <button
           type="button"
@@ -79,7 +112,7 @@ export function StepEditorPanel({
           onClick={onConfirm}
           disabled={confirming || editorDisabled || !content.trim()}
         >
-          {confirming ? '确认中…' : '确认并下一步 →'}
+          {confirming ? '确认中…' : '确认并进入下一步'}
         </button>
       </div>
     </section>
