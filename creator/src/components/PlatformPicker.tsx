@@ -27,6 +27,8 @@ export function PlatformPicker({
 }: PlatformPickerProps) {
   function toggle(key: string) {
     if (value.includes(key)) {
+      // Keep at least one platform so create/handoff CTAs stay actionable.
+      if (value.length === 1) return
       const next = value.filter((p) => p !== key)
       onChange(next)
       if (showPrimary && onPrimaryChange && primaryKey === key) {
