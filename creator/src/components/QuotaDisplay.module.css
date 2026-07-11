@@ -16,6 +16,12 @@
   width: 100%;
 }
 
+.embedded {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .row {
   display: flex;
   flex-direction: column;

@@ -4,6 +4,8 @@ import styles from './QuotaDisplay.module.css'
 interface QuotaDisplayProps {
   usage: Usage
   compact?: boolean
+  /** Quieter chrome for nesting inside menus / popovers. */
+  embedded?: boolean
 }
 
 function pct(used: number, limit: number) {
@@ -19,7 +21,7 @@ function isExhausted(used: number, limit: number) {
   return limit > 0 && used >= limit
 }
 
-export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
+export function QuotaDisplay({ usage, compact = false, embedded = false }: QuotaDisplayProps) {
   const projectPct = pct(usage.completed_projects, usage.completed_projects_limit)
   const aiPct = pct(usage.ai_calls, usage.ai_calls_limit)
   const pgPct = pct(usage.playground_calls, usage.playground_calls_limit)
@@ -32,7 +34,13 @@ export function QuotaDisplay({ usage, compact = false }: QuotaDisplayProps) {
 
   return (
     <div
-      className={`${styles.quota} ${compact ? styles.compact : ''}`}
+      className={[
+        styles.quota,
+        compact ? styles.compact : '',
+        embedded ? styles.embedded : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       title="本月用量"
       aria-label="本月用量"
     >

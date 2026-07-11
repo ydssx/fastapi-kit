@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
@@ -11,6 +11,7 @@ import {
   PlaygroundIcon,
   ProjectsIcon,
 } from '../components/icons/NavIcons'
+import type { Usage } from '../types/api'
 import styles from './CreatorLayout.module.css'
 
 type NavAccent = 'accent' | 'ai'
@@ -25,8 +26,96 @@ const NAV: {
   { to: '/assets', label: '图片素材库', Icon: BrandIcon },
   { to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
   { to: '/brand', label: '品牌档案', Icon: BrandIcon },
-  { to: '/account', label: '账号', Icon: AccountIcon },
 ]
+
+function UserMenu({
+  email,
+  usage,
+  onLogout,
+  onNavigate,
+}: {
+  email: string | undefined
+  usage?: Usage
+  onLogout: () => void
+  onNavigate?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+  const accountActive = useLocation().pathname.startsWith('/account')
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className={styles.userMenu} ref={rootRef}>
+      <button
+        type="button"
+        className={styles.userTrigger}
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className={styles.userAvatar} aria-hidden>
+          <AccountIcon />
+        </span>
+        <span className={styles.email} title={email ?? ''}>
+          {email}
+        </span>
+        <span className={styles.userChevron} aria-hidden>
+          {open ? '▴' : '▾'}
+        </span>
+      </button>
+      {open && (
+        <div id={menuId} className={styles.userPopover} role="menu" aria-label="账号菜单">
+          {usage && (
+            <div className={styles.userQuota}>
+              <p className={styles.userQuotaLabel}>本月用量</p>
+              <QuotaDisplay usage={usage} compact embedded />
+            </div>
+          )}
+          <Link
+            to="/account"
+            role="menuitem"
+            className={accountActive ? styles.userMenuItemActive : styles.userMenuItem}
+            aria-current={accountActive ? 'page' : undefined}
+            onClick={() => {
+              setOpen(false)
+              onNavigate?.()
+            }}
+          >
+            账号设置
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.userMenuLogout}
+            onClick={() => {
+              setOpen(false)
+              onLogout()
+            }}
+          >
+            退出
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function CreatorLayout() {
   const { user, logout } = useAuth()
@@ -87,21 +176,14 @@ export function CreatorLayout() {
             ))}
           </nav>
         </div>
-
-        <div className={styles.sidebarBottom}>
-          {usage && <QuotaDisplay usage={usage} />}
-          <div className={styles.userRow}>
-            <span className={styles.email} title={user?.email ?? ''}>
-              {user?.email}
-            </span>
-            <button type="button" className={styles.logout} onClick={logout}>
-              退出
-            </button>
-          </div>
-        </div>
       </aside>
 
       <div className={styles.content}>
+        <header className={styles.topBar}>
+          <div className={styles.topBarSpacer} aria-hidden />
+          <UserMenu email={user?.email} usage={usage} onLogout={logout} />
+        </header>
+
         <header className={styles.mobileHeader}>
           <Link to="/" className={styles.mobileBrand} onClick={closeMenu}>
             <span className={styles.mark} aria-hidden>
@@ -110,18 +192,21 @@ export function CreatorLayout() {
             <span className={styles.brandName}>创作者工作台</span>
           </Link>
 
-          <button
-            type="button"
-            className={styles.menuBtn}
-            aria-expanded={menuOpen}
-            aria-controls="creator-mobile-panel"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <span className={styles.menuIcon} aria-hidden>
-              {menuOpen ? '×' : '≡'}
-            </span>
-            <span className="sr-only">{menuOpen ? '关闭菜单' : '打开菜单'}</span>
-          </button>
+          <div className={styles.mobileHeaderActions}>
+            <UserMenu email={user?.email} usage={usage} onLogout={logout} onNavigate={closeMenu} />
+            <button
+              type="button"
+              className={styles.menuBtn}
+              aria-expanded={menuOpen}
+              aria-controls="creator-mobile-panel"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <span className={styles.menuIcon} aria-hidden>
+                {menuOpen ? '×' : '≡'}
+              </span>
+              <span className="sr-only">{menuOpen ? '关闭菜单' : '打开菜单'}</span>
+            </button>
+          </div>
         </header>
 
         {menuOpen && (
@@ -142,13 +227,6 @@ export function CreatorLayout() {
                 </Link>
               ))}
             </nav>
-            {usage && <QuotaDisplay usage={usage} compact />}
-            <div className={styles.mobileMeta}>
-              <span className={styles.emailMobile}>{user?.email}</span>
-              <button type="button" className={styles.logout} onClick={logout}>
-                退出
-              </button>
-            </div>
           </div>
         )}
 
