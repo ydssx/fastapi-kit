@@ -36,7 +36,8 @@ interface PlaygroundHandoffModalProps {
   outline: PlaygroundOutline | null
   pipelines: Pipeline[]
   selectedCount: number
-  remainingCompletedQuota: number | null
+  /** `undefined` = usage still loading; `null` = unknown after load; number = remaining completes. */
+  remainingCompletedQuota: number | null | undefined
   onClose: () => void
   onConfirm: (payload: HandoffPayload) => void
   loading: boolean
@@ -119,14 +120,17 @@ export function PlaygroundHandoffModal({
   const hasOutlinePayload = Boolean(outline)
   const needsQuotaWarning =
     mode === 'all' &&
-    remainingCompletedQuota != null &&
+    remainingCompletedQuota !== undefined &&
+    remainingCompletedQuota !== null &&
     selectedCount > remainingCompletedQuota
+  const usagePending = multiSelect && mode === 'all' && remainingCompletedQuota === undefined
   const canConfirm =
     Boolean(pipelineId) &&
     Boolean(editableBrief.trim()) &&
     platforms.length > 0 &&
     primaryReady &&
     (!hasOutlinePayload || Boolean(editableOutlineText.trim())) &&
+    !usagePending &&
     (!needsQuotaWarning || quotaAck)
 
   const preview = useMemo(() => {
@@ -255,6 +259,12 @@ export function PlaygroundHandoffModal({
               <span>立刻把勾选的 {selectedCount} 条都建成项目</span>
             </label>
           </fieldset>
+        ) : null}
+
+        {usagePending ? (
+          <p className={shared.muted} role="status">
+            正在读取本月完成额度…
+          </p>
         ) : null}
 
         {needsQuotaWarning ? (

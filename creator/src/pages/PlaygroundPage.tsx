@@ -52,12 +52,12 @@ export function PlaygroundPage() {
   const queryClient = useQueryClient()
   const { confirm, dialog } = useConfirmDialog()
   const { showToast } = useToast()
-  const { session, setSession, resetSession, exportSession } = usePlaygroundSession()
+  const { session, setSession, persistSession, resetSession, exportSession } = usePlaygroundSession()
   const [handoffOpen, setHandoffOpen] = useState(false)
   const [outlineViewOpen, setOutlineViewOpen] = useState(false)
   const [quotaError, setQuotaError] = useState<'ai' | 'projects' | 'playground' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: fetchUsage })
+  const { data: usage, isLoading: usageLoading } = useQuery({ queryKey: ['usage'], queryFn: fetchUsage })
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ['pipelines'],
@@ -260,20 +260,19 @@ export function PlaygroundPage() {
       }
 
       const handedOff = data.focus
-      setSession((prev) => {
-        const nextSlate = handedOff
-          ? removeTopicFromList(prev.selectedTopics, handedOff)
-          : prev.selectedTopics
-        const nextFocus = nextSlate[0] ?? null
-        return {
-          ...prev,
-          selectedTopics: nextSlate,
-          selectedTopic: nextFocus,
-          messages: [],
-          understanding: null,
-          outline: null,
-          outlineMessages: [],
-        }
+      const prev = session
+      const nextSlate = handedOff
+        ? removeTopicFromList(prev.selectedTopics, handedOff)
+        : prev.selectedTopics
+      const nextFocus = nextSlate[0] ?? null
+      persistSession({
+        ...prev,
+        selectedTopics: nextSlate,
+        selectedTopic: nextFocus,
+        messages: [],
+        understanding: null,
+        outline: null,
+        outlineMessages: [],
       })
       navigate(`/projects/${data.projectId}`)
     },
@@ -485,9 +484,11 @@ export function PlaygroundPage() {
             session.selectedTopics.length > 0 ? session.selectedTopics.length : 1
           }
           remainingCompletedQuota={
-            usage
-              ? Math.max(0, usage.completed_projects_limit - usage.completed_projects)
-              : null
+            usageLoading
+              ? undefined
+              : usage
+                ? Math.max(0, usage.completed_projects_limit - usage.completed_projects)
+                : null
           }
           onClose={() => setHandoffOpen(false)}
           onConfirm={(payload) => handoffMut.mutate(payload)}

@@ -53,6 +53,11 @@ export function usePlaygroundSession() {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
   }, [session])
 
+  const persistSession = useCallback((next: PlaygroundSession) => {
+    setSession(next)
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  }, [])
+
   const resetSession = useCallback(() => {
     setSession(EMPTY)
     sessionStorage.removeItem(STORAGE_KEY)
@@ -68,5 +73,5 @@ export function usePlaygroundSession() {
     URL.revokeObjectURL(url)
   }, [session])
 
-  return { session, setSession, resetSession, exportSession }
+  return { session, setSession, persistSession, resetSession, exportSession }
 }
