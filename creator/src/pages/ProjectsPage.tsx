@@ -20,7 +20,9 @@ import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
 import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
 import { TopicSeedPanel } from '../components/TopicSeedPanel'
+import { WeeklyRhythmStrip } from '../components/WeeklyRhythmStrip'
 import type { PlaygroundTopic } from '../types/api'
+import { countWeeklyRhythm } from '../lib/weeklyRhythm'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
@@ -61,6 +63,7 @@ export function ProjectsPage() {
   const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
 
   const priorityView = useMemo(() => buildProjectPriorityView(projects, pipelines), [projects, pipelines])
+  const weeklyRhythm = useMemo(() => countWeeklyRhythm(projects), [projects])
   const activeProjects = priorityView.activeProjects
   const sprintProjects = priorityView.sprintProjects
   const otherActiveProjects = priorityView.otherActiveProjects
@@ -70,6 +73,7 @@ export function ProjectsPage() {
   const hasActiveProjects = activeProjects.length > 0
   const hasSprintProjects = sprintProjects.length > 0
   const collapseCreateByDefault = hasSprintProjects
+  const showRhythmStrip = !isLoading && projects.length > 0
 
   useEffect(() => {
     if (collapseCreateByDefault) setCreateExpanded(false)
@@ -190,6 +194,14 @@ export function ProjectsPage() {
         className={`${styles.workspace} ${hasSprintProjects ? styles.workspaceWithSprint : ''}`}
       >
         <div className={styles.projectsMain}>
+          {showRhythmStrip ? (
+            <WeeklyRhythmStrip
+              target={weeklyRhythm.target}
+              inProgress={weeklyRhythm.inProgress}
+              completedThisWeek={weeklyRhythm.completedThisWeek}
+            />
+          ) : null}
+
           {isLoading && (
             <section className={styles.section}>
               <div className={styles.listPanel}>

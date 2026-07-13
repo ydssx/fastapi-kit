@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { PlaygroundMessage, PlaygroundOutline, PlaygroundTopic } from '../types/api'
+import { topicInList } from '../lib/playgroundTopics'
 
 const STORAGE_KEY = 'creator-playground-session'
 
 export interface PlaygroundSession {
   topics: PlaygroundTopic[]
   selectedTopic: PlaygroundTopic | null
+  selectedTopics: PlaygroundTopic[]
   messages: PlaygroundMessage[]
   understanding: string | null
   brandEmpty: boolean
@@ -16,6 +18,7 @@ export interface PlaygroundSession {
 const EMPTY: PlaygroundSession = {
   topics: [],
   selectedTopic: null,
+  selectedTopics: [],
   messages: [],
   understanding: null,
   brandEmpty: false,
@@ -27,7 +30,17 @@ function loadSession(): PlaygroundSession {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return EMPTY
-    return { ...EMPTY, ...JSON.parse(raw) } as PlaygroundSession
+    const parsed = { ...EMPTY, ...JSON.parse(raw) } as PlaygroundSession
+    // Migrate sessions saved before multi-select existed.
+    if (!Array.isArray(parsed.selectedTopics)) {
+      parsed.selectedTopics = parsed.selectedTopic ? [parsed.selectedTopic] : []
+    } else if (
+      parsed.selectedTopic &&
+      !topicInList(parsed.selectedTopics, parsed.selectedTopic)
+    ) {
+      parsed.selectedTopics = [...parsed.selectedTopics, parsed.selectedTopic]
+    }
+    return parsed
   } catch {
     return EMPTY
   }

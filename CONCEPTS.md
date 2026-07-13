@@ -36,6 +36,14 @@ The terminal pipeline step variant: per-target-platform tasks the user marks com
 
 The Creator Workbench projects-home framing where near-publish content projects are prioritized over recency or creation. Its job is to help creators resume the content project most likely to reach the Publish Checklist next.
 
+### Mixed Handoff
+
+An Inspiration Lab handoff mode where the creator can create a Content Project for the current topic only while keeping other selected topics in the same lab session, or create one Content Project per selected topic in a single confirmation. It extends single-topic handoff; it is not a separate durable topic-queue product.
+
+### Weekly Rhythm Strip
+
+A thin status strip on the Publish Sprint Hub showing the creator’s weekly publish target alongside in-progress and completed-this-week counts. It supplements near-publish prioritization; it does not replace the hub with a calendar of slots.
+
 ## Creator UI vocabulary
 
 ### Design Tokens

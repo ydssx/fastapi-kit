@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import {
   fetchPipelines,
+  fetchUsage,
   playgroundHandoff,
   playgroundOutlineGenerate,
   playgroundOutlineRefine,
@@ -26,8 +27,15 @@ import {
   PlaygroundTopicCardsActions,
 } from '../components/PlaygroundTopicCards'
 import { QuotaLimitNotice, quotaLimitKindFromCode } from '../components/QuotaLimitNotice'
+import { useToast } from '../components/Toast'
 import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { usePlaygroundSession } from '../hooks/usePlaygroundSession'
+import {
+  removeTopicFromList,
+  samePlaygroundTopic,
+  toggleTopicInList,
+  topicInList,
+} from '../lib/playgroundTopics'
 import type { PlaygroundMessage, PlaygroundOutline, PlaygroundTopic } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './PlaygroundPage.module.css'
@@ -43,11 +51,13 @@ export function PlaygroundPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { confirm, dialog } = useConfirmDialog()
+  const { showToast } = useToast()
   const { session, setSession, resetSession, exportSession } = usePlaygroundSession()
   const [handoffOpen, setHandoffOpen] = useState(false)
   const [outlineViewOpen, setOutlineViewOpen] = useState(false)
   const [quotaError, setQuotaError] = useState<'ai' | 'projects' | 'playground' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: fetchUsage })
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ['pipelines'],
@@ -76,6 +86,7 @@ export function PlaygroundPage() {
         ...prev,
         topics: data.topics,
         selectedTopic: null,
+        selectedTopics: [],
         messages: [],
         understanding: null,
         brandEmpty: data.brand_empty,
@@ -193,12 +204,78 @@ export function PlaygroundPage() {
   })
 
   const handoffMut = useMutation({
-    mutationFn: (payload: HandoffPayload) => playgroundHandoff(payload),
+    mutationFn: async (payload: HandoffPayload) => {
+      const sharedFields = {
+        pipeline_id: payload.pipeline_id,
+        target_platform_keys: payload.target_platform_keys,
+        primary_platform_key: payload.primary_platform_key,
+      }
+
+      if (payload.mode === 'all') {
+        const slate =
+          session.selectedTopics.length > 0
+            ? session.selectedTopics
+            : session.selectedTopic
+              ? [session.selectedTopic]
+              : []
+        const createdIds: string[] = []
+        for (const topic of slate) {
+          const isFocus =
+            session.selectedTopic != null &&
+            samePlaygroundTopic(session.selectedTopic, topic)
+          const result = await playgroundHandoff({
+            ...sharedFields,
+            title: topic.title,
+            brief: isFocus ? payload.brief : topic.reason,
+            hooks: isFocus ? payload.hooks : undefined,
+            outline: isFocus ? payload.outline : undefined,
+            raw_notes: isFocus ? payload.raw_notes : '',
+          })
+          createdIds.push(result.project_id)
+        }
+        return { mode: 'all' as const, projectIds: createdIds }
+      }
+
+      const result = await playgroundHandoff({
+        ...sharedFields,
+        title: payload.title,
+        brief: payload.brief,
+        hooks: payload.hooks,
+        outline: payload.outline,
+        raw_notes: payload.raw_notes,
+      })
+      return { mode: 'current' as const, projectId: result.project_id, focus: session.selectedTopic }
+    },
     onSuccess: (data) => {
-      resetSession()
+      setHandoffOpen(false)
       setOutlineViewOpen(false)
       void queryClient.invalidateQueries({ queryKey: ['projects'] })
-      navigate(`/projects/${data.project_id}`)
+      void queryClient.invalidateQueries({ queryKey: ['usage'] })
+
+      if (data.mode === 'all') {
+        resetSession()
+        showToast(`已创建 ${data.projectIds.length} 个项目`)
+        navigate('/')
+        return
+      }
+
+      const handedOff = data.focus
+      setSession((prev) => {
+        const nextSlate = handedOff
+          ? removeTopicFromList(prev.selectedTopics, handedOff)
+          : prev.selectedTopics
+        const nextFocus = nextSlate[0] ?? null
+        return {
+          ...prev,
+          selectedTopics: nextSlate,
+          selectedTopic: nextFocus,
+          messages: [],
+          understanding: null,
+          outline: null,
+          outlineMessages: [],
+        }
+      })
+      navigate(`/projects/${data.projectId}`)
     },
     onError: (err: unknown) => {
       setActionError(err instanceof Error ? err.message : '创建项目失败')
@@ -223,17 +300,38 @@ export function PlaygroundPage() {
     }
     if (topicChanged && !(await confirmClearOutline('切换选题'))) return
 
-    setSession((prev) => ({
-      ...prev,
-      selectedTopic: topic,
-      messages: topicChanged ? [] : prev.messages,
-      understanding: topicChanged ? null : prev.understanding,
-      outline: topicChanged ? null : prev.outline,
-      outlineMessages: topicChanged ? [] : prev.outlineMessages,
-    }))
+    setSession((prev) => {
+      const selectedTopics = topicInList(prev.selectedTopics, topic)
+        ? prev.selectedTopics
+        : [...prev.selectedTopics, topic]
+      return {
+        ...prev,
+        selectedTopic: topic,
+        selectedTopics,
+        messages: topicChanged ? [] : prev.messages,
+        understanding: topicChanged ? null : prev.understanding,
+        outline: topicChanged ? null : prev.outline,
+        outlineMessages: topicChanged ? [] : prev.outlineMessages,
+      }
+    })
     if (topicChanged) {
       setOutlineViewOpen(false)
     }
+  }
+
+  function toggleSlateTopic(topic: PlaygroundTopic) {
+    setSession((prev) => {
+      const next = toggleTopicInList(prev.selectedTopics, topic)
+      // Keep focus topic in the slate when it is the active refine/outline target.
+      if (
+        prev.selectedTopic &&
+        samePlaygroundTopic(prev.selectedTopic, topic) &&
+        !topicInList(next, topic)
+      ) {
+        return prev
+      }
+      return { ...prev, selectedTopics: next }
+    })
   }
 
   async function handleRegenerateTopics() {
@@ -310,7 +408,9 @@ export function PlaygroundPage() {
                 <PlaygroundTopicCards
                   topics={session.topics}
                   selected={session.selectedTopic}
+                  selectedTopics={session.selectedTopics}
                   onSelect={(topic) => void selectTopic(topic)}
+                  onToggleSlate={toggleSlateTopic}
                 />
                 <PlaygroundTopicCardsActions
                   onRegenerate={() => void handleRegenerateTopics()}
@@ -381,6 +481,14 @@ export function PlaygroundPage() {
           understanding={session.understanding}
           outline={session.outline}
           pipelines={pipelines}
+          selectedCount={
+            session.selectedTopics.length > 0 ? session.selectedTopics.length : 1
+          }
+          remainingCompletedQuota={
+            usage
+              ? Math.max(0, usage.completed_projects_limit - usage.completed_projects)
+              : null
+          }
           onClose={() => setHandoffOpen(false)}
           onConfirm={(payload) => handoffMut.mutate(payload)}
           loading={handoffMut.isPending}
