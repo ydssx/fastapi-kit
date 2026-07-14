@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ideation: Creator 工作台创意与灵感</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #1a1a20;
+      --border: #2a2a32;
+      --text: #e8e6e3;
+      --muted: #9a9690;
+      --accent: #f2b84b;
+      --success: #4ade80;
+      --danger: #f87171;
+      --font: "DM Sans", system-ui, sans-serif;
+      --font-display: "Instrument Serif", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 400;
+      margin: 0 0 0.75rem;
+      color: var(--accent);
+    }
+    .meta { color: var(--muted); font-size: 0.9rem; }
+    .meta span { margin-right: 1.25rem; }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 400;
+      margin: 2.5rem 0 1rem;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin: 0 0 0.5rem;
+      color: var(--accent);
+    }
+    section { margin-bottom: 2rem; }
+    .grounding, .axes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+    .grounding ul, .axes ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .grounding li, .axes li { margin-bottom: 0.35rem; }
+    .jump-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .jump-list ol { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .jump-list a { color: var(--accent); text-decoration: none; }
+    .jump-list a:hover { text-decoration: underline; }
+    .idea-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .idea-card .rank {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .field { margin: 0.6rem 0; }
+    .field-label {
+      display: inline-block;
+      min-width: 6.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+    .badge-conf-high { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+    .badge-conf-med { background: rgba(242, 184, 75, 0.15); color: var(--accent); }
+    .badge-cx-low { background: rgba(154, 150, 144, 0.2); color: var(--muted); }
+    .badge-cx-med { background: rgba(242, 184, 75, 0.1); color: var(--accent); }
+    .badge-cx-high { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+    .diagram {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      border: 1px dashed var(--border);
+    }
+    .diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+    }
+    th { background: var(--surface); color: var(--muted); font-weight: 600; }
+    footer.composition-signal {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ideation: Creator 工作台如何获取创意与灵感</h1>
+      <div class="meta">
+        <span><strong>Date:</strong> 2026-06-25</span>
+        <span><strong>Topic:</strong> creator-inspiration</span>
+        <span><strong>Focus:</strong> creator工作台如何获取创意和灵感</span>
+        <span><strong>Mode:</strong> repo-grounded</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Grounding Context</h2>
+      <div class="grounding">
+        <p><strong>Codebase Context</strong> — FastAPI + React creator 工作台（<code>/creator/</code>），流水线向导 + 品牌档案 + 步骤级 AI 建议（<code>AiSuggestionPanel</code>、<code>ContextChips</code>）。当前 AI 仅绑定「当前步骤」、返回单一建议；第 3 步起空编辑器自动拉建议。已有 artifact 版本化、<code>open_step</code> 回开 remix、pipeline 模板定义、admin creator-metrics。</p>
+        <ul>
+          <li><strong>痛点：</strong>空白页焦虑、上下文在 ChatGPT/表格间断裂；无灵感画廊/模板市场；单方案生成限制探索。</li>
+          <li><strong>杠杆：</strong><code>STEP_AI_ADJUSTMENTS</code> 已有「再给 3 个角度」；品牌+上文已注入 prompt；原型资产与 metrics 可驱动发现。</li>
+          <li><strong>外部：</strong>Jasper Canvas、Canva Magic Switch、Copy.ai 工作流、DAW 采样库、Figma 社区、厨师 mise en place、Writer Semrush 趋势侧栏。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Topic Axes</h2>
+      <div class="axes">
+        <ul>
+          <li>冷启动与空白页灵感</li>
+          <li>AI 建议与多方案生成</li>
+          <li>品牌与上下文驱动灵感</li>
+          <li>发现与复用</li>
+          <li>探索性工作流</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Ranked Ideas</h2>
+      <nav class="jump-list" aria-label="Ideas jump list">
+        <strong>Jump to idea</strong>
+        <ol>
+          <li><a href="#idea-1">并排多方案面板（N-Choice Panel）</a></li>
+          <li><a href="#idea-2">选题 Playground（脱离步骤的 ideate 模式）</a></li>
+          <li><a href="#idea-3">灵感采样库（Inspiration Sample Rack）</a></li>
+          <li><a href="#idea-4">Mise en Place 准备台</a></li>
+          <li><a href="#idea-5">灵感画廊 + 一键 Remix</a></li>
+          <li><a href="#idea-6">可 Fork 的流水线/提示词模板库</a></li>
+          <li><a href="#idea-7">趋势-to-Brief 侧边栏</a></li>
+        </ol>
+      </nav>
+
+      <article class="idea-card" id="idea-1">
+        <div class="rank">#1</div>
+        <h3>并排多方案面板（N-Choice Panel）</h3>
+        <p class="field"><span class="field-label">Description</span>将 <code>ai-suggest</code> 从返回单一 <code>suggestion</code> 扩展为 3 个并排卡片（不同角度/语气），用户可对比、采纳其一或合并。UI 复用现有 <code>AiSuggestionPanel</code> 的 adopt/insert/regenerate 模式，后端一次 LLM 调用要求 JSON 数组或并行 3 次低温/高温采样。</p>
+        <p class="field"><span class="field-label">Axis</span>AI 建议与多方案生成</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> <code>creator/src/constants.ts</code> 中 topic/hook 步已有 chip「再给 3 个角度」；<code>app/services/creator_ai.py</code> 仅返回单条 <code>suggestion</code>；前端「换一版」是串行而非并排对比。</p>
+        <p class="field"><span class="field-label">Rationale</span>产品已承认用户需要多角度，但 UX 仍是一次只看一版——并排是「获取灵感」最低成本、最高感知价值的改动，直接消减「换一版直到满意」的配额消耗与挫败感。</p>
+        <p class="field"><span class="field-label">Downsides</span>配额计次需定义（1 次调用 vs 3 次）；移动端三栏需折叠为 swipe；prompt 需约束多样性避免三版雷同。</p>
+        <p class="field"><span class="field-label">Confidence</span>92% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+        <div class="diagram" aria-label="N-choice panel sketch">
+          <svg viewBox="0 0 520 120" width="520" height="120" role="img">
+            <text x="10" y="18" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">Before: 单条建议</text>
+            <rect x="10" y="28" width="150" height="70" rx="6" fill="#1a1a20" stroke="#2a2a32"/>
+            <text x="85" y="68" fill="#e8e6e3" font-size="12" text-anchor="middle" font-family="DM Sans,sans-serif">1 版</text>
+            <text x="270" y="68" fill="#f2b84b" font-size="20" text-anchor="middle">→</text>
+            <text x="310" y="18" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">After: 并排 3 选</text>
+            <rect x="310" y="28" width="60" height="70" rx="6" fill="#1a1a20" stroke="#f2b84b"/>
+            <rect x="378" y="28" width="60" height="70" rx="6" fill="#1a1a20" stroke="#f2b84b"/>
+            <rect x="446" y="28" width="60" height="70" rx="6" fill="#1a1a20" stroke="#f2b84b"/>
+            <text x="340" y="68" fill="#e8e6e3" font-size="10" text-anchor="middle">A</text>
+            <text x="408" y="68" fill="#e8e6e3" font-size="10" text-anchor="middle">B</text>
+            <text x="476" y="68" fill="#e8e6e3" font-size="10" text-anchor="middle">C</text>
+          </svg>
+        </div>
+      </article>
+
+      <article class="idea-card" id="idea-2">
+        <div class="rank">#2</div>
+        <h3>选题 Playground（脱离步骤的 ideate 模式）</h3>
+        <p class="field"><span class="field-label">Description</span>新增独立入口「灵感实验室」：不绑定 <code>current_step_key</code>，用户输入模糊方向或粘贴参考链接，系统基于品牌档案返回 5–10 条选题/钩子/角度清单，选中后再「落地为项目」。API：<code>POST /api/v1/creator/ai/ideate</code>，与步骤内 <code>ai-suggest</code> 分离。</p>
+        <p class="field"><span class="field-label">Axis</span>探索性工作流</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> <code>creator_ai.py</code> 校验 <code>step_key == project.current_step_key</code>；brainstorm 文档指出「上下文断裂、在各工具间复制粘贴」是核心痛点；当前只能在流水线内逐步获取建议。</p>
+        <p class="field"><span class="field-label">Rationale</span>灵感获取发生在「决定做什么」之前，而现有产品把 AI 锁在「正在做哪一步」——Playground 对齐用户真实心智：先发散，再进入流水线。</p>
+        <p class="field"><span class="field-label">Downsides</span>与流水线状态可能脱节，需「从 Playground 创建项目」的明确 handoff；额外配额品类。</p>
+        <p class="field"><span class="field-label">Confidence</span>88% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-3">
+        <div class="rank">#3</div>
+        <h3>灵感采样库（Inspiration Sample Rack）</h3>
+        <p class="field"><span class="field-label">Description</span>按「语气 × 平台 × 内容类型」预置可拖拽的灵感片段（钩子句式、标题公式、结构骨架）——像 DAW 采样库，用户拖入编辑器或作为 adjustment 发送给 AI。首版可用静态 JSON + 品牌过滤，无需 LLM。</p>
+        <p class="field"><span class="field-label">Axis</span>冷启动与空白页灵感</p>
+        <p class="field"><span class="field-label">Basis</span><code>external:</code> 音乐 DAW sample library 模式（按情感/节奏组织）；<code>direct:</code> 原型设计文档明确「减少空白页焦虑」为方案 C 动机；现有空态仅有「新建流水线」引导，无内容级 spark。</p>
+        <p class="field"><span class="field-label">Rationale</span>不是所有灵感都需要生成——结构化片段让用户「先动手再优化」，比等待 AI 生成更快打破空白页，且不消耗配额。</p>
+        <p class="field"><span class="field-label">Downsides</span>内容库维护成本；需与品牌 taboo 过滤；国际化/行业垂直需扩展库。</p>
+        <p class="field"><span class="field-label">Confidence</span>85% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+        <div class="diagram" aria-label="Sample rack analogy">
+          <svg viewBox="0 0 480 100" width="480" height="100" role="img">
+            <text x="10" y="20" fill="#9a9690" font-size="11" font-family="DM Sans,sans-serif">Sample Rack → Editor</text>
+            <rect x="10" y="30" width="70" height="24" rx="4" fill="#2a2a32"/><text x="45" y="46" fill="#f2b84b" font-size="9" text-anchor="middle">钩子</text>
+            <rect x="90" y="30" width="70" height="24" rx="4" fill="#2a2a32"/><text x="125" y="46" fill="#f2b84b" font-size="9" text-anchor="middle">标题</text>
+            <rect x="170" y="30" width="70" height="24" rx="4" fill="#2a2a32"/><text x="205" y="46" fill="#f2b84b" font-size="9" text-anchor="middle">结构</text>
+            <path d="M260 42 L300 42" stroke="#4ade80" stroke-width="2" marker-end="url(#arr)"/>
+            <rect x="310" y="28" width="160" height="60" rx="6" fill="#1a1a20" stroke="#2a2a32"/>
+            <text x="390" y="62" fill="#e8e6e3" font-size="11" text-anchor="middle" font-family="DM Sans,sans-serif">步骤编辑器</text>
+            <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#4ade80"/></marker></defs>
+          </svg>
+        </div>
+      </article>
+
+      <article class="idea-card" id="idea-4">
+        <div class="rank">#4</div>
+        <h3>Mise en Place 准备台（动笔前的备料页）</h3>
+        <p class="field"><span class="field-label">Description</span>在进入第 3 步（脚本/正文）前，插入轻量「备料」屏：自动汇总品牌档案摘要、可选竞品 URL（提取要点）、3 条平台热点 chip——全部进入 <code>ContextChips</code> 与后续 prompt。用户确认「备料完成」再进入 auto-suggest 流程。</p>
+        <p class="field"><span class="field-label">Axis</span>品牌与上下文驱动灵感</p>
+        <p class="field"><span class="field-label">Basis</span><code>external:</code> 厨师 mise en place（动笔前备好料）；<code>direct:</code> <code>shouldAutoSuggest</code> 从 step index ≥ 2 触发，但此前两步用户可能未建立足够上下文；<code>ContextChips</code> 仅展示品牌三字段+上步摘要，无外部信号。</p>
+        <p class="field"><span class="field-label">Rationale</span>灵感质量高度依赖输入上下文——在 auto-suggest 触发点之前系统化「备料」，比事后用 adjustment chip 补丁式补救更根本。</p>
+        <p class="field"><span class="field-label">Downsides</span>多一步 friction；URL 抓取需新依赖与合规；热点源需选型（手动输入 vs API）。</p>
+        <p class="field"><span class="field-label">Confidence</span>80% <span class="badge badge-conf-med">Med-High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-5">
+        <div class="rank">#5</div>
+        <h3>灵感画廊 + 一键 Remix</h3>
+        <p class="field"><span class="field-label">Description</span>在项目列表旁增加「灵感画廊」：展示 <code>docs/prototypes/v2/</code> 截图语义、高完成率 pipeline 示例（来自 creator-metrics）、用户自己的已完成项目摘要。点击「Remix」→ 新建项目并预填首步草稿（复用 <code>open_step</code> / artifact 复制逻辑）。</p>
+        <p class="field"><span class="field-label">Axis</span>发现与复用</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> <code>creator/docs/prototypes/</code> 已有 v1/v2 视觉资产；<code>open_step</code> + artifact 版本链已在测试中验证 remix 路径；<code>external:</code> Canva Magic Switch 一键重混模式。</p>
+        <p class="field"><span class="field-label">Rationale</span>「看别人怎么做」是最古老的灵感来源——仓库里已有原型与版本化产物，只差发现层 UI。</p>
+        <p class="field"><span class="field-label">Downsides</span>隐私：默认仅展示用户自己的完成项目 + 官方 curated；metrics 聚合需脱敏；画廊内容运营。</p>
+        <p class="field"><span class="field-label">Confidence</span>84% <span class="badge badge-conf-high">High</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-med">Medium</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-6">
+        <div class="rank">#6</div>
+        <h3>可 Fork 的流水线 / 提示词模板库</h3>
+        <p class="field"><span class="field-label">Description</span>将 <code>app/creator/pipelines.py</code> 中的流水线定义 + <code>app/creator/prompts/</code> 模板暴露为可浏览、可 Fork 的「社区模板」——用户 Fork 后创建项目，prompt 模板带变量占位符（受众、话题）。高完成率模板由 metrics 加权排序。</p>
+        <p class="field"><span class="field-label">Axis</span>发现与复用</p>
+        <p class="field"><span class="field-label">Basis</span><code>direct:</code> pipeline 以代码常量存在，已是模板形态；admin <code>GET /api/v1/admin/creator-metrics/summary</code> 可识别高频 pipeline；<code>external:</code> Musebox / Figma Community 的 Fork 模式。</p>
+        <p class="field"><span class="field-label">Rationale</span>降低「从哪开始」的决策成本——模板是结构化的灵感，比纯 AI 生成更可预测、更可复用。</p>
+        <p class="field"><span class="field-label">Downsides</span>社区治理、模板质量审核；从代码常量到用户可见库需数据模型；UGC 模板远期工作量大。</p>
+        <p class="field"><span class="field-label">Confidence</span>76% <span class="badge badge-conf-med">Med</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-high">High</span></p>
+      </article>
+
+      <article class="idea-card" id="idea-7">
+        <div class="rank">#7</div>
+        <h3>趋势-to-Brief 侧边栏（Trend Chips）</h3>
+        <p class="field"><span class="field-label">Description</span>在 <code>StepWorkspace</code> 右侧或 <code>ContextChips</code> 行扩展「今日热点」chip（按目标平台过滤），点击将趋势词注入 adjustment 或 Playground prompt。首版可手动 curated + 定期更新，后续接 Semrush/平台 API。</p>
+        <p class="field"><span class="field-label">Axis</span>冷启动与空白页灵感</p>
+        <p class="field"><span class="field-label">Basis</span><code>external:</code> Writer.com Semrush 连接器将 SEO 趋势直接变为 Brief；<code>direct:</code> <code>ContextChips</code> 当前仅品牌+上步，无外部市场信号入口。</p>
+        <p class="field"><span class="field-label">Rationale</span>创作者常见阻塞是「不知道写什么」——趋势 chip 把外部 demand signal 变成可点击的灵感起点。</p>
+        <p class="field"><span class="field-label">Downsides</span>趋势 API 成本与准确性；可能与品牌 taboo 冲突；需明确非实时时的 stale 提示。</p>
+        <p class="field"><span class="field-label">Confidence</span>70% <span class="badge badge-conf-med">Med</span></p>
+        <p class="field"><span class="field-label">Complexity</span><span class="badge badge-cx-high">High</span></p>
+      </article>
+    </section>
+
+    <section>
+      <h2>Rejection Summary</h2>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Idea</th><th>Reason Rejected</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>全步骤 AI 预填草稿（方案 C 完整版）</td><td>原型设计已否决：前几步预生成价值低，易跳过品牌校准</td></tr>
+          <tr><td>2</td><td>随机灵感按钮（纯随机）</td><td>过于 vague，无结构化 basis；不如采样库或趋势 chip 可验证</td></tr>
+          <tr><td>3</td><td>协作灵感墙 / 团队 moodboard</td><td>scope overrun：当前 C 端单用户隔离，无协作基础设施</td></tr>
+          <tr><td>4</td><td>零配额 sandbox 预览</td><td>interesting 但属配额/商业化 brainstorm，非灵感机制本身</td></tr>
+          <tr><td>5</td><td>Agentic 全自动调研流</td><td>below ambition floor for v1：复杂度高，Playground + Mise en Place 已覆盖渐进路径</td></tr>
+          <tr><td>6</td><td>视频转文字跨媒介灵感</td><td>duplicate weaker：Typeface 模式好但本 repo 无视频 ingest；远期</td></tr>
+          <tr><td>7</td><td>游戏化每日灵感 streak</td><td>not grounded in codebase pain；增长手段非灵感获取核心</td></tr>
+          <tr><td>8</td><td>Notion/Google Docs 零 ETL 连接器</td><td>too expensive relative to value for validation phase</td></tr>
+          <tr><td>9</td><td>双档 fast/creative 温度切换</td><td>duplicates N-Choice Panel 的多方案价值，增量小</td></tr>
+          <tr><td>10</td><td>历史版本 diff 灵感</td><td>better handled as brainstorm variant on remix/gallery</td></tr>
+          <tr><td>11</td><td>Pinterest 式独立 moodboard 页</td><td>overlap with Mise en Place + 采样库；分散入口</td></tr>
+          <tr><td>12</td><td>采纳率 ML 推荐引擎</td><td>需 metrics 数据量；可作为 gallery 排序 v2，非独立 v1</td></tr>
+          <tr><td>13</td><td>固定 dockable 灵感面板</td><td>duplicates AiSuggestionPanel 位置；增量 UX  polish 非 step-function</td></tr>
+          <tr><td>14</td><td>URL-to-Blog 单功能 Copy.ai 克隆</td><td>已吸收进 Playground + Mise en Place 的 URL 备料</td></tr>
+          <tr><td>15</td><td>分支草稿可视化树</td><td>open_step 已支持行为；可视化树属 polish，complexity 高</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="composition-signal">Composed 2026-06-25 by ce-ideate · focus: creator工作台如何获取创意和灵感 · raw candidates: 38 · survivors: 7</footer>
+  </div>
+</body>
+</html>

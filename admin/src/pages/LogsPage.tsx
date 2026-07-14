@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { fetchLogs } from '../api/logs'
-import { CopyJsonButton } from '../components/CopyJsonButton'
 import { CopyTextButton } from '../components/CopyTextButton'
 import { DataTable, TABLE_SCROLL_MAX_HEIGHT, type Column } from '../components/DataTable'
-import { DetailMeta } from '../components/DetailMeta'
-import { JsonPreview } from '../components/JsonPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
-import { Modal } from '../components/Modal'
+import { LogDetailModal } from '../components/LogDetailModal'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import { StatusBadge } from '../components/StatusBadge'
@@ -19,6 +16,7 @@ import {
   defaultTodayRangeLocal,
   isoToDateTimeLocal,
 } from '../lib/datetime'
+import { logLevelVariant } from '../lib/logDisplay'
 import { buildLogsSearchParams } from '../lib/traceLinks'
 import shared from '../styles/shared.module.css'
 import styles from './LogsPage.module.css'
@@ -75,37 +73,19 @@ function parseLogsFiltersFromSearchParams(searchParams: URLSearchParams): {
   }
 }
 
-function logLevelVariant(level: string | null): 'ok' | 'warn' | 'error' | 'neutral' {
-  const normalized = (level ?? '').toLowerCase()
-  if (normalized === 'error' || normalized === 'critical' || normalized === 'fatal') {
-    return 'error'
-  }
-  if (normalized === 'warn' || normalized === 'warning') {
-    return 'warn'
-  }
-  if (normalized === 'info' || normalized === 'debug') {
-    return 'ok'
-  }
-  return 'neutral'
-}
-
 function RequestIdCell({ requestId }: { requestId: string | null }) {
   if (!requestId) return '—'
   return (
     <span className={styles.requestIdCell}>
       <span className={styles.code}>{requestId}</span>
-      <CopyTextButton value={requestId} label="复制 Request ID" />
+      <CopyTextButton value={requestId} label="复制 Request ID" compact />
     </span>
   )
 }
 
 export function LogsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialParse = useRef<ReturnType<typeof parseLogsFiltersFromSearchParams> | null>(null)
-  if (initialParse.current === null) {
-    initialParse.current = parseLogsFiltersFromSearchParams(searchParams)
-  }
-  const initial = initialParse.current
+  const [initial] = useState(() => parseLogsFiltersFromSearchParams(searchParams))
 
   const [page, setPage] = useState(1)
   const [requestId, setRequestId] = useState(initial.draft.requestId)
@@ -214,7 +194,6 @@ export function LogsPage() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="应用日志"
         description="只读查询；每 30 秒自动刷新；需启用 ops profile 启动 Loki 与 Promtail"
         actions={
           <button
@@ -231,8 +210,8 @@ export function LogsPage() {
       {lokiUnavailable && (
         <p className={shared.notice}>
           日志聚合未配置或不可用。请执行：
-          <code className={styles.code}> docker compose --profile ops up -d loki promtail </code>
-          并在 API 环境变量中设置 <code className={styles.code}>LOKI_URL=http://loki:3100</code>。
+          <code className={shared.codeInline}> docker compose --profile ops up -d loki promtail </code>
+          并在 API 环境变量中设置 <code className={shared.codeInline}>LOKI_URL=http://loki:3100</code>。
         </p>
       )}
 
@@ -329,54 +308,20 @@ export function LogsPage() {
         </>
       ) : null}
 
-      {selected && (
-        <Modal
-          title="日志详情"
-          titleId="log-detail-title"
-          wide
+      {selected ? (
+        <LogDetailModal
+          entry={selected}
           onClose={() => setSelected(null)}
-          headerActions={<CopyJsonButton key={selected.timestamp} value={selected.raw} />}
-        >
-          <DetailMeta
-            items={[
-              {
-                label: '时间',
-                value: new Date(selected.timestamp).toLocaleString('zh-CN'),
-              },
-              {
-                label: '级别',
-                value: selected.level ? (
-                  <StatusBadge
-                    status={selected.level.toUpperCase()}
-                    variant={logLevelVariant(selected.level)}
-                  />
-                ) : (
-                  '—'
-                ),
-              },
-              {
-                label: 'Request ID',
-                value: selected.request_id ? (
-                  <span className={styles.requestIdCell}>
-                    <span className={styles.code}>{selected.request_id}</span>
-                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
-                  </span>
-                ) : (
-                  '—'
-                ),
-              },
-              { label: '消息', value: selected.message ?? '—' },
-            ]}
-          />
-          <p className={shared.detailSectionLabel}>详情</p>
-          <JsonPreview value={selected.raw} />
-          <div className={shared.modalActions}>
-            <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
-              关闭
-            </button>
-          </div>
-        </Modal>
-      )}
+          onFilterByRequestId={(requestId) => {
+            setSelected(null)
+            setRequestId(requestId)
+            applyFilters({
+              ...filters,
+              request_id: requestId,
+            })
+          }}
+        />
+      ) : null}
     </div>
   )
 }

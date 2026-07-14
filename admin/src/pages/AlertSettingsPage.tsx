@@ -99,7 +99,7 @@ export function AlertSettingsPage() {
   if (isLoading) {
     return (
       <div className={shared.page}>
-        <PageHeader title="告警设置" />
+        <PageHeader />
         <LoadingBlock />
       </div>
     )
@@ -107,17 +107,14 @@ export function AlertSettingsPage() {
 
   return (
     <div className={shared.page}>
-      <PageHeader
-        title="告警设置"
-        description="配置 Webhook 后，Beat 或依赖异常时将推送 JSON 告警（通用格式，可对接 Slack/钉钉）"
-      />
+      <PageHeader description="配置 Webhook 后，Beat 或依赖异常时将推送 JSON 告警（通用格式，可对接 Slack/钉钉）" />
 
       {!settings?.webhook_enabled && (
         <p className={shared.notice}>当前未启用告警：填写 Webhook URL 并保存后即可测试发送。</p>
       )}
 
       <form
-        className={styles.form}
+        className={`${shared.panel} ${styles.form}`}
         onSubmit={(e) => {
           e.preventDefault()
           saveMutation.mutate()

@@ -20,7 +20,7 @@ def get_engine(settings: Settings | None = None) -> AsyncEngine:
         _engine = create_async_engine(
             settings.database_url_str,
             pool_pre_ping=True,
-            echo=settings.environment == "dev",
+            echo=settings.log_level.upper() == "DEBUG",
         )
     return _engine
 

@@ -7,6 +7,7 @@ import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import { StatusBadge } from '../components/StatusBadge'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import type { UserPublic } from '../types/api'
 import shared from '../styles/shared.module.css'
 import styles from './UsersPage.module.css'
@@ -16,6 +17,7 @@ export function UsersPage() {
   const [email, setEmail] = useState('')
   const [search, setSearch] = useState('')
   const queryClient = useQueryClient()
+  const { confirm, dialog } = useConfirmDialog()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['users', page, search],
@@ -55,13 +57,20 @@ export function UsersPage() {
           <select
             className={styles.select}
             value={u.role}
-            onChange={(e) => {
+            onChange={async (e) => {
               const next = e.target.value
-              const warn =
-                next === 'user'
-                  ? `将 ${u.email} 降为普通用户？若其为最后一名管理员将被拒绝。`
-                  : `将 ${u.email} 设为管理员？`
-              if (confirm(warn)) {
+              const demoting = next === 'user'
+              const message = demoting
+                ? `将 ${u.email} 降为普通用户？若其为最后一名管理员将被拒绝。`
+                : `将 ${u.email} 设为管理员？`
+              if (
+                await confirm({
+                  title: demoting ? '降级用户' : '设为管理员',
+                  message,
+                  confirmLabel: demoting ? '降级' : '设为管理员',
+                  variant: demoting ? 'danger' : 'default',
+                })
+              ) {
                 mutation.mutate({ id: u.id, payload: { role: next } })
               }
             }}
@@ -79,10 +88,17 @@ export function UsersPage() {
             <input
               type="checkbox"
               checked={u.is_active}
-              onChange={() => {
+              onChange={async () => {
                 const next = !u.is_active
                 const action = next ? '启用' : '禁用'
-                if (confirm(`${action}用户 ${u.email}？禁用最后一名管理员将被拒绝。`)) {
+                if (
+                  await confirm({
+                    title: `${action}用户`,
+                    message: `${action}用户 ${u.email}？禁用最后一名管理员将被拒绝。`,
+                    confirmLabel: action,
+                    variant: next ? 'default' : 'danger',
+                  })
+                ) {
                   mutation.mutate({ id: u.id, payload: { is_active: next } })
                 }
               }}
@@ -98,7 +114,7 @@ export function UsersPage() {
         render: (u) => new Date(u.created_at).toLocaleString('zh-CN'),
       },
     ],
-    [mutation],
+    [confirm, mutation],
   )
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
@@ -106,7 +122,7 @@ export function UsersPage() {
 
   return (
     <div className={shared.page}>
-      <PageHeader title="用户管理" description="手动刷新；点击邮箱查看详情与审计记录" />
+      <PageHeader description="手动刷新；点击邮箱查看详情与审计记录" />
 
       <form
         className={shared.toolbar}
@@ -153,6 +169,8 @@ export function UsersPage() {
           />
         </>
       )}
+
+      {dialog}
     </div>
   )
 }

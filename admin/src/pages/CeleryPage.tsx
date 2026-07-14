@@ -37,7 +37,7 @@ export function CeleryPage() {
   if (isLoading) {
     return (
       <div className={shared.page}>
-        <PageHeader title="Celery 监控" description="每 15 秒自动刷新" />
+        <PageHeader description="每 15 秒自动刷新" />
         <LoadingBlock />
       </div>
     )
@@ -46,7 +46,7 @@ export function CeleryPage() {
   if (error) {
     return (
       <div className={shared.page}>
-        <PageHeader title="Celery 监控" />
+        <PageHeader />
         <p className={shared.errorText}>加载失败：{(error as Error).message}</p>
       </div>
     )
@@ -57,8 +57,7 @@ export function CeleryPage() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Celery 监控"
-        description="Worker、Beat 调度与队列任务"
+        description="Worker、Beat 调度与队列任务 · 每 15 秒自动刷新"
         actions={
           <>
             <StatusBadge status={data.status} />
@@ -79,6 +78,25 @@ export function CeleryPage() {
         }
       />
       {data.message && <p className={shared.notice}>{data.message}</p>}
+
+      <div className={styles.summary}>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryLabel}>Workers 在线</span>
+          <span className={styles.summaryValue}>{data.workers.length}</span>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryLabel}>活跃任务</span>
+          <span className={styles.summaryValue}>{data.active_tasks.length}</span>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryLabel}>预定任务</span>
+          <span className={styles.summaryValue}>{data.scheduled_tasks.length}</span>
+        </div>
+        <div className={styles.summaryItem}>
+          <span className={styles.summaryLabel}>Beat 条目</span>
+          <span className={styles.summaryValue}>{data.beat_schedule?.length ?? 0}</span>
+        </div>
+      </div>
 
       <section className={shared.section}>
         <h3 className={shared.sectionTitle}>Beat 调度</h3>

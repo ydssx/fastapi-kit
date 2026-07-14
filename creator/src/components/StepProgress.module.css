@@ -1,0 +1,147 @@
+.track {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-sm) 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  position: relative;
+}
+
+.step {
+  flex: 1;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  position: relative;
+  opacity: 0.45;
+  transition: opacity 0.25s ease;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: calc(50% + 16px);
+  right: calc(-50% + 16px);
+  height: 2px;
+  background: var(--border-subtle);
+  z-index: 0;
+  transition: background 0.25s ease;
+}
+
+.step.done:not(:last-child)::after {
+  background: color-mix(in srgb, var(--success) 50%, var(--border-subtle));
+}
+
+.step.done,
+.step.active {
+  opacity: 1;
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.step.done .dot {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, var(--bg-elevated));
+  color: var(--success);
+}
+
+.step.active .dot {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+  color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.label {
+  font-size: 0.68rem;
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.25;
+  max-width: 72px;
+}
+
+.step.active .label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.step.done .label {
+  color: color-mix(in srgb, var(--success) 70%, var(--text-muted));
+}
+
+.clickable {
+  opacity: 1;
+}
+
+.stepButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+
+.stepButton:hover:not(:disabled) .dot {
+  border-color: var(--accent);
+}
+
+.stepButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .step {
+    min-width: 60px;
+  }
+
+  .label {
+    font-size: 0.62rem;
+    max-width: 60px;
+  }
+
+  .dot {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dot svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .step:not(:last-child)::after {
+    top: 16px;
+    left: calc(50% + 14px);
+    right: calc(-50% + 14px);
+  }
+}

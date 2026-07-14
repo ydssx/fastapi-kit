@@ -1,0 +1,106 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-md);
+}
+
+.modal h2 {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.select,
+.textarea {
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.preview {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+  background: var(--bg-elevated);
+}
+
+.preview pre {
+  margin: var(--space-sm) 0 0;
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modeFieldset {
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.modeLegend {
+  padding: 0 var(--space-xs);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modeOption {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  margin-top: var(--space-sm);
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modeOption input {
+  margin-top: 3px;
+}
+
+.quotaWarn {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--danger, #c44) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger, #c44) 8%, var(--surface));
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.quotaWarn input {
+  margin-top: 3px;
+}

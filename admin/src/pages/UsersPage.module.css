@@ -1,9 +1,15 @@
 .select {
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
   background: var(--surface);
+}
+
+.select:focus {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft);
+  outline: none;
 }
 
 .toggle {
@@ -14,15 +20,9 @@
 }
 
 .toggle input {
-  accent-color: var(--accent);
+  accent-color: var(--signal);
 }
 
 .emailLink {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.emailLink:hover {
-  text-decoration: underline;
+  composes: link from '../styles/shared.module.css';
 }

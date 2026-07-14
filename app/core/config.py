@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:8000",
         "https://localhost",
     ]
@@ -62,6 +63,51 @@ class Settings(BaseSettings):
     loki_url: str | None = None
     loki_query_timeout_seconds: float = 15.0
     loki_max_lines: int = 500
+
+    llm_api_key: str | None = None
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = 60.0
+    # When True, structured Creator AI calls send response_format=json_object.
+    llm_json_output: bool = True
+
+    object_storage_endpoint: str | None = None
+    # Browser-facing base URL for presigned previews. Defaults to endpoint when unset.
+    # In Docker Compose the API talks to http://minio:9000 internally, but browsers need
+    # http://localhost:9000 (or another published host).
+    object_storage_public_endpoint: str | None = None
+    object_storage_region: str = "us-east-1"
+    object_storage_bucket: str = "creator-media"
+    object_storage_access_key: str | None = None
+    object_storage_secret_key: str | None = None
+    object_storage_presign_ttl_seconds: int = Field(default=900, ge=1, le=604800)
+    creator_media_max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
+    creator_media_max_width: int = Field(default=8192, ge=1)
+    creator_media_max_height: int = Field(default=8192, ge=1)
+    image_generation_api_key: str | None = None
+    image_generation_base_url: str = "https://api.openai.com/v1"
+    image_generation_model: str = "gpt-image-2"
+    image_generation_timeout_seconds: float = Field(default=90.0, gt=0)
+    image_generation_max_prompt_chars: int = Field(default=4000, ge=1)
+
+    creator_free_completed_projects_per_month: int = 2
+    creator_free_ai_calls_per_month: int = 50
+    creator_free_playground_calls_per_month: int = 30
+    creator_pro_multiplier: int = 10
+
+    app_public_url: str = "https://localhost"
+    password_reset_expire_minutes: int = 60
+    password_reset_rate_limit_per_hour: int = 5
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+    smtp_use_tls: bool = True
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.smtp_host and self.smtp_from)
 
     @field_validator("cors_origins", mode="before")
     @classmethod
