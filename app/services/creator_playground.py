@@ -78,7 +78,7 @@ class CreatorPlaygroundService:
         )
         system, user_prompt = build_topics_prompt(brand, seed)
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             seed_text = seed.strip() if seed else ""
             if seed_text:
                 topics = parse_topics_json(raw, min_count=3, max_count=3)
@@ -132,7 +132,7 @@ class CreatorPlaygroundService:
         )
         system, user_prompt = build_outline_generate_prompt(brand, selected_topic)
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             outline = await self._parse_outline_llm(raw)
         except AppException:
             raise
@@ -154,7 +154,7 @@ class CreatorPlaygroundService:
             brand, payload.selected_topic, payload.outline, payload.messages
         )
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             outline = await self._parse_outline_llm(raw)
         except AppException:
             raise

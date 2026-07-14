@@ -67,7 +67,7 @@ class CreatorAiService:
                 primary_platform_key=project.primary_platform_key,
                 adjustment=adjustment,
             )
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             variants = parse_variants_json(raw)
         else:
             system, user_prompt = build_step_prompt(

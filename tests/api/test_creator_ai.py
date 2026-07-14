@@ -25,7 +25,7 @@ async def test_ai_suggest_success(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return "AI 生成的钩子"
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -58,7 +58,7 @@ async def test_ai_suggest_multi_variant_topic(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return VARIANTS_JSON
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -85,7 +85,7 @@ async def test_ai_suggest_script_single_variant(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return "完整口播脚本"
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -117,7 +117,7 @@ async def test_ai_context_uses_latest_artifact_after_reconfirm(
     test_settings.llm_api_key = "test-key"
     captured: list[str] = []
 
-    async def fake_complete(_self, _system: str, user_prompt: str) -> str:
+    async def fake_complete(_self, _system: str, user_prompt: str, **_kwargs: object) -> str:
         captured.append(user_prompt)
         return "AI 钩子"
 
@@ -162,7 +162,7 @@ async def test_ai_suggest_with_adjustment(
     test_settings.llm_api_key = "test-key"
     captured: list[str] = []
 
-    async def fake_complete(_self, _system: str, user_prompt: str) -> str:
+    async def fake_complete(_self, _system: str, user_prompt: str, **_kwargs: object) -> str:
         captured.append(user_prompt)
         return "更口语的脚本"
 
@@ -195,7 +195,7 @@ async def test_ai_prompt_includes_xhs_rules_when_primary_xiaohongshu(
     test_settings.llm_api_key = "test-key"
     captured: list[str] = []
 
-    async def fake_complete(_self, _system: str, user_prompt: str) -> str:
+    async def fake_complete(_self, _system: str, user_prompt: str, **_kwargs: object) -> str:
         captured.append(user_prompt)
         return "小红书脚本"
 
@@ -236,7 +236,7 @@ async def test_ai_prompt_excludes_xhs_when_primary_wechat(
     test_settings.llm_api_key = "test-key"
     captured: list[str] = []
 
-    async def fake_complete(_self, _system: str, user_prompt: str) -> str:
+    async def fake_complete(_self, _system: str, user_prompt: str, **_kwargs: object) -> str:
         captured.append(user_prompt)
         return "公众号正文"
 

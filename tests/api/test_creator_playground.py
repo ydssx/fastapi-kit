@@ -34,7 +34,7 @@ async def test_playground_topics_success(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return TOPICS_JSON
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -70,7 +70,7 @@ async def test_playground_topics_with_seed(
     test_settings.llm_api_key = "test-key"
     captured: list[str] = []
 
-    async def fake_complete(_self, _system: str, user: str) -> str:
+    async def fake_complete(_self, _system: str, user: str, **_kwargs: object) -> str:
         captured.append(user)
         return SEED_TOPICS_JSON
 
@@ -97,7 +97,7 @@ async def test_playground_refine(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return "可以把角度收窄到职场新人。【理解】面向职场新人的通勤穿搭"
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -162,7 +162,7 @@ async def test_playground_quota_exhausted(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return TOPICS_JSON
 
     def fake_limits(_self, _user):
@@ -203,7 +203,7 @@ async def test_playground_outline_generate_success(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return OUTLINE_JSON
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -234,7 +234,7 @@ async def test_playground_outline_generate_malformed(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return "not json"
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
@@ -258,7 +258,7 @@ async def test_playground_outline_refine(
     test_settings.llm_api_key = "test-key"
     current_outline = json.loads(OUTLINE_JSON)
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         refined = {**current_outline, "central_claim": "更聚焦职场新人胶囊衣橱"}
         return json.dumps(refined, ensure_ascii=False)
 
@@ -396,7 +396,7 @@ async def test_playground_outline_quota_exhausted(
 ) -> None:
     test_settings.llm_api_key = "test-key"
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return OUTLINE_JSON
 
     def fake_limits(_self, _user):
