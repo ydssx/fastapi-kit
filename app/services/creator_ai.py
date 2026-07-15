@@ -13,21 +13,30 @@ from app.creator.prompts.multi_variant import (
     uses_multi_variant,
 )
 from app.models.user import User
-from app.repositories.creator_project import CreatorProjectRepository
 from app.schemas.creator import AiSuggestOut, AiVariantOut
 from app.services.creator_brand import CreatorBrandService
 from app.services.creator_project import CreatorProjectService
+from app.services.creator_step import CreatorStepService
 from app.services.creator_usage import CreatorUsageService
 
 
 class CreatorAiService:
-    def __init__(self, session: AsyncSession, settings: Settings | None = None) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        *,
+        settings: Settings | None = None,
+        projects: CreatorProjectService | None = None,
+        steps: CreatorStepService | None = None,
+        brand: CreatorBrandService | None = None,
+        usage: CreatorUsageService | None = None,
+    ) -> None:
         self.session = session
         self.settings = settings or get_settings()
-        self.projects = CreatorProjectRepository(session)
-        self.project_service = CreatorProjectService(session)
-        self.brand_service = CreatorBrandService(session)
-        self.usage = CreatorUsageService(session, self.settings)
+        self.projects = projects or CreatorProjectService(session)
+        self.steps = steps or CreatorStepService(session, projects=self.projects)
+        self.brand_service = brand or CreatorBrandService(session)
+        self.usage = usage or CreatorUsageService(session, self.settings)
         self.llm = LlmClient(self.settings)
 
     async def suggest(
@@ -37,8 +46,8 @@ class CreatorAiService:
         step_key: str,
         adjustment: str | None = None,
     ) -> AiSuggestOut:
-        project = await self.project_service._get_owned(user, project_id)
-        self.project_service._ensure_editable(project)
+        project = await self.projects.get_owned(user, project_id)
+        self.projects.ensure_editable(project)
         if project.current_step_key != step_key:
             raise AppException(
                 "AI suggest is only available for the current step",
@@ -52,7 +61,7 @@ class CreatorAiService:
 
         await self.usage.check_ai_quota(user)
         brand = await self.brand_service.get_profile(user.id)
-        context = await self.project_service.gather_confirmed_context(project)
+        context = await self.steps.gather_confirmed_context(project)
 
         if uses_multi_variant(step_key):
             system, user_prompt = build_multi_variant_prompt(

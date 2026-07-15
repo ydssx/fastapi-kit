@@ -6,7 +6,6 @@ from fastapi import APIRouter, Query
 from starlette.responses import StreamingResponse
 
 from app.api.deps import AdminUser, DbSession, SettingsDep
-from app.repositories.audit_log import AuditLogRepository
 from app.schemas.admin import AuditLogPublic
 from app.schemas.common import ApiResponse
 from app.schemas.pagination import PaginatedResponse
@@ -19,6 +18,7 @@ router = APIRouter()
 async def list_audit_logs(
     _admin: AdminUser,
     db: DbSession,
+    settings: SettingsDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     action: str | None = None,
@@ -27,7 +27,7 @@ async def list_audit_logs(
     since: datetime | None = None,
     until: datetime | None = None,
 ) -> ApiResponse[PaginatedResponse[AuditLogPublic]]:
-    items, total = await AuditLogRepository(db).list_paginated(
+    items, total = await AdminAuditService(db, settings).list_paginated(
         page=page,
         page_size=page_size,
         action=action,

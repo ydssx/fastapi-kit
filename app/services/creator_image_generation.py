@@ -81,6 +81,7 @@ class CreatorImageGenerationService:
             status="processing",
         )
         created = await self.repository.create(asset)
+        # Commit before Celery so the worker can load the processing row.
         await self.session.commit()
         self.schedule_generation(created.id)
         return created
@@ -109,6 +110,7 @@ class CreatorImageGenerationService:
             asset.height = image.height
             asset.sha256 = hashlib.sha256(image.content).hexdigest()
             asset.status = "ready"
+            # Worker owns its session; commit success state before exit.
             await self.session.commit()
         except Exception:
             logger.exception("creator_image_generation_failed", asset_id=str(asset_id))
@@ -116,6 +118,7 @@ class CreatorImageGenerationService:
             metadata = dict(asset.generation_metadata or {})
             metadata["error"] = "generation_failed"
             asset.generation_metadata = metadata
+            # Persist failure even when generation/upload blew up.
             await self.session.commit()
 
     async def _load_asset(self, asset_id: uuid.UUID) -> CreatorMediaAsset | None:

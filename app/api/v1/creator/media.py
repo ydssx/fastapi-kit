@@ -3,8 +3,8 @@ from collections.abc import AsyncIterable
 
 from fastapi import APIRouter, File, Form, Query, UploadFile
 
-from app.api.deps import CurrentUser, DbSession
-from app.models.creator import CreatorMediaAsset, ProjectMediaAsset
+from app.api.deps import CurrentUser
+from app.api.v1.creator.deps import CreatorImageGenerationSvc, CreatorMediaSvc
 from app.schemas.common import ApiResponse
 from app.schemas.creator import (
     CreatorImageGenerationIn,
@@ -17,29 +17,8 @@ from app.schemas.creator import (
     CreatorMediaPreviewOut,
     CreatorProjectMediaAssociationOut,
 )
-from app.services.creator_image_generation import CreatorImageGenerationService
-from app.services.creator_media import CreatorMediaService
 
 router = APIRouter()
-
-
-def _asset_out(asset: CreatorMediaAsset) -> CreatorMediaAssetOut:
-    data = CreatorMediaAssetOut.model_validate(asset, from_attributes=True)
-    if asset.deleted_at is not None:
-        return data.model_copy(update={"status": "deleted"})
-    return data
-
-
-def _association_out(association: ProjectMediaAsset) -> CreatorMediaAssociationOut:
-    return CreatorMediaAssociationOut(
-        id=association.id,
-        project_id=association.project_id,
-        media_asset_id=association.media_asset_id,
-        step_key=association.step_key,
-        reference_position=association.reference_position,
-        asset_reference=f"asset://{association.media_asset_id}",
-        created_at=association.created_at,
-    )
 
 
 async def _upload_chunks(file: UploadFile) -> AsyncIterable[bytes]:
@@ -50,12 +29,12 @@ async def _upload_chunks(file: UploadFile) -> AsyncIterable[bytes]:
 @router.post("/media/upload", response_model=ApiResponse[CreatorMediaAssetOut], status_code=201)
 async def upload_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     file: UploadFile = File(...),
     category: str = Form(..., min_length=1, max_length=50),
     tags: list[str] = Form(default=[]),
 ) -> ApiResponse[CreatorMediaAssetOut]:
-    asset = await CreatorMediaService(db).upload(
+    asset = await media.upload(
         user_id=user.id,
         content=_upload_chunks(file),
         filename=file.filename or "upload",
@@ -63,36 +42,37 @@ async def upload_media(
         category=category,
         tags=tags,
     )
-    return ApiResponse(data=_asset_out(asset))
+    return ApiResponse(data=media.to_asset_out(asset))
 
 
 @router.post("/media/import", response_model=ApiResponse[CreatorMediaAssetOut], status_code=201)
 async def import_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     payload: CreatorMediaImportIn,
 ) -> ApiResponse[CreatorMediaAssetOut]:
-    asset = await CreatorMediaService(db).import_url(user_id=user.id, **payload.model_dump())
-    return ApiResponse(data=_asset_out(asset))
+    asset = await media.import_url(user_id=user.id, **payload.model_dump())
+    return ApiResponse(data=media.to_asset_out(asset))
 
 
 @router.post("/media/generate", response_model=ApiResponse[CreatorMediaAssetOut], status_code=202)
 async def generate_media(
     user: CurrentUser,
-    db: DbSession,
+    images: CreatorImageGenerationSvc,
+    media: CreatorMediaSvc,
     payload: CreatorImageGenerationIn,
 ) -> ApiResponse[CreatorMediaAssetOut]:
-    asset = await CreatorImageGenerationService(db).request_generation(
+    asset = await images.request_generation(
         user_id=user.id,
         **payload.model_dump(),
     )
-    return ApiResponse(data=_asset_out(asset))
+    return ApiResponse(data=media.to_asset_out(asset))
 
 
 @router.get("/media", response_model=ApiResponse[CreatorMediaAssetListOut])
 async def list_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     category: str | None = Query(default=None, max_length=50),
     tags: list[str] | None = Query(default=None),
     keyword: str | None = Query(default=None, max_length=500),
@@ -100,7 +80,7 @@ async def list_media(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[CreatorMediaAssetListOut]:
-    assets, total = await CreatorMediaService(db).list_assets(
+    assets, total = await media.list_assets(
         user_id=user.id,
         category=category,
         tags=tags,
@@ -111,7 +91,7 @@ async def list_media(
     )
     return ApiResponse(
         data=CreatorMediaAssetListOut(
-            items=[_asset_out(asset) for asset in assets],
+            items=[media.to_asset_out(asset) for asset in assets],
             total=total,
             page=page,
             page_size=page_size,
@@ -125,20 +105,16 @@ async def list_media(
 )
 async def list_project_media_associations(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     project_id: uuid.UUID,
 ) -> ApiResponse[list[CreatorProjectMediaAssociationOut]]:
-    associations = await CreatorMediaService(db).list_project_associations(
+    associations = await media.list_project_associations(
         user_id=user.id,
         project_id=project_id,
     )
     return ApiResponse(
         data=[
-            CreatorProjectMediaAssociationOut(
-                **_association_out(association).model_dump(),
-                asset=_asset_out(asset),
-                is_invalid=asset.deleted_at is not None or asset.status != "ready",
-            )
+            media.to_project_association_out(association, asset)
             for association, asset in associations
         ]
     )
@@ -147,40 +123,44 @@ async def list_project_media_associations(
 @router.get("/media/{asset_id}", response_model=ApiResponse[CreatorMediaAssetOut])
 async def get_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     asset_id: uuid.UUID,
 ) -> ApiResponse[CreatorMediaAssetOut]:
-    asset = await CreatorMediaService(db).get(user_id=user.id, asset_id=asset_id)
-    return ApiResponse(data=_asset_out(asset))
+    asset = await media.get(user_id=user.id, asset_id=asset_id)
+    return ApiResponse(data=media.to_asset_out(asset))
 
 
 @router.patch("/media/{asset_id}", response_model=ApiResponse[CreatorMediaAssetOut])
 async def update_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     asset_id: uuid.UUID,
     payload: CreatorMediaAssetUpdate,
 ) -> ApiResponse[CreatorMediaAssetOut]:
-    asset = await CreatorMediaService(db).update_metadata(
+    asset = await media.update_metadata(
         user_id=user.id,
         asset_id=asset_id,
         **payload.model_dump(),
     )
-    return ApiResponse(data=_asset_out(asset))
+    return ApiResponse(data=media.to_asset_out(asset))
 
 
 @router.delete("/media/{asset_id}", status_code=204)
-async def delete_media(user: CurrentUser, db: DbSession, asset_id: uuid.UUID) -> None:
-    await CreatorMediaService(db).delete(user_id=user.id, asset_id=asset_id)
+async def delete_media(
+    user: CurrentUser,
+    media: CreatorMediaSvc,
+    asset_id: uuid.UUID,
+) -> None:
+    await media.delete(user_id=user.id, asset_id=asset_id)
 
 
 @router.get("/media/{asset_id}/preview", response_model=ApiResponse[CreatorMediaPreviewOut])
 async def preview_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     asset_id: uuid.UUID,
 ) -> ApiResponse[CreatorMediaPreviewOut]:
-    url = await CreatorMediaService(db).preview_url(user_id=user.id, asset_id=asset_id)
+    url = await media.preview_url(user_id=user.id, asset_id=asset_id)
     return ApiResponse(data=CreatorMediaPreviewOut(url=url))
 
 
@@ -191,26 +171,26 @@ async def preview_media(
 )
 async def associate_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     asset_id: uuid.UUID,
     payload: CreatorMediaAssociationCreate,
 ) -> ApiResponse[CreatorMediaAssociationOut]:
-    association = await CreatorMediaService(db).associate(
+    association = await media.associate(
         user_id=user.id,
         asset_id=asset_id,
         **payload.model_dump(),
     )
-    return ApiResponse(data=_association_out(association))
+    return ApiResponse(data=media.to_association_out(association))
 
 
 @router.delete("/media/{asset_id}/associations/{association_id}", status_code=204)
 async def disassociate_media(
     user: CurrentUser,
-    db: DbSession,
+    media: CreatorMediaSvc,
     asset_id: uuid.UUID,
     association_id: uuid.UUID,
 ) -> None:
-    await CreatorMediaService(db).disassociate(
+    await media.disassociate(
         user_id=user.id,
         asset_id=asset_id,
         association_id=association_id,

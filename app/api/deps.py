@@ -23,13 +23,9 @@ async def get_redis() -> Redis:
     return get_redis_client()
 
 
-async def get_settings_dep() -> Settings:
-    return get_settings()
-
-
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
-SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
 async def get_current_user(
