@@ -64,22 +64,21 @@ async def test_rate_limit_uses_forwarded_for_when_trust_proxy(
     client: AsyncClient,
     test_settings: Settings,
 ) -> None:
-    test_settings.rate_limit_per_minute = 2
+    test_settings.rate_limit_per_minute = 1
     test_settings.trust_proxy_headers = True
     await get_redis_client().flushdb()
 
-    for _ in range(2):
-        first = await client.get(
-            "/api/v1/auth/me",
-            headers={"X-Forwarded-For": "198.51.100.1"},
-        )
-        assert first.status_code == 401
+    first_ip = await client.get(
+        "/api/v1/auth/me",
+        headers={"X-Forwarded-For": "198.51.100.1"},
+    )
+    assert first_ip.status_code == 401
 
-    second = await client.get(
+    second_ip = await client.get(
         "/api/v1/auth/me",
         headers={"X-Forwarded-For": "198.51.100.2"},
     )
-    assert second.status_code == 401
+    assert second_ip.status_code == 401
 
     blocked_first_ip = await client.get(
         "/api/v1/auth/me",

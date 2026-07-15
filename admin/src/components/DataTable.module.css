@@ -1,6 +1,6 @@
 .wrap {
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -19,26 +19,21 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.86rem;
+  font-size: 0.9rem;
 }
 
 .table th {
   text-align: left;
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1rem;
   font-weight: 600;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
   background: var(--surface-muted);
-  white-space: nowrap;
 }
 
 .table td {
-  padding: 0.68rem 1rem;
-  border-bottom: 1px solid var(--border-subtle);
-  vertical-align: top;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .table tbody tr {
@@ -55,7 +50,7 @@
 
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
 .empty {

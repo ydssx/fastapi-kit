@@ -1,49 +1,10 @@
-.summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0.65rem;
-}
-
-.summaryItem {
-  position: relative;
-  padding: 0.85rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  overflow: hidden;
-}
-
-.summaryItem::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--signal-bright), transparent 70%);
-  opacity: 0.65;
-}
-
-.summaryLabel {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.summaryValue {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--accent-stat);
-}
-
 .flowerLink {
-  composes: link from '../styles/shared.module.css';
-  font-size: 0.88rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.flowerLink:hover {
+  text-decoration: underline;
 }

@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
+  gap: 1.5rem;
   animation: pageIn 0.35s ease both;
 }
 
@@ -11,91 +11,19 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-subtle);
-  position: relative;
-}
-
-.pageHeader::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: min(8rem, 40%);
-  height: 2px;
-  background: linear-gradient(90deg, var(--signal-bright), transparent);
-  border-radius: 1px;
 }
 
 .pageTitle {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.02em;
 }
 
 .pageDesc {
-  margin: 0.3rem 0 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-.pageHeaderSlim .pageDesc {
-  margin-top: 0;
+  margin: 0.25rem 0 0;
   font-size: 0.9rem;
-}
-
-.panel {
-  position: relative;
-  padding: 1.15rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--signal-bright), transparent 65%);
-  opacity: 0.75;
-}
-
-.link {
-  color: var(--signal-deep);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.loadingPanel {
-  composes: panel;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1.25rem;
   color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.codeInline {
-  font-family: var(--font-mono);
-  font-size: 0.82em;
-  padding: 0.12em 0.4em;
-  background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  color: var(--signal-deep);
 }
 
 .toolbar {
@@ -103,34 +31,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-}
-
-.headerActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .input {
-  min-height: 2.35rem;
-  padding: 0.55rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
@@ -139,19 +43,16 @@
 }
 
 .input:focus {
-  border-color: var(--signal);
-  box-shadow: 0 0 0 3px var(--signal-soft);
-  outline: none;
+  border-color: var(--accent);
 }
 
 .btn {
-  min-height: 2.35rem;
   padding: 0.5rem 1rem;
   border-radius: var(--radius);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .btn:disabled {
@@ -162,13 +63,12 @@
 .btnPrimary {
   composes: btn;
   border: none;
-  background: var(--signal);
+  background: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-signal);
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: var(--signal-deep);
+  background: var(--accent-hover);
 }
 
 .btnSecondary {
@@ -180,7 +80,6 @@
 
 .btnSecondary:hover:not(:disabled) {
   background: var(--surface-hover);
-  border-color: var(--signal);
 }
 
 .btnDanger {
@@ -211,27 +110,23 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  font-family: var(--font-display);
-  font-size: 0.82rem;
+  gap: 0.5rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .sectionTitle::before {
   content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 1px;
-  background: var(--signal-bright);
-  box-shadow: 0 0 6px var(--signal-glow);
+  width: 3px;
+  height: 1.05em;
+  border-radius: 2px;
+  background: var(--accent);
   flex-shrink: 0;
 }
 
 .select {
-  padding: 0.55rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font: inherit;
@@ -240,16 +135,14 @@
 }
 
 .select:focus {
-  border-color: var(--signal);
-  box-shadow: 0 0 0 3px var(--signal-soft);
-  outline: none;
+  border-color: var(--accent);
 }
 
 .btnLink {
   padding: 0;
   border: none;
   background: none;
-  color: var(--signal-deep);
+  color: var(--accent);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -261,10 +154,8 @@
 
 .detailSectionLabel {
   margin: 0.25rem 0 0;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
@@ -272,18 +163,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .filterField input,
 .filterField select {
   font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
 }
 
 .notice {
@@ -291,9 +178,8 @@
   padding: 0.75rem 1rem;
   background: var(--warn-bg);
   border: 1px solid var(--warn-border);
-  border-left: 3px solid #d97706;
   border-radius: var(--radius);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .loading {
@@ -308,7 +194,7 @@
   width: 1rem;
   height: 1rem;
   border: 2px solid var(--border);
-  border-top-color: var(--signal);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -320,13 +206,12 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   padding-top: 0.25rem;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
 .paginationTotal {
   font-weight: 500;
-  font-family: var(--font-mono);
 }
 
 .paginationControls {
@@ -347,7 +232,6 @@
 
 .pagination button:hover:not(:disabled) {
   background: var(--surface-hover);
-  border-color: var(--signal);
 }
 
 .pagination button:disabled {
@@ -367,9 +251,11 @@
 @keyframes pageIn {
   from {
     opacity: 0;
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 

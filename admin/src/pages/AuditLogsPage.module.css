@@ -1,5 +1,10 @@
 .requestIdCell {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
 }

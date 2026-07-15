@@ -196,26 +196,6 @@ async def test_admin_reset_password_and_login(client: AsyncClient, db_engine) ->
 
 
 @pytest.mark.asyncio
-async def test_admin_cannot_reset_own_password(client: AsyncClient, db_engine) -> None:
-    admin_email = "self-reset@example.com"
-    admin_token = await _register(client, admin_email)
-    await _make_admin(db_engine, admin_email)
-
-    me = await client.get(
-        "/api/v1/auth/me",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    admin_id = me.json()["data"]["id"]
-
-    response = await client.post(
-        f"/api/v1/admin/users/{admin_id}/reset-password",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == 400
-    assert response.json()["code"] == 40006
-
-
-@pytest.mark.asyncio
 async def test_admin_get_user_not_found(client: AsyncClient, db_engine) -> None:
     admin_email = "lookup-admin@example.com"
     admin_token = await _register(client, admin_email)

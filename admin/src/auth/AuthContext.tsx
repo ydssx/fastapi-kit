@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { fetchMe, login as apiLogin, register as apiRegister } from '../api/auth'
+import { fetchMe, login as apiLogin } from '../api/auth'
 import { clearStoredTokens, getStoredTokens } from '../api/client'
 import type { UserPublic } from '../types/api'
 
@@ -15,7 +15,6 @@ interface AuthContextValue {
   user: UserPublic | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
   logout: () => void
 }
 
@@ -26,13 +25,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const loadUser = useCallback(async () => {
-    if (!getStoredTokens()) {
+    const tokens = getStoredTokens()
+    if (!tokens) {
       setUser(null)
       setLoading(false)
       return
     }
     try {
-      setUser(await fetchMe())
+      const me = await fetchMe()
+      if (me.role !== 'admin') {
+        clearStoredTokens()
+        setUser(null)
+      } else {
+        setUser(me)
+      }
     } catch {
       clearStoredTokens()
       setUser(null)
@@ -47,11 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const result = await apiLogin(email, password)
-    setUser(result.user)
-  }, [])
-
-  const register = useCallback(async (email: string, password: string) => {
-    const result = await apiRegister(email, password)
+    if (result.user.role !== 'admin') {
+      clearStoredTokens()
+      throw new Error('需要管理员账号才能登录后台')
+    }
     setUser(result.user)
   }, [])
 
@@ -61,8 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, login, logout }),
+    [user, loading, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

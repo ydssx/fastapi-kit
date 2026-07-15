@@ -148,13 +148,6 @@ class AdminUserService:
         if not user:
             raise AppException("User not found", code=40401, status_code=404)
 
-        if user.id == actor.id:
-            raise AppException(
-                "Cannot reset your own password",
-                code=40006,
-                status_code=400,
-            )
-
         temporary_password = secrets.token_urlsafe(12)
         await self.users.update_fields(
             user,

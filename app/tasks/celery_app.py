@@ -27,12 +27,12 @@ def _beat_schedule(settings: Settings) -> dict[str, dict[str, object]]:
     }
 
 
-@worker_process_init.connect  # type: ignore[untyped-decorator]
+@worker_process_init.connect
 def configure_worker_logging(**_kwargs: object) -> None:
     setup_logging(get_settings())
 
 
-@beat_init.connect  # type: ignore[untyped-decorator]
+@beat_init.connect
 def configure_beat_logging(**_kwargs: object) -> None:
     setup_logging(get_settings())
 
@@ -43,7 +43,7 @@ celery_app = Celery(
     "fastapi_kit",
     broker=str(settings.redis_url),
     backend=str(settings.redis_url),
-    include=["app.tasks.example", "app.tasks.scheduled", "app.tasks.creator_media"],
+    include=["app.tasks.example", "app.tasks.scheduled"],
 )
 
 celery_app.conf.update(

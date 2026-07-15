@@ -9,7 +9,6 @@ import { DetailMeta } from '../components/DetailMeta'
 import { JsonPreview } from '../components/JsonPreview'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { Modal } from '../components/Modal'
-import { ModalFooter } from '../components/ModalFooter'
 import { PageHeader } from '../components/PageHeader'
 import { PaginationBar } from '../components/PaginationBar'
 import type { AuditLog } from '../types/api'
@@ -110,6 +109,7 @@ export function AuditLogsPage() {
   return (
     <div className={shared.page}>
       <PageHeader
+        title="审计日志"
         description="手动刷新；筛选后导出 CSV，单次最多 5000 行"
         actions={
           <button
@@ -228,7 +228,7 @@ export function AuditLogsPage() {
                 value: selected.request_id ? (
                   <span className={styles.requestIdCell}>
                     <span className={styles.mono}>{selected.request_id}</span>
-                    <CopyTextButton value={selected.request_id} label="复制 Request ID" compact />
+                    <CopyTextButton value={selected.request_id} label="复制 Request ID" />
                   </span>
                 ) : (
                   '—'
@@ -239,7 +239,7 @@ export function AuditLogsPage() {
           />
           <p className={shared.detailSectionLabel}>详情</p>
           <JsonPreview value={selected} />
-          <ModalFooter>
+          <div className={shared.modalActions}>
             {selected.request_id && (
               <Link
                 to={buildLogsPathFromAudit(selected.created_at, selected.request_id)}
@@ -251,7 +251,7 @@ export function AuditLogsPage() {
             <button type="button" className={shared.btnSecondary} onClick={() => setSelected(null)}>
               关闭
             </button>
-          </ModalFooter>
+          </div>
         </Modal>
       )}
     </div>

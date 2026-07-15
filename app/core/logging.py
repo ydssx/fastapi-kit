@@ -16,13 +16,9 @@ _THIRD_PARTY_LOGGERS = (
     "celery.worker",
     "celery.beat",
     "alembic",
+    "sqlalchemy.engine",
     "httpx",
     "httpcore",
-)
-
-_DATABASE_LOGGERS = (
-    "sqlalchemy.engine",
-    "sqlalchemy.pool",
 )
 
 # Access logging is handled by RequestIDMiddleware (request_completed).
@@ -56,16 +52,6 @@ def _close_logger_handlers(logger: logging.Logger) -> None:
     for handler in logger.handlers[:]:
         handler.close()
         logger.removeHandler(handler)
-
-
-def _configure_database_loggers(app_level: int) -> None:
-    """SQLAlchemy emits queries at INFO; only surface them when app log level is DEBUG."""
-    db_level = logging.DEBUG if app_level <= logging.DEBUG else logging.WARNING
-    for name in _DATABASE_LOGGERS:
-        lib_logger = logging.getLogger(name)
-        _close_logger_handlers(lib_logger)
-        lib_logger.propagate = True
-        lib_logger.setLevel(db_level)
 
 
 def _configure_third_party_loggers(level: int) -> None:
@@ -134,7 +120,6 @@ def setup_logging(settings: Settings | None = None, *, log_level: str | None = N
     )
 
     _configure_third_party_loggers(level)
-    _configure_database_loggers(level)
 
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:

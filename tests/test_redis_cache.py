@@ -1,12 +1,6 @@
 import pytest
 
-from app.cache.redis import (
-    cache_get,
-    cache_set,
-    close_redis_pool,
-    get_redis_client,
-    init_redis_pool,
-)
+from app.cache.redis import cache_get, cache_set, close_redis_pool, get_redis_client, init_redis_pool
 from app.core.config import Settings
 
 

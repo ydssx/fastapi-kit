@@ -12,9 +12,7 @@ from app.services.auth import AuthService
 
 
 @pytest.mark.asyncio
-async def test_login_rejects_inactive_user(
-    db_session: AsyncSession, test_settings: Settings
-) -> None:
+async def test_login_rejects_inactive_user(db_session: AsyncSession, test_settings: Settings) -> None:
     service = AuthService(db_session, test_settings)
     email = "inactive@example.com"
     password = "securepass123"
@@ -33,9 +31,7 @@ async def test_login_rejects_inactive_user(
 
 
 @pytest.mark.asyncio
-async def test_refresh_rejects_access_token(
-    db_session: AsyncSession, test_settings: Settings
-) -> None:
+async def test_refresh_rejects_access_token(db_session: AsyncSession, test_settings: Settings) -> None:
     service = AuthService(db_session, test_settings)
     user_id = uuid.uuid4()
     access_token = create_access_token(user_id, test_settings)

@@ -11,7 +11,6 @@ htmlcov/
 .coverage
 dist/
 admin/node_modules/
-creator/node_modules/
 build/
 *.egg-info/
 .cursor/

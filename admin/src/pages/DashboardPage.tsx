@@ -1,44 +1,36 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchDashboard } from '../api/dashboard'
-import { DonutChart } from '../components/charts/DonutChart'
-import donutStyles from '../components/charts/DonutChart.module.css'
-import { HealthRail } from '../components/charts/HealthRail'
-import { MetricBarChart } from '../components/charts/MetricBarChart'
-import { Sparkline } from '../components/charts/Sparkline'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
-import { pickTopMetrics } from '../lib/dashboardCharts'
-import { buildSparklineDeltaSeries } from '../lib/dashboardSparkline'
 import shared from '../styles/shared.module.css'
 import styles from './DashboardPage.module.css'
 
-const METRIC_HISTORY_LIMIT = 12
+type IconTone = 'success' | 'accent'
+
+function StatIcon({ tone, children }: { tone: IconTone; children: ReactNode }) {
+  return (
+    <span
+      className={`${styles.statIcon} ${tone === 'success' ? styles.statIconSuccess : styles.statIconAccent}`}
+      aria-hidden
+    >
+      {children}
+    </span>
+  )
+}
 
 export function DashboardPage() {
-  const metricHistoryRef = useRef<Record<string, number>[]>([])
-  const [metricHistory, setMetricHistory] = useState<Record<string, number>[]>([])
-
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
     refetchInterval: 30_000,
   })
 
-  useEffect(() => {
-    if (!data?.metrics_summary) return
-    const last = metricHistoryRef.current.at(-1)
-    if (last && JSON.stringify(last) === JSON.stringify(data.metrics_summary)) return
-    const next = [...metricHistoryRef.current, data.metrics_summary].slice(-METRIC_HISTORY_LIMIT)
-    metricHistoryRef.current = next
-    setMetricHistory(next)
-  }, [data?.metrics_summary])
-
   if (isLoading) {
     return (
       <div className={shared.page}>
-        <PageHeader description="服务健康、用户与指标摘要" />
+        <PageHeader title="系统概览" description="服务健康、用户与指标摘要" />
         <LoadingBlock />
       </div>
     )
@@ -47,7 +39,7 @@ export function DashboardPage() {
   if (error) {
     return (
       <div className={shared.page}>
-        <PageHeader />
+        <PageHeader title="系统概览" />
         <p className={shared.errorText} role="alert">
           加载失败：{(error as Error).message}
         </p>
@@ -57,130 +49,168 @@ export function DashboardPage() {
 
   if (!data) return null
 
+  const metrics = Object.entries(data.metrics_summary).slice(0, 8)
   const sys = data.system
-  const activeCount = Math.min(data.active_user_count, data.user_count)
-  const inactiveCount = Math.max(data.user_count - activeCount, 0)
-  const userTotal = activeCount + inactiveCount
-  const activeRate = userTotal > 0 ? Math.round((activeCount / userTotal) * 100) : 0
-  const topMetrics = pickTopMetrics(data.metrics_summary)
-  const sparkline = buildSparklineDeltaSeries(data.metrics_summary, metricHistory)
   const replicaLabel =
     sys.api_replicas_reported != null ? String(sys.api_replicas_reported) : '—'
 
-  const healthNodes = [
-    { id: 'db', label: 'PostgreSQL', status: data.service_status.database },
-    { id: 'redis', label: 'Redis', status: data.service_status.redis },
-    {
-      id: 'migration',
-      label: '数据库迁移',
-      status: sys.migration_at_head ? 'ok' : 'degraded',
-      hint:
-        sys.migration_revision && sys.migration_head_revision
-          ? `${sys.migration_revision} / ${sys.migration_head_revision}`
-          : null,
-    },
-    {
-      id: 'beat',
-      label: 'Celery Beat',
-      status: sys.beat_status,
-      hint: sys.beat_last_seen
-        ? new Date(sys.beat_last_seen).toLocaleString('zh-CN')
-        : null,
-    },
-  ]
-
   return (
     <div className={shared.page}>
-      <PageHeader description="每 30 秒自动刷新 · 图表基于当前快照" />
+      <PageHeader title="系统概览" description="每 30 秒自动刷新" />
       {sys.ready_message && <p className={shared.notice}>{sys.ready_message}</p>}
 
       <section className={shared.section}>
-        <h3 className={shared.sectionTitle}>系统脉搏</h3>
-        <HealthRail nodes={healthNodes} overallStatus={sys.ready_status} />
-      </section>
-
-      <section className={shared.section}>
-        <h3 className={shared.sectionTitle}>用户构成</h3>
-        <div className={styles.userChartRow}>
-          <DonutChart
-            segments={[
-              { label: '活跃', value: activeCount, color: 'var(--signal)' },
-              { label: '停用', value: inactiveCount, color: '#94a3b8' },
-            ]}
-            centerLabel="用户总数"
-            centerValue={String(userTotal)}
-          />
-          <div className={styles.userChartAside}>
-            <ul className={donutStyles.legend}>
-              <li className={donutStyles.legendItem}>
-                <span className={donutStyles.legendSwatch} style={{ background: 'var(--signal)' }} />
-                <span className={donutStyles.legendLabel}>活跃用户</span>
-                <span className={donutStyles.legendValue}>{activeCount}</span>
-              </li>
-              <li className={donutStyles.legendItem}>
-                <span className={donutStyles.legendSwatch} style={{ background: '#94a3b8' }} />
-                <span className={donutStyles.legendLabel}>停用用户</span>
-                <span className={donutStyles.legendValue}>{inactiveCount}</span>
-              </li>
-            </ul>
-            <p className={styles.rateLine}>
-              活跃率 <strong>{activeRate}%</strong>
-            </p>
-          </div>
+        <h3 className={shared.sectionTitle}>运行健康</h3>
+        <div className={styles.grid}>
+          <StatCard label="就绪状态" delay={0} iconTone="success" icon={<CheckCircleIcon />}>
+            <StatusBadge status={sys.ready_status} />
+          </StatCard>
+          <StatCard label="数据库" delay={40} iconTone="success" icon={<DatabaseIcon />}>
+            <StatusBadge status={data.service_status.database} />
+          </StatCard>
+          <StatCard label="Redis" delay={80} iconTone="success" icon={<LayersIcon />}>
+            <StatusBadge status={data.service_status.redis} />
+          </StatCard>
+          <StatCard label="数据库迁移" delay={120} iconTone="success" icon={<DatabaseIcon />}>
+            <StatusBadge status={sys.migration_at_head ? 'ok' : 'degraded'} />
+            <span className={styles.statHint}>
+              {sys.migration_revision ?? '—'} / {sys.migration_head_revision ?? '—'}
+            </span>
+          </StatCard>
+          <StatCard label="Celery Beat" delay={160} iconTone="success" icon={<ClockIcon />}>
+            <StatusBadge status={sys.beat_status} />
+            {sys.beat_last_seen && (
+              <span className={styles.statHint}>
+                {new Date(sys.beat_last_seen).toLocaleString('zh-CN')}
+              </span>
+            )}
+          </StatCard>
+          <StatCard label="API 副本" delay={200} iconTone="accent" icon={<ServerIcon />}>
+            <span className={styles.statValue}>{replicaLabel}</span>
+            {sys.api_replicas_note && (
+              <span className={styles.statHint}>{sys.api_replicas_note}</span>
+            )}
+          </StatCard>
         </div>
       </section>
 
-      {(topMetrics.length > 0 || sparkline) && (
+      <section className={shared.section}>
+        <h3 className={shared.sectionTitle}>用户</h3>
+        <div className={styles.gridNarrow}>
+          <StatCard label="用户总数" delay={0} iconTone="accent" icon={<UsersIcon />} largeValue>
+            <span className={styles.statValue}>{data.user_count}</span>
+          </StatCard>
+          <StatCard label="活跃用户" delay={60} iconTone="accent" icon={<UserIcon />} largeValue>
+            <span className={styles.statValue}>{data.active_user_count}</span>
+          </StatCard>
+        </div>
+      </section>
+
+      {metrics.length > 0 && (
         <section className={shared.section}>
           <h3 className={shared.sectionTitle}>Prometheus 指标</h3>
-          <p className={styles.metricsHint}>
-            折线为近几次刷新的 counter 增量（每 30 秒）；柱状图为当前累计值 Top 8，不可跨指标直接对比。
-          </p>
-          <div className={styles.metricsLayout}>
-            {sparkline && (
-              <Sparkline
-                label={sparkline.label}
-                points={sparkline.points}
-                current={sparkline.current}
-              />
-            )}
-            <div className={`${shared.panel} ${styles.metricsPanel}`}>
-              <p className={styles.metricsPanelTitle}>累计值 Top 8</p>
-              <MetricBarChart items={topMetrics} />
-            </div>
-          </div>
+          <ul className={styles.metricList}>
+            {metrics.map(([name, value]) => (
+              <li key={name}>
+                <span className={styles.metricName}>{name}</span>
+                <span className={styles.metricValue}>{value}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
-
-      <section className={shared.section}>
-        <h3 className={shared.sectionTitle}>运行明细</h3>
-        <div className={styles.detailGrid}>
-          <DetailTile label="就绪状态">
-            <StatusBadge status={sys.ready_status} />
-          </DetailTile>
-          <DetailTile label="API 副本">
-            <span className={styles.detailValue}>{replicaLabel}</span>
-            {sys.api_replicas_note && (
-              <span className={styles.detailHint}>{sys.api_replicas_note}</span>
-            )}
-          </DetailTile>
-          <DetailTile label="数据库">
-            <StatusBadge status={data.service_status.database} />
-          </DetailTile>
-          <DetailTile label="Redis">
-            <StatusBadge status={data.service_status.redis} />
-          </DetailTile>
-        </div>
-      </section>
     </div>
   )
 }
 
-function DetailTile({ label, children }: { label: string; children: ReactNode }) {
+function StatCard({
+  label,
+  delay,
+  icon,
+  iconTone,
+  largeValue,
+  children,
+}: {
+  label: string
+  delay: number
+  icon: ReactNode
+  iconTone: IconTone
+  largeValue?: boolean
+  children: ReactNode
+}) {
   return (
-    <article className={styles.detailTile}>
-      <span className={styles.detailLabel}>{label}</span>
-      <div className={styles.detailBody}>{children}</div>
+    <article className={styles.statCard} style={{ animationDelay: `${delay}ms` }}>
+      <StatIcon tone={iconTone}>{icon}</StatIcon>
+      <div className={styles.statBody}>
+        <span className={styles.statLabel}>{label}</span>
+        {largeValue ? children : <div>{children}</div>}
+      </div>
     </article>
+  )
+}
+
+function CheckCircleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <path d="M22 4 12 14.01l-3-3" />
+    </svg>
+  )
+}
+
+function DatabaseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+      <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+    </svg>
+  )
+}
+
+function LayersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="m12.83 2.18 8.49 4.92a2 2 0 0 1 0 3.46l-8.49 4.92a2 2 0 0 1-2 0L2.34 10.56a2 2 0 0 1 0-3.46l8.49-4.92a2 2 0 0 1 2 0z" />
+      <path d="m2.34 14.44 8.49 4.92a2 2 0 0 0 2 0l8.49-4.92" />
+    </svg>
+  )
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  )
+}
+
+function ServerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="2" y="2" width="20" height="8" rx="2" />
+      <rect x="2" y="14" width="20" height="8" rx="2" />
+      <path d="M6 6h.01M6 18h.01" />
+    </svg>
+  )
+}
+
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
   )
 }

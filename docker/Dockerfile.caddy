@@ -1,20 +1,13 @@
-# Caddy reverse proxy with admin + creator SPAs baked in at image build time.
-FROM node:22-alpine AS frontend-builder
+# Caddy reverse proxy with admin SPA baked in (built at image build time).
+FROM node:22-alpine AS admin-builder
 
-WORKDIR /app/admin
+WORKDIR /app
 COPY admin/package.json admin/package-lock.json ./
 RUN npm ci
 COPY admin/ ./
 RUN npm run build
 
-WORKDIR /app/creator
-COPY creator/package.json creator/package-lock.json ./
-RUN npm ci
-COPY creator/ ./
-RUN npm run build
-
 FROM caddy:2-alpine
 
-COPY --from=frontend-builder /app/admin/dist /srv/admin
-COPY --from=frontend-builder /app/creator/dist /srv/creator
+COPY --from=admin-builder /app/dist /srv/admin
 COPY docker/Caddyfile /etc/caddy/Caddyfile

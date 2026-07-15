@@ -49,8 +49,8 @@ tags:
 - **分层**：`api` → `service` → `repository` → SQLAlchemy 2 异步模型
 - **能力**：JWT 注册/登录/刷新、`/me`、Redis 缓存与限流、Celery 示例任务、structlog、`/metrics`、Alembic、pytest + testcontainers、GitHub Actions
 - **两种启动路径**：
-  - `make dev-init` + `make dev`（底层仍是 `scripts/init_dev.sh`）：仅 Docker 起 Postgres + Redis，本机 `uvicorn --reload`（热重载开发）；需要时再配合 `make worker` / `make beat`
-  - `make up`（底层是 `scripts/start.sh -d`）：全栈 Compose（`postgres`、`redis`、`migrate`、`proxy`（Caddy + **admin**/**creator** 静态资源）、`api`、`celery-worker`、`celery-beat`）；对外入口 **https://localhost**
+  - `scripts/init_dev.sh`：仅 Docker 起 Postgres + Redis，本机 `uvicorn --reload`（热重载开发）
+  - `scripts/start.sh -d` / `docker compose up --build -d`：全栈（API + worker + 依赖）
 
 实施与 code review 阶段还修复了 Docker 构建、hatchling 打包、注册/Celery 时序、限流策略与生产密钥校验等问题。
 
@@ -65,15 +65,13 @@ tags:
 | 迁移 | Alembic 异步 `env.py`，与 `DATABASE_URL` 一致 |
 | 测试 | testcontainers（Postgres + Redis）；无 Docker 时可设 `TEST_DATABASE_URL` / `TEST_REDIS_URL` |
 
-### 启动入口与底层脚本
+### 启动脚本分工
 
-| 推荐入口 | 底层脚本 | 作用 |
-|------|------|------|
-| `make dev-init` | `scripts/init_dev.sh` | `uv sync`、Docker 仅 `postgres`+`redis`、`alembic upgrade`；**不**启动 API |
-| `make dev` | - | 本机 `uvicorn --reload`，配合 `dev-init` 做热重载开发 |
-| `make worker` / `make beat` | - | 本机 Celery worker / beat |
-| `make up` | `scripts/start.sh -d` | 检查 Docker → `docker compose up --build -d`（含 migrate、Caddy proxy）→ 等待 **https://localhost** `/health` |
-| `make down` | `scripts/stop.sh` | `docker compose down` |
+| 脚本 | 作用 |
+|------|------|
+| `scripts/init_dev.sh` | `uv sync`、Docker 仅 `postgres`+`redis`、`alembic upgrade`；**不**启动 API |
+| `scripts/start.sh -d` | 检查 Docker → `docker compose up --build -d` → 等待 `/health` |
+| `scripts/stop.sh` | `docker compose down` |
 
 ### 生产加固（code review 落地）
 
@@ -173,12 +171,12 @@ def reject_default_jwt_secret_in_production(self) -> "Settings":
 ### 全栈一键启动
 
 ```bash
-make up
-# 底层等价于
 bash scripts/start.sh -d
+# 或
+docker compose up --build -d
 ```
 
-API 文档（经 Caddy）：**https://localhost/docs**（直连 `http://localhost:8000` 会 301 到 HTTPS）
+API 文档：http://localhost:8000/docs
 
 ## Related
 

@@ -21,15 +21,7 @@
 		file_server
 	}
 
-	@creator_exact path /creator
-	redir @creator_exact /creator/ permanent
 
-	handle_path /creator/* {
-		root * /srv/creator
-		uri strip_prefix /creator
-		try_files {path} /index.html
-		file_server
-	}
 
 	handle {
 

@@ -31,7 +31,7 @@ admin/
 │   ├── index.css       # 设计 token（:root）
 │   ├── App.tsx         # 路由表
 │   ├── api/            # 按资源拆分：auth、users、audit…
-│   ├── auth/           # AuthProvider、authContext、useAuth
+│   ├── auth/           # AuthContext、登录态
 │   ├── components/     # 可复用 UI（DataTable、PageHeader…）
 │   ├── layouts/        # AdminLayout（侧栏 + 顶栏）
 │   ├── pages/          # 路由级页面 + 同名 *.module.css
@@ -54,9 +54,7 @@ admin/
 
 ### 3.1 视觉定位
 
-运维向管理台：**信号控制台（Signal Console）** — 深炭侧栏 + 冷灰工作区 + 青绿遥测强调色 + 等宽字体展示指标与 ID。导航按「概览 / 治理 / 观测」分组；侧栏与页头使用信号轨迹签名元素（渐变光带、脉冲点）。文案偏实用（状态、操作、筛选），避免营销腔。
-
-字体：**Chakra Petch**（标题/导航标签）+ **Noto Sans SC**（界面）+ **JetBrains Mono**（遥测数据）。
+运维向管理台：**深色侧栏 + 浅色工作区 + 靛蓝强调 + 等宽字体展示遥测数据**。文案偏实用（状态、操作、筛选），避免营销腔。
 
 ### 3.2 设计 Token（`src/index.css`）
 
@@ -64,13 +62,12 @@ admin/
 
 | Token | 用途 |
 |-------|------|
-| `--signal` / `--signal-bright` | 主强调、信号轨迹、健康脉冲 |
-| `--accent` / `--accent-hover` | 与 `--signal` 同义（主按钮、链接、焦点环） |
+| `--accent` / `--accent-hover` | 主按钮、链接、焦点环 |
 | `--sidebar-bg` / `--sidebar-text` | 侧栏 |
 | `--surface` / `--surface-muted` / `--surface-hover` | 卡片、表格、主内容区背景 |
 | `--border` | 边框 |
 | `--text` / `--text-muted` | 正文 / 次要文案 |
-| `--font-display` / `--font-sans` / `--font-mono` | 标题 / 界面 / ID、指标、代码 |
+| `--font-sans` / `--font-mono` | 界面 / ID、指标、代码 |
 | `--radius` | 统一圆角（8px） |
 | `--shadow-sm` / `--shadow-md` | 卡片、弹层 |
 | `--danger-*` / `--warn-*` | 错误、告警条 |
@@ -93,10 +90,7 @@ admin/
 | `.notice` | 黄底提示条 |
 | `.loading` / `.spinner` | 加载态 |
 | `.pagination` | 分页条 |
-| `.headerActions` | 页头右侧操作按钮组（无边框） |
-| `.panel` | 带信号顶线的卡片容器（表单、详情块） |
-| `.visuallyHidden` | 仅读屏可见文本 |
-| `.link` / `.codeInline` | 文内链接与行内命令样式 |
+| `.muted` / `.errorText` | 次要文字 / 错误 |
 
 页面特有样式放在 `pages/XxxPage.module.css`，仅放该页独有布局。
 
@@ -104,7 +98,7 @@ admin/
 
 | 组件 | 职责 |
 |------|------|
-| `PageHeader` | 可选 `title`（详情页实体名）+ `description` + `actions`；列表页标题由布局顶栏承担 |
+| `PageHeader` | 标题、可选描述、右侧 `actions` 插槽（已包一层 `toolbar`，子节点不要再套 `toolbar`） |
 | `LoadingBlock` | 统一加载指示（`role="status"`） |
 | `DataTable` | 列配置 + 空状态；`scrollMaxHeight` 限制表体高度（表头 sticky） |
 | `Modal` | `createPortal` 到 `document.body` 的详情弹层；`Escape` 关闭、锁 body 滚动 |
@@ -112,8 +106,7 @@ admin/
 | `CopyJsonButton` | 弹层标题栏复制 JSON |
 | `StatusBadge` | 状态 pill（ok / degraded / error / active…） |
 | `ProtectedRoute` | 未登录跳转 `/login` |
-| `AdminLayout` | 分组侧栏导航 + 顶栏上下文标题 + `<Outlet />` |
-| `AdminBrandMark` | 品牌 Mark（层叠服务 + 信号横束） |
+| `AdminLayout` | 侧栏导航 + 顶栏 + `<Outlet />` |
 
 扩展 UI 时优先**扩展现有组件**，避免同页复制一套表格/分页样式。
 
@@ -232,7 +225,7 @@ await apiFetch<UserPublic>(`/api/v1/admin/users/${id}`, {
 ## 6. 认证与路由
 
 - Token 存 `localStorage`，键名 `fastapi_kit_admin_tokens`（见 `api/client.ts`）
-- `AuthProvider` + `useAuth()` 提供 `login` / `logout` / `user`（context 定义在 `authContext.ts`）
+- `AuthContext` 提供 `login` / `logout` / `user`
 - 路由路径**不要**写 `/admin` 前缀（已由 `basename` 处理），例如 `to="/users"` 而非 `to="/admin/users"`
 - 对外访问 URL：**`https://localhost/admin/`**（无尾斜杠的 `/admin` 由 Caddy 301 到 `/admin/`）
 
@@ -352,8 +345,6 @@ make admin-docker-dev
 
 | 日期 | 说明 |
 |------|------|
-| 2026-06-30 | 仪表盘图表化：健康轨、用户环形图、Prometheus 柱状图与会话内请求趋势折线 |
-| 2026-06-30 | 信号控制台视觉重设计：Chakra Petch + 青绿遥测 token、分组导航、`AdminBrandMark`、登录双栏 |
 | 2026-05-20 | 排障串联：日志 URL 深链、`traceLinks.ts`、审计 `request_id` 与「查日志」/用户跳转 |
 | 2026-05-20 | 列表筛选：草稿/`filters` 分离、`lib/datetime.ts` 日期范围约定 |
 | 2026-05-19 | 全站一致性：`Modal`/`JsonPreview`/`CopyJsonButton`、列表筛选布局、`TABLE_SCROLL_MAX_HEIGHT`、`btnDanger` |
