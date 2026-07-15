@@ -64,7 +64,7 @@ The convention that primary navigation uses coral accent for active states while
 
 ### Studio Sidebar
 
-The desktop navigation pattern for the creator workbench: a fixed left column for wayfinding and account utilities, with the main canvas for page content.
+The desktop navigation pattern for the creator workbench: a fixed left column for brand and primary navigation (projects, media library, Inspiration Lab, brand profile), with quota and account utilities in the content-area top bar (or mobile header), and the main canvas for page content.
 
 ## Flagged ambiguities
 

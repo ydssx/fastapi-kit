@@ -21,6 +21,7 @@ tags:
   - favicon
 related_components:
   - admin
+last_refreshed: 2026-07-15
 ---
 
 # 创作者工作台图标体系：舞台流水线 SVG 与三层图标规范
@@ -38,10 +39,10 @@ related_components:
 | 层级 | 文件 | 用途 |
 |------|------|------|
 | 品牌层 | `icons/CreatorMark.tsx`、`components/AuthBrandMark.tsx`、`public/favicon.svg`、`public/apple-touch-icon.png` | 侧栏 Mark、认证页、favicon |
-| 导航层 | `icons/NavIcons.tsx` | 侧栏四项；灵感实验室激活态用 `navActiveAi`（`--ai`） |
+| 导航层 | `icons/NavIcons.tsx` | 侧栏四项主导航；灵感实验室激活态用 `navActiveAi`（`--ai`） |
 | 步骤层 | `icons/StepIcons.tsx` | `StepProgress` 按 `step_key` 渲染；完成态用 `CheckIcon` |
 
-目录：`creator/src/components/icons/`。
+目录：`creator/src/components/icons/`。账号入口不在侧栏主导航，而在顶栏 / 移动端 `UserMenu`（见 [侧栏布局文档](./creator-workspace-ui-redesign-studio-sidebar.md)）。
 
 ### 2. 品牌 Mark（Direction A）
 
@@ -56,8 +57,11 @@ related_components:
 
 ### 3. 导航与双色 accent
 
-- 项目 / 品牌 / 账号：激活态 `--accent`（珊瑚）
+侧栏主导航（`CreatorLayout` `NAV`）：
+
+- 项目 / 图片素材库 / 品牌档案：激活态 `--accent`（珊瑚）；素材库用 `AssetsIcon`
 - 灵感实验室：激活态 `--ai`（薄荷），与 Playground 空态、AI 面板视觉链路一致
+- 账号：`UserMenu` 菜单项（`AccountIcon`），不是侧栏第四项
 
 图标规范：24×24 viewBox、1.5px stroke、`currentColor`、与 `MailIcon`/`LockIcon` 一致。
 
@@ -119,8 +123,11 @@ Unicode 占位符在小尺寸模糊、无法继承 token、无语义。统一 SV
 // Before
 { to: '/playground', label: '灵感实验室', icon: '✦' }
 
-// After
-{ to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' }
+// After — 侧栏主导航示例
+{ to: '/', label: '项目', Icon: ProjectsIcon },
+{ to: '/assets', label: '图片素材库', Icon: AssetsIcon },
+{ to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
+{ to: '/brand', label: '品牌档案', Icon: BrandIcon },
 ```
 
 **步进圆点：**

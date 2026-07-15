@@ -1,7 +1,7 @@
 ---
 title: "feat: Creator 选题 Playground（灵感实验室）"
 type: feat
-status: active
+status: completed
 date: 2026-06-25
 origin: docs/brainstorms/2026-06-25-creator-topic-playground-requirements.md
 ---

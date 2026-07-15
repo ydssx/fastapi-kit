@@ -38,6 +38,7 @@ tags:
   - hatchling
   - rate-limit-fail-closed
   - background-tasks
+last_refreshed: 2026-07-15
 ---
 
 # Production FastAPI scaffold from greenfield (fastapi-kit)
@@ -73,11 +74,14 @@ tags:
 | `make dev` | - | 本机 `uvicorn --reload`，配合 `dev-init` 做热重载开发 |
 | `make worker` / `make beat` | - | 本机 Celery worker / beat |
 | `make up` | `scripts/start.sh -d` | 检查 Docker → `docker compose up --build -d`（含 migrate、Caddy proxy）→ 等待 **https://localhost** `/health` |
+| `make api-rebuild` | - | 仅重建并重启 API（及共用镜像的 migrate / Celery）；`uv.lock` 未变时依赖层命中缓存 |
+| `make proxy-rebuild` | - | 仅重建并重启 proxy（admin + creator SPA） |
+| `make build` | - | BuildKit 下构建全部 Compose 镜像（不启动） |
 | `make down` | `scripts/stop.sh` | `docker compose down` |
 
 ### 生产加固（code review 落地）
 
-1. **Docker + hatchling**：`readme = "README.md"` 时 builder 必须 `COPY README.md`；`.dockerignore` 可用 `*.md` + `!README.md`
+1. **Docker + hatchling**：`readme = "README.md"` 时 builder 必须 `COPY README.md`；`.dockerignore` 可用 `*.md` + `!README.md`。镜像用两层 `uv sync`（先 `--no-install-project` 缓存依赖，再装项目）+ BuildKit cache mount
 2. **Celery 入队时机**：注册等写库路由用 `BackgroundTasks` 调用 `send_notification.delay`，不要在 service 内与 `get_db` commit 竞态
 3. **限流 fail-closed**：Redis 异常返回 503（`50301`），不放行请求
 4. **生产 JWT**：`ENVIRONMENT=prod` 且仍为默认 `JWT_SECRET` 时启动失败（`model_validator`）
@@ -101,7 +105,7 @@ tags:
 
 ## Examples
 
-### Docker：COPY README.md（hatchling）
+### Docker：分层 uv sync + COPY README.md（hatchling）
 
 **错误现象：**
 
@@ -109,14 +113,20 @@ tags:
 OSError: Readme file does not exist: README.md
 ```
 
-**修复：**
+**修复（当前 Dockerfile 形态）：**
 
 ```dockerfile
+# Dependency layer — survives app/alembic edits
 COPY pyproject.toml uv.lock README.md ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+# Project layer
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
-RUN uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 ```
 
 ```gitignore

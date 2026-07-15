@@ -1,7 +1,7 @@
 ---
 title: "feat: Platform Prompt Guard (小红书平台提示词护栏)"
 type: feat
-status: active
+status: completed
 date: 2026-06-25
 origin: docs/brainstorms/2026-06-25-platform-prompt-guard-xhs-requirements.md
 ---

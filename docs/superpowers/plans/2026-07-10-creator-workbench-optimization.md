@@ -1,6 +1,12 @@
+---
+status: completed
+completed_date: 2026-07-15
+note: "Progress checkboxes refreshed against current codebase; treat as shipped reference."
+---
+
 # 创作者工作台优化 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Shipped reference:** 本文已按现网代码标记为 `completed`。不要按 checkbox 重新实现；仅作历史实现与文件职责参考。
 
 **Goal:** 让创作者工作台以可行动的发布队列和选区感知的 AI 共写流程推进内容，并在前后端可靠阻止未完成发布检查的项目完成。
 
@@ -31,7 +37,7 @@
 - Modify: `creator/vite.config.ts`
 - Create: `creator/src/test/setup.ts`
 
-- [ ] **Step 1: 安装测试依赖**
+- [x] **Step 1: 安装测试依赖**
 
 Run:
 
@@ -41,7 +47,7 @@ cd creator && npm install -D vitest jsdom @testing-library/react @testing-librar
 
 Expected: `package.json` 与 lockfile 增加五个开发依赖，命令退出码为 0。
 
-- [ ] **Step 2: 配置 Vitest 与测试 setup**
+- [x] **Step 2: 配置 Vitest 与测试 setup**
 
 将 `creator/vite.config.ts` 的导入和配置改为：
 
@@ -83,7 +89,7 @@ import '@testing-library/jest-dom/vitest'
 "test": "vitest run"
 ```
 
-- [ ] **Step 3: 验证空测试运行与构建**
+- [x] **Step 3: 验证空测试运行与构建**
 
 Run:
 
@@ -93,7 +99,7 @@ cd creator && npm run test && npm run build
 
 Expected: Vitest 报告没有测试文件但退出码为 0，随后 TypeScript 和 Vite 构建成功。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add creator/package.json creator/package-lock.json creator/vite.config.ts creator/src/test/setup.ts
@@ -109,7 +115,7 @@ git commit -m "test(creator): add frontend test baseline"
 - Modify: `creator/src/components/AiSuggestionPanel.tsx`
 - Modify: `creator/src/pages/ProjectDetailPage.tsx`
 
-- [ ] **Step 1: 编写选区纯函数的失败测试**
+- [x] **Step 1: 编写选区纯函数的失败测试**
 
 创建 `creator/src/lib/editorSelection.test.ts`：
 
@@ -147,7 +153,7 @@ describe('editor selection', () => {
 })
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run:
 
@@ -157,7 +163,7 @@ cd creator && npm run test -- editorSelection
 
 Expected: FAIL，提示无法解析 `./editorSelection`。
 
-- [ ] **Step 3: 实现无 DOM 依赖的选区适配层**
+- [x] **Step 3: 实现无 DOM 依赖的选区适配层**
 
 创建 `creator/src/lib/editorSelection.ts`：
 
@@ -191,7 +197,7 @@ export function applySelectionInsertion(
 }
 ```
 
-- [ ] **Step 4: 将 `textarea` 选区上报给项目详情**
+- [x] **Step 4: 将 `textarea` 选区上报给项目详情**
 
 在 `StepEditorPanelProps` 新增：
 
@@ -222,7 +228,7 @@ setEditorSelection(null)
 onSelectionChange={(start, end) => setEditorSelection(captureSelection(content, start, end))}
 ```
 
-- [ ] **Step 5: 让 AI 面板反映真实操作**
+- [x] **Step 5: 让 AI 面板反映真实操作**
 
 在 `AiSuggestionPanelProps` 新增：
 
@@ -257,7 +263,7 @@ onReplaceSelection: (content: string) => void
 
 在 `ProjectDetailPage` 中，`onInsert` 与 `onReplaceSelection` 均调用选区适配层；“插入”在选中内容前后保留换行，“替换”不添加额外换行。AI 请求开始前不清空选区；选区与草稿内容不再匹配时，面板自动显示“插入到末尾”。
 
-- [ ] **Step 6: 运行选区测试与构建**
+- [x] **Step 6: 运行选区测试与构建**
 
 Run:
 
@@ -267,7 +273,7 @@ cd creator && npm run test -- editorSelection && npm run build
 
 Expected: 3 个选区测试通过，生产构建成功。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add creator/src/lib/editorSelection.ts creator/src/lib/editorSelection.test.ts creator/src/components/StepEditorPanel.tsx creator/src/components/AiSuggestionPanel.tsx creator/src/pages/ProjectDetailPage.tsx
@@ -283,7 +289,7 @@ git commit -m "feat(creator): add selection-aware AI editing"
 - Modify: `app/services/creator_project.py`
 - Modify: `tests/api/test_creator_publish.py`
 
-- [ ] **Step 1: 编写发布清单组件失败测试**
+- [x] **Step 1: 编写发布清单组件失败测试**
 
 创建 `creator/src/components/PublishChecklist.test.tsx`：
 
@@ -306,7 +312,7 @@ describe('PublishChecklist', () => {
 })
 ```
 
-- [ ] **Step 2: 运行组件测试确认失败**
+- [x] **Step 2: 运行组件测试确认失败**
 
 Run:
 
@@ -316,7 +322,7 @@ cd creator && npm run test -- PublishChecklist
 
 Expected: FAIL，因为按钮尚未禁用且缺少未完成平台文案。
 
-- [ ] **Step 3: 完成客户端预防与错误反馈**
+- [x] **Step 3: 完成客户端预防与错误反馈**
 
 在 `PublishChecklist.tsx` 中从 `items` 得出：
 
@@ -353,7 +359,7 @@ onError: handleApiError,
 
 使更新失败沿用页面现有错误状态与重新获取的服务端数据。
 
-- [ ] **Step 4: 编写并运行服务层校验失败测试**
+- [x] **Step 4: 编写并运行服务层校验失败测试**
 
 在 `tests/api/test_creator_publish.py` 中，使用该文件已有的 `register_token`、`create_short_video_project`、`advance_to_publish_step` 和 `auth_headers`，增加：
 
@@ -383,7 +389,7 @@ uv run pytest tests/api/test_creator_publish.py -k incomplete_publish_checklist 
 
 Expected: FAIL，因为 `complete_project` 当前没有检查 `publish_checklist_state`。
 
-- [ ] **Step 5: 在服务层复核清单**
+- [x] **Step 5: 在服务层复核清单**
 
 在 `CreatorProjectService.complete_project` 的 `get_pipeline` 之后、遍历 artifact 之前加入：
 
@@ -405,7 +411,7 @@ Expected: FAIL，因为 `complete_project` 当前没有检查 `publish_checklist
 
 该处与 `get_publish_checklist` 使用同一 `build_publish_checklist(project.target_platforms)` 模板，不引入新 helper；API 契约和数据库 schema 均不变。
 
-- [ ] **Step 6: 运行前后端验证**
+- [x] **Step 6: 运行前后端验证**
 
 Run:
 
@@ -416,7 +422,7 @@ cd .. && uv run pytest tests/api/test_creator_publish.py -v
 
 Expected: 前端组件测试和构建成功；发布 API 测试通过，包括未完成清单返回 40019 的场景。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add creator/src/components/PublishChecklist.tsx creator/src/components/PublishChecklist.test.tsx creator/src/pages/ProjectDetailPage.tsx app/services/creator_project.py tests/api/test_creator_publish.py
@@ -432,7 +438,7 @@ git commit -m "fix(creator): require completed publish checks"
 - Modify: `creator/src/components/PlaygroundRefinePanel.tsx`
 - Modify: `creator/src/components/PlaygroundOutlinePanel.tsx`
 
-- [ ] **Step 1: 编写弹窗失败测试**
+- [x] **Step 1: 编写弹窗失败测试**
 
 创建 `creator/src/components/PlaygroundHandoffModal.test.tsx`，包含下列最小父级测试包装器，以保留触发按钮和关闭状态：
 
@@ -481,7 +487,7 @@ it('focuses the first control, traps Tab, closes on Escape, and restores the tri
 
 另加一个测试选择流水线与平台后点击“创建并进入项目”，断言 `onConfirm` 收到既有 `HandoffPayload` 的 `pipeline_id`、`brief`、`target_platform_keys` 与 `primary_platform_key`。
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run:
 
@@ -491,7 +497,7 @@ cd creator && npm run test -- PlaygroundHandoffModal
 
 Expected: FAIL，因为现有对话框不接收 Escape，且关闭后不恢复焦点。
 
-- [ ] **Step 3: 增加焦点生命周期**
+- [x] **Step 3: 增加焦点生命周期**
 
 在 `PlaygroundHandoffModal.tsx` 引入 `useRef`，为对话框容器创建 `dialogRef`，并在打开时执行：
 
@@ -518,7 +524,7 @@ useEffect(() => {
 
 给 `role="dialog"` 容器设置 `ref={dialogRef}` 和 `tabIndex={-1}`。在该容器的 `onKeyDown` 中实现 Tab／Shift+Tab 循环：查询 `button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])`，没有可聚焦元素时阻止 Tab；首尾元素间循环。背景点击仍调用同一个 `onClose`。
 
-- [ ] **Step 4: 更新交接语言与会话提示**
+- [x] **Step 4: 更新交接语言与会话提示**
 
 将标题和主按钮改为：
 
@@ -535,7 +541,7 @@ useEffect(() => {
 
 将用户可见的 `Refine`、`handoff`、`checklist` 分别替换为“优化想法”“交接到项目”“发布检查”；只改展示文案，不能改 API 字段或内部函数名。
 
-- [ ] **Step 5: 运行弹窗测试与构建**
+- [x] **Step 5: 运行弹窗测试与构建**
 
 Run:
 
@@ -545,7 +551,7 @@ cd creator && npm run test -- PlaygroundHandoffModal && npm run build
 
 Expected: 交接弹窗测试通过，构建成功。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add creator/src/components/PlaygroundHandoffModal.tsx creator/src/components/PlaygroundHandoffModal.test.tsx creator/src/pages/PlaygroundPage.tsx creator/src/components/PlaygroundRefinePanel.tsx creator/src/components/PlaygroundOutlinePanel.tsx
@@ -563,7 +569,7 @@ git commit -m "feat(creator): make project handoff accessible"
 - Modify: `creator/src/pages/BrandPage.tsx`
 - Create: `creator/src/layouts/CreatorLayout.test.tsx`
 
-- [ ] **Step 1: 编写移动导航失败测试**
+- [x] **Step 1: 编写移动导航失败测试**
 
 创建 `creator/src/layouts/CreatorLayout.test.tsx`，用 `MemoryRouter initialEntries={['/creator/playground']}` 渲染布局及 outlet，断言桌面和移动导航内名称为“灵感实验室”的链接都有：
 
@@ -581,7 +587,7 @@ for (const link of screen.getAllByRole('link', { name: '灵感实验室' })) {
 }
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run:
 
@@ -591,7 +597,7 @@ cd creator && npm run test -- CreatorLayout
 
 Expected: FAIL，移动导航链接没有 `aria-current`。
 
-- [ ] **Step 3: 实现队列和可访问性修正**
+- [x] **Step 3: 实现队列和可访问性修正**
 
 在 `CreatorLayout.tsx` 移动 `Link` 上增加：
 
@@ -618,7 +624,7 @@ const attentionCount = priorityView.sprintProjects.length
 
 并为页面已有 mutation 错误提示增加 `role="alert"`。
 
-- [ ] **Step 4: 运行导航测试、lint 与构建**
+- [x] **Step 4: 运行导航测试、lint 与构建**
 
 Run:
 
@@ -628,7 +634,7 @@ cd creator && npm run test -- CreatorLayout && npm run lint && npm run build
 
 Expected: 移动导航测试通过，ESLint 和构建成功。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add creator/src/pages/ProjectsPage.tsx creator/src/components/ProjectSprintCard.tsx creator/src/pages/ProjectsPage.module.css creator/src/layouts/CreatorLayout.tsx creator/src/layouts/CreatorLayout.test.tsx creator/src/pages/ProjectDetailPage.module.css creator/src/pages/BrandPage.tsx
@@ -643,7 +649,7 @@ git commit -m "feat(creator): prioritize actionable project queue"
 - Modify: `creator/src/components/ProjectSprintCard.module.css`
 - Modify: `creator/src/components/AiSuggestionPanel.module.css`
 
-- [ ] **Step 1: 定义语义 token**
+- [x] **Step 1: 定义语义 token**
 
 在 `creator/src/index.css` 的现有 token 后增加：
 
@@ -662,7 +668,7 @@ git commit -m "feat(creator): prioritize actionable project queue"
 
 将 `--stage-line` 改为基于 `--action-required` 与 `--ai-ready` 的渐变；动画规则继续保留在现有 `prefers-reduced-motion: reduce` 块中。
 
-- [ ] **Step 2: 替换缩略图组件硬编码色**
+- [x] **Step 2: 替换缩略图组件硬编码色**
 
 在 `PipelineThumbnail.module.css` 中将已有渐变和阴影替换为 token，例如：
 
@@ -683,7 +689,7 @@ git commit -m "feat(creator): prioritize actionable project queue"
 
 将项目冲刺风险边框改用 `var(--action-required)`，AI 面板就绪边框改用 `var(--ai-ready)`；不要把行动信号线作为这些状态唯一载体。
 
-- [ ] **Step 3: 运行视觉构建检查**
+- [x] **Step 3: 运行视觉构建检查**
 
 Run:
 
@@ -693,7 +699,7 @@ cd creator && npm run lint && npm run build
 
 Expected: lint 和生产构建成功。
 
-- [ ] **Step 4: 手工验证**
+- [x] **Step 4: 手工验证**
 
 在 `make creator-dev` 下检查：
 
@@ -703,7 +709,7 @@ Expected: lint 和生产构建成功。
 4. 留一项发布检查未勾选，确认完成按钮不可用；直接调用 API 确认得到 `40019`。
 5. 在系统启用减少动态时，页面不会播放额外行动信号动画。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add creator/src/index.css creator/src/components/PipelineThumbnail.module.css creator/src/components/ProjectSprintCard.module.css creator/src/components/AiSuggestionPanel.module.css
@@ -715,7 +721,7 @@ git commit -m "style(creator): apply semantic action tokens"
 **Files:**
 - Modify: `docs/superpowers/specs/2026-07-10-creator-workbench-optimization-design.md`（仅在实际实现偏离已确认规格时更新）
 
-- [ ] **Step 1: 运行 Creator 完整检查**
+- [x] **Step 1: 运行 Creator 完整检查**
 
 Run:
 
@@ -726,7 +732,7 @@ cd creator && npm run test
 
 Expected: ESLint、TypeScript、Vite 构建与全部前端测试均成功。
 
-- [ ] **Step 2: 运行受影响后端 API 测试**
+- [x] **Step 2: 运行受影响后端 API 测试**
 
 Run:
 
@@ -736,7 +742,7 @@ uv run pytest tests/api/test_creator_publish.py tests/api/test_creator_playgroun
 
 Expected: 发布清单复核与 Playground handoff 的 API 测试全部通过。
 
-- [ ] **Step 3: 检查最终改动范围**
+- [x] **Step 3: 检查最终改动范围**
 
 Run:
 
@@ -746,7 +752,7 @@ git diff --check && git status --short
 
 Expected: 无空白错误；只包含计划列出的 Creator、服务、测试和必要 lockfile 修改。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-07-10-creator-workbench-optimization-design.md

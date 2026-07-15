@@ -1,7 +1,7 @@
 ---
 title: "feat: Admin phase 2 ops and governance"
 type: feat
-status: active
+status: completed
 date: 2026-05-18
 origin: docs/brainstorms/2026-05-18-admin-phase2-requirements.md
 ---
