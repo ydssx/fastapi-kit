@@ -19,7 +19,10 @@ export function DonutChart({
   const radius = 38
   const stroke = 14
   const circumference = 2 * Math.PI * radius
-  let offset = 0
+  const dashes = segments.map((segment) => (segment.value / total) * circumference)
+  const offsets = dashes.map((_, index) =>
+    dashes.slice(0, index).reduce((sum, dash) => sum + dash, 0),
+  )
 
   if (total <= 0) {
     return (
@@ -53,27 +56,21 @@ export function DonutChart({
           stroke="var(--border-subtle)"
           strokeWidth={stroke}
         />
-        {segments.map((segment) => {
-          const fraction = segment.value / total
-          const dash = fraction * circumference
-          const circle = (
-            <circle
-              key={segment.label}
-              cx="50"
-              cy="50"
-              r={radius}
-              fill="none"
-              stroke={segment.color ?? 'var(--signal)'}
-              strokeWidth={stroke}
-              strokeDasharray={`${dash} ${circumference - dash}`}
-              strokeDashoffset={-offset}
-              strokeLinecap="butt"
-              transform="rotate(-90 50 50)"
-            />
-          )
-          offset += dash
-          return circle
-        })}
+        {segments.map((segment, index) => (
+          <circle
+            key={segment.label}
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="none"
+            stroke={segment.color ?? 'var(--signal)'}
+            strokeWidth={stroke}
+            strokeDasharray={`${dashes[index]} ${circumference - dashes[index]}`}
+            strokeDashoffset={-offsets[index]}
+            strokeLinecap="butt"
+            transform="rotate(-90 50 50)"
+          />
+        ))}
       </svg>
       <div className={styles.center}>
         <span className={styles.centerValue}>{centerValue ?? formatMetricValue(total)}</span>

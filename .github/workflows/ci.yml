@@ -30,3 +30,28 @@ jobs:
 
       - name: Pytest
         run: uv run pytest -v
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            admin/package-lock.json
+            creator/package-lock.json
+
+      - name: Install admin dependencies
+        working-directory: admin
+        run: npm ci
+
+      - name: Install creator dependencies
+        working-directory: creator
+        run: npm ci
+
+      - name: Check frontends
+        run: make frontend-check

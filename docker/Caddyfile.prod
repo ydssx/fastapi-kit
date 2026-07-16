@@ -1,0 +1,45 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# Metrics remain available to containers at http://api:8000/metrics, but are
+	# intentionally excluded from the public reverse proxy.
+	@metrics path /metrics /metrics/*
+	handle @metrics {
+		respond "Not Found" 404
+	}
+
+	@admin_exact path /admin
+	redir @admin_exact /admin/ permanent
+
+	handle_path /admin/* {
+		root * /srv/admin
+		uri strip_prefix /admin
+		try_files {path} /index.html
+		file_server
+	}
+
+	@creator_exact path /creator
+	redir @creator_exact /creator/ permanent
+
+	handle_path /creator/* {
+		root * /srv/creator
+		uri strip_prefix /creator
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		reverse_proxy {
+			dynamic a api 8000 {
+				refresh 5s
+			}
+			health_uri /health
+			health_interval 5s
+			health_timeout 3s
+			fail_duration 15s
+			lb_policy round_robin
+		}
+	}
+}

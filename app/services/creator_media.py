@@ -8,6 +8,7 @@ from app.clients.object_storage import ObjectStorageClient
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException
 from app.core.logging import get_logger
+from app.db.celery_dispatch import commit_then_enqueue
 from app.models.creator import CreatorMediaAsset, ProjectMediaAsset
 from app.repositories.creator_media_asset import CreatorMediaAssetRepository
 from app.schemas.creator import (
@@ -93,8 +94,7 @@ class CreatorMediaService:
         if not await self.repository.soft_delete_for_user(asset_id, user_id):
             raise AppException("Media asset not found", code=40420, status_code=404)
         # Commit before Celery so the worker sees the soft-delete.
-        await self.session.commit()
-        self.schedule_cleanup(asset.object_key)
+        await commit_then_enqueue(self.session, self.schedule_cleanup, asset.object_key)
 
     async def get(self, *, user_id: uuid.UUID, asset_id: uuid.UUID) -> CreatorMediaAsset:
         asset = await self.repository.get_by_id_for_user(asset_id, user_id)

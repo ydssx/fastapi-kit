@@ -9,6 +9,7 @@ from app.clients.image_generation import GeneratedImage, ImageGenerationClient
 from app.clients.object_storage import ObjectStorageClient
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
+from app.db.celery_dispatch import commit_then_enqueue
 from app.models.creator import CreatorMediaAsset
 from app.repositories.creator_media_asset import CreatorMediaAssetRepository
 from app.services.creator_media_import import validate_image
@@ -82,8 +83,7 @@ class CreatorImageGenerationService:
         )
         created = await self.repository.create(asset)
         # Commit before Celery so the worker can load the processing row.
-        await self.session.commit()
-        self.schedule_generation(created.id)
+        await commit_then_enqueue(self.session, self.schedule_generation, created.id)
         return created
 
     async def archive_generation(self, asset_id: uuid.UUID) -> None:

@@ -24,7 +24,7 @@ vi.mock('../api/creator', () => ({
     id: 'project-1',
     pipeline_id: 'pipeline',
     title: '测试项目',
-    status: 'draft',
+    status: 'in_progress',
     current_step_key: 'outline',
     target_platforms: [],
     primary_platform_key: null,

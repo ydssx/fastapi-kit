@@ -12,12 +12,15 @@
 
 - `uv sync --all-extras` 或 `make install`：安装 Python 依赖；首次前端开发或锁文件变化后运行 `make frontend-install`。
 - `make up`：启动完整 Docker 栈，包含 `postgres`、`redis`、`migrate`、`proxy`、`api`、`celery-worker`、`celery-beat`。入口为 `https://localhost`，管理后台为 `https://localhost/admin/`，创作者工作台为 `https://localhost/creator/`。
+- 生产入口使用 `docker-compose.yml` + `docker-compose.prod.yml`：复制 `.env.prod.example` 为不提交的 `.env.prod`，先运行 `make prod-config`，再用 `make up-prod` / `make down-prod` 管理。
+- `make api-rebuild`：仅重建并重启 API（及共用镜像的 migrate / Celery）；依赖层在 `uv.lock` 未变时命中缓存。改前端 SPA 用 `make proxy-rebuild`；全栈仍用 `make up`。
+- `make build`：在 BuildKit 下构建全部 Compose 镜像（不启动）。
 - `make up-ha` / `make rolling-update`：以 2 个 API 副本启动并滚动替换 API 容器。
 - `make dev-init`：只启动 PostgreSQL 和 Redis，并执行迁移，供本机 API 热重载开发。
 - `make dev`、`make worker`、`make beat`：分别运行本机 API、Celery worker、Celery Beat。
 - `make down`、`make logs`、`make certs`、`make migrate`：停止、查看日志、生成本地 TLS 证书、执行迁移。
 - `make check`：后端质量门禁，等同于 `ruff check`、`mypy app`、`pytest -v`。
-- `make frontend-check`：前端质量门禁，依次 lint/build `admin` 与 `creator`（不重装依赖）。
+- `make frontend-check`：前端质量门禁，依次 test/lint/build `admin` 与 `creator`（不重装依赖）。
 
 ## 前端工作流
 
@@ -37,7 +40,7 @@
 
 测试使用 `pytest`、`pytest-asyncio`、`httpx` 和 testcontainers，依赖 PostgreSQL 与 Redis。测试文件命名为 `test_*.py`。本机不能用 Docker 时，可设置 `TEST_DATABASE_URL` 和 `TEST_REDIS_URL` 指向已有服务，再运行 `uv run pytest -v`。
 
-CI 目前只执行后端门禁：`uv sync --all-extras`、`uv run ruff check .`、`uv run mypy app`、`uv run pytest -v`。改动前端时本地补跑 `make frontend-check`，因为 GitHub Actions 尚未覆盖 Node 构建。
+CI 并行执行后端与前端门禁：后端运行 `uv sync --all-extras`、`uv run ruff check .`、`uv run mypy app`、`uv run pytest -v`；前端使用 Node 22，分别在 `admin` 与 `creator` 运行 `npm ci`，再执行 `make frontend-check`（两端 test/lint/build）。
 
 ## 提交与安全
 

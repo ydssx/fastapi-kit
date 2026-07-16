@@ -8,7 +8,10 @@ type PendingConfirm = ConfirmOptions & {
 export function useConfirmDialog() {
   const [pending, setPending] = useState<PendingConfirm | null>(null)
   const pendingRef = useRef(pending)
-  pendingRef.current = pending
+
+  useEffect(() => {
+    pendingRef.current = pending
+  }, [pending])
 
   useEffect(() => {
     return () => {

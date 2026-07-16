@@ -41,11 +41,13 @@ export interface StepArtifact {
   confirmed_at: string
 }
 
+export type ProjectStatus = 'in_progress' | 'completed'
+
 export interface Project {
   id: string
   pipeline_id: string
   title: string
-  status: string
+  status: ProjectStatus
   current_step_key: string
   target_platforms: string[]
   primary_platform_key: string | null
@@ -145,6 +147,8 @@ export interface BrandProfile {
   structure_notes: string
 }
 
+export type MediaAssetStatus = 'processing' | 'ready' | 'failed' | 'deleted'
+
 export interface MediaAsset {
   id: string
   original_filename: string
@@ -155,7 +159,7 @@ export interface MediaAsset {
   source: string
   category: string
   tags: string[]
-  status: string
+  status: MediaAssetStatus
   created_at: string
 }
 

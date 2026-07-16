@@ -7,7 +7,7 @@ const fetchMedia = vi.fn()
 
 vi.mock('../api/creator', () => ({
   fetchMedia: (...args: unknown[]) => fetchMedia(...args),
-  fetchMediaPreview: vi.fn(),
+  fetchMediaPreview: vi.fn().mockResolvedValue({ url: 'https://example.test/cover.png' }),
 }))
 
 describe('ImageAssetPicker', () => {
@@ -40,7 +40,7 @@ describe('ImageAssetPicker', () => {
     await waitFor(() => {
       expect(fetchMedia).toHaveBeenLastCalledWith({ keyword: '夏日' })
     })
-    fireEvent.click(screen.getByRole('button', { name: '添加' }))
+    fireEvent.click(await screen.findByRole('button', { name: '添加' }))
 
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'ready-asset' }))
   })
