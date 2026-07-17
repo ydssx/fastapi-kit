@@ -123,6 +123,8 @@ export function ProjectDetailPage() {
     setSelection: setEditorSelection,
     handleApiError,
     setQuotaError,
+    aiPending: stepAi.aiMut.isPending,
+    quotaBlocked: quotaError === 'ai',
   })
 
   useEffect(() => {
@@ -292,6 +294,7 @@ export function ProjectDetailPage() {
   }
 
   function applyAiText(text: string, mode: 'insert' | 'replace') {
+    if (selectionRewrite.locked) return
     if (!hasActiveSelection(editorSelection, content) || editorSelection === null) {
       setContent((current) => (current ? `${current}\n\n${text}` : text))
       setEditorSelection(null)
@@ -383,11 +386,20 @@ export function ProjectDetailPage() {
       aiPending={stepAi.aiMut.isPending}
       suggestion={stepAi.suggestion}
       variants={stepAi.variants}
-      onAdoptAll={(text) => setContent(text)}
+      onAdoptAll={(text) => {
+        if (selectionRewrite.locked) return
+        setContent(text)
+      }}
       onInsert={(text) => applyAiText(text, 'insert')}
       onReplaceSelection={(text) => applyAiText(text, 'replace')}
-      onRegenerate={() => stepAi.aiMut.mutate(undefined)}
-      onAdjust={(adj) => stepAi.aiMut.mutate(adj)}
+      onRegenerate={() => {
+        if (selectionRewrite.locked) return
+        stepAi.aiMut.mutate(undefined)
+      }}
+      onAdjust={(adj) => {
+        if (selectionRewrite.locked) return
+        stepAi.aiMut.mutate(adj)
+      }}
       checklist={publish.checklist}
       onToggleCheck={publish.toggleCheck}
       onComplete={() => publish.completeMut.mutate()}

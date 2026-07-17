@@ -28,6 +28,7 @@
 | `AiSuggestionPanel` | AI 建议预览、采纳、快捷调整、配额态 |
 | `StepWorkspace` | 双栏布局（编辑区 + AI 面板），含移动端折叠 |
 | `StepProgress` / `StepEditorPanel` / `AiLoadingOverlay` | 流水线向导 |
+| `SelectionRewriteFloat` | 选区旁悬浮改写条（portal 定位；预览确认后写入） |
 | `PublishChecklist` / `CompletedBanner` / `StepVersionHistory` | 变体态 |
 | `BrandField` | 品牌档案字段 + 字数 |
 

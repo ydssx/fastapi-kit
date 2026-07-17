@@ -12,10 +12,16 @@ export function aiSuggest(
   adjustment?: string,
   options?: AiSuggestOptions,
 ): Promise<AiSuggestResponse> {
-  const body: Record<string, string> = {}
+  const body: {
+    adjustment?: string
+    mode?: 'selection'
+    selected_text?: string
+  } = {}
   if (adjustment) body.adjustment = adjustment
-  if (options?.mode) body.mode = options.mode
-  if (options?.selectedText !== undefined) body.selected_text = options.selectedText
+  if (options?.mode === 'selection' || options?.selectedText !== undefined) {
+    body.mode = 'selection'
+    body.selected_text = options?.selectedText ?? ''
+  }
 
   return apiFetch<AiSuggestResponse>(
     `/api/v1/creator/projects/${projectId}/steps/${stepKey}/ai-suggest`,

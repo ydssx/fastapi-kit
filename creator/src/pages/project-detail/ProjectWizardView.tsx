@@ -12,6 +12,7 @@ import { PublishChecklist } from '../../components/PublishChecklist'
 import { QuotaLimitNotice, type QuotaLimitKind } from '../../components/QuotaLimitNotice'
 import { SelectionRewriteFloat } from '../../components/SelectionRewriteFloat'
 import { StepEditorPanel, type DraftSaveStatus } from '../../components/StepEditorPanel'
+import type { SelectionRewriteController } from '../../hooks/useSelectionRewrite'
 import { StepProgress } from '../../components/StepProgress'
 import { StepWorkspace } from '../../components/StepWorkspace'
 import { StepVersionHistory } from '../../components/StepVersionHistory'
@@ -87,16 +88,7 @@ interface ProjectWizardViewProps {
   stepTitle: (key: string) => string
   moreMenu: ReactNode
   dialog: ReactNode
-  selectionRewrite?: {
-    showFloat: boolean
-    chips: { label: string; adjustment: string }[]
-    loading: boolean
-    preview: string | null
-    locked: boolean
-    onRewrite: (adjustment: string) => void
-    onConfirm: () => void
-    onCancel: () => void
-  }
+  selectionRewrite?: SelectionRewriteController
 }
 
 export function ProjectWizardView({
@@ -191,17 +183,23 @@ export function ProjectWizardView({
       onPickImage={onPickImage}
       addingImage={addingImage}
       selectionToolbar={
-        selectionRewrite?.showFloat ? (
-          <SelectionRewriteFloat
-            chips={selectionRewrite.chips}
-            loading={selectionRewrite.loading}
-            preview={selectionRewrite.preview}
-            locked={selectionRewrite.locked}
-            onRewrite={selectionRewrite.onRewrite}
-            onConfirm={selectionRewrite.onConfirm}
-            onCancel={selectionRewrite.onCancel}
-          />
-        ) : null
+        selectionRewrite?.showFloat
+          ? ({ textareaRef }) => (
+              <SelectionRewriteFloat
+                chips={selectionRewrite.chips}
+                loading={selectionRewrite.loading}
+                preview={selectionRewrite.preview}
+                locked={selectionRewrite.locked}
+                actionsDisabled={aiPending}
+                textareaRef={textareaRef}
+                selectionStart={editorSelection?.start ?? 0}
+                selectionEnd={editorSelection?.end ?? 0}
+                onRewrite={selectionRewrite.onRewrite}
+                onConfirm={selectionRewrite.onConfirm}
+                onCancel={selectionRewrite.onCancel}
+              />
+            )
+          : null
       }
     />
   )

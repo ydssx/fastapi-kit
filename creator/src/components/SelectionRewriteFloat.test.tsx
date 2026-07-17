@@ -37,6 +37,7 @@ describe('SelectionRewriteFloat', () => {
     )
 
     expect(screen.getByText('新中间段')).toBeInTheDocument()
+    expect(screen.getByText(/预览改写/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '更短' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '取消' }))
@@ -61,5 +62,25 @@ describe('SelectionRewriteFloat', () => {
 
     expect(screen.getByRole('button', { name: '更短' })).toBeDisabled()
     expect(screen.getByText('改写中…')).toBeInTheDocument()
+  })
+
+  it('disables chips when actionsDisabled', () => {
+    const onRewrite = vi.fn()
+    render(
+      <SelectionRewriteFloat
+        chips={[{ label: '更短', adjustment: '更简短' }]}
+        loading={false}
+        preview={null}
+        locked={false}
+        actionsDisabled
+        onRewrite={onRewrite}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: '更短' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: '更短' }))
+    expect(onRewrite).not.toHaveBeenCalled()
   })
 })

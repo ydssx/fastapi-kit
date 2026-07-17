@@ -1,8 +1,12 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode, type RefObject } from 'react'
 import shared from '../styles/shared.module.css'
 import styles from './StepEditorPanel.module.css'
 
 export type DraftSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+
+export interface StepEditorToolbarContext {
+  textareaRef: RefObject<HTMLTextAreaElement | null>
+}
 
 interface StepEditorPanelProps {
   title: string
@@ -18,8 +22,11 @@ interface StepEditorPanelProps {
   editorDisabled?: boolean
   onPickImage?: () => void
   addingImage?: boolean
-  selectionToolbar?: ReactNode
+  selectionToolbar?: ReactNode | ((ctx: StepEditorToolbarContext) => ReactNode)
 }
+
+const CHAR_LIMIT = 2000
+const CHAR_WARN_AT = 1800
 
 function draftStatusLabel(status: DraftSaveStatus): string | null {
   switch (status) {
@@ -52,45 +59,86 @@ export function StepEditorPanel({
   addingImage = false,
   selectionToolbar,
 }: StepEditorPanelProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const statusLabel = draftStatusLabel(draftStatus)
+  const nearLimit = content.length >= CHAR_WARN_AT
+  const atLimit = content.length >= CHAR_LIMIT
+  const toolbar =
+    typeof selectionToolbar === 'function'
+      ? selectionToolbar({ textareaRef })
+      : selectionToolbar
 
   return (
     <section className={`${shared.panel} ${shared.panelStage} ${styles.panel}`}>
-      <div className={styles.head}>
-        <h2 className={shared.panelTitle}>{title}</h2>
+      <header className={styles.head}>
+        <div className={styles.titleBlock}>
+          <p className={styles.eyebrow}>当前步骤</p>
+          <h2 className={styles.title}>{title}</h2>
+        </div>
         {statusLabel && (
           <span
             className={`${styles.draftStatus} ${
               draftStatus === 'error' ? styles.draftError : ''
-            } ${draftStatus === 'saved' ? styles.draftSaved : ''}`}
+            } ${draftStatus === 'saved' ? styles.draftSaved : ''} ${
+              draftStatus === 'dirty' ? styles.draftDirty : ''
+            }`}
             role="status"
           >
+            <span className={styles.statusDot} aria-hidden />
             {statusLabel}
           </span>
         )}
-      </div>
+      </header>
+
       {decisionHint && (
         <p className={styles.hint}>
-          本步你要决定：<span className={styles.decision}>{decisionHint}</span>
+          <span className={styles.hintLabel}>本步决定</span>
+          <span className={styles.decision}>{decisionHint}</span>
         </p>
       )}
-      <div className={styles.editorWrap}>
+
+      <div
+        className={`${styles.editorWrap} ${editorDisabled ? styles.editorLocked : ''}`}
+        data-locked={editorDisabled ? 'true' : undefined}
+      >
         <textarea
-          className={shared.textarea}
+          ref={textareaRef}
+          className={`${shared.textarea} ${styles.manuscript}`}
           rows={12}
           value={content}
           onChange={(e) => {
             onContentChange(e.target.value)
             onSelectionChange(e.target.selectionStart, e.target.selectionEnd)
           }}
-          onSelect={(e) => onSelectionChange(e.currentTarget.selectionStart, e.currentTarget.selectionEnd)}
+          onSelect={(e) =>
+            onSelectionChange(e.currentTarget.selectionStart, e.currentTarget.selectionEnd)
+          }
           placeholder={`撰写「${title}」…`}
           disabled={editorDisabled}
-          maxLength={2000}
+          maxLength={CHAR_LIMIT}
+          aria-describedby="step-editor-meta"
         />
-        <span className={styles.charCount}>{content.length} / 2000</span>
-        {selectionToolbar}
+        <div className={styles.metaRow} id="step-editor-meta">
+          {editorDisabled ? (
+            <span className={styles.lockNote} role="status">
+              预览确认中，稿面已锁定
+            </span>
+          ) : (
+            <span className={styles.metaHint}>划选文字可改这段</span>
+          )}
+          <span
+            className={`${styles.charCount} ${nearLimit ? styles.charWarn : ''} ${
+              atLimit ? styles.charLimit : ''
+            }`}
+          >
+            {content.length}
+            <span className={styles.charSep}>/</span>
+            {CHAR_LIMIT}
+          </span>
+        </div>
       </div>
+      {toolbar}
+
       {onPickImage && (
         <button
           type="button"
@@ -101,6 +149,7 @@ export function StepEditorPanel({
           {addingImage ? '正在添加图片…' : '从素材库添加图片'}
         </button>
       )}
+
       <div className={styles.actions}>
         <button
           type="button"

@@ -44,4 +44,23 @@ describe('StepEditorPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '从素材库添加图片' }))
     expect(onPickImage).toHaveBeenCalledOnce()
   })
+
+  it('锁定稿面时提示预览确认中', () => {
+    render(
+      <StepEditorPanel
+        title="正文"
+        content="草稿"
+        onContentChange={vi.fn()}
+        onSelectionChange={vi.fn()}
+        onSaveDraft={vi.fn()}
+        onConfirm={vi.fn()}
+        savingDraft={false}
+        confirming={false}
+        editorDisabled
+      />,
+    )
+
+    expect(screen.getByText('预览确认中，稿面已锁定')).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toBeDisabled()
+  })
 })

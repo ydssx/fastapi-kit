@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { aiSuggest } from '../api/creator'
 import {
   applySelectionInsertion,
@@ -8,6 +8,17 @@ import {
 } from '../lib/editorSelection'
 import { adjustmentsForStep } from '../lib/stepAiAdjustments'
 import type { QuotaLimitKind } from '../components/QuotaLimitNotice'
+
+export interface SelectionRewriteController {
+  showFloat: boolean
+  chips: { label: string; adjustment: string }[]
+  loading: boolean
+  preview: string | null
+  locked: boolean
+  onRewrite: (adjustment: string) => void
+  onConfirm: () => void
+  onCancel: () => void
+}
 
 interface UseSelectionRewriteArgs {
   projectId: string | undefined
@@ -20,6 +31,8 @@ interface UseSelectionRewriteArgs {
   setSelection: (value: TextSelection | null) => void
   handleApiError: (err: unknown) => void
   setQuotaError: (value: QuotaLimitKind | null) => void
+  aiPending?: boolean
+  quotaBlocked?: boolean
 }
 
 const FALLBACK_CHIPS = [{ label: '改写选中', adjustment: '改写选中片段，保持原意' }]
@@ -40,7 +53,9 @@ export function useSelectionRewrite({
   setSelection,
   handleApiError,
   setQuotaError,
-}: UseSelectionRewriteArgs) {
+  aiPending = false,
+  quotaBlocked = false,
+}: UseSelectionRewriteArgs): SelectionRewriteController {
   const queryClient = useQueryClient()
   const [preview, setPreview] = useState<string | null>(null)
   const [lockedSelection, setLockedSelection] = useState<TextSelection | null>(null)
@@ -49,6 +64,11 @@ export function useSelectionRewrite({
     stepKey && adjustmentsForStep(stepKey).length > 0
       ? adjustmentsForStep(stepKey)
       : FALLBACK_CHIPS
+
+  useEffect(() => {
+    setPreview(null)
+    setLockedSelection(null)
+  }, [projectId, stepKey])
 
   const rewriteMut = useMutation({
     mutationFn: (adjustment: string) => {
@@ -79,13 +99,15 @@ export function useSelectionRewrite({
   })
 
   const locked = preview !== null || rewriteMut.isPending
+  const busy = locked || aiPending || quotaBlocked
   const showFloat =
     !!aiEnabled &&
     !isPublish &&
+    !quotaBlocked &&
     (locked || hasRewritableSelection(selection, content))
 
   function confirmPreview() {
-    if (!preview || !lockedSelection) return
+    if (preview === null || !lockedSelection) return
     const result = applySelectionInsertion(lockedSelection.value, lockedSelection, preview)
     setContent(result.content)
     setSelection(result.selection)
@@ -105,7 +127,7 @@ export function useSelectionRewrite({
     preview,
     loading: rewriteMut.isPending,
     onRewrite: (adjustment: string) => {
-      if (locked) return
+      if (busy) return
       rewriteMut.mutate(adjustment)
     },
     onConfirm: confirmPreview,

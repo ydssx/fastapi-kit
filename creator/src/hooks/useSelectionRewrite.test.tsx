@@ -104,14 +104,16 @@ describe('useSelectionRewrite', () => {
     expect(result.current.locked).toBe(false)
   })
 
-  it('hides float for whitespace-only selection', () => {
-    const content = '钩子。   。CTA'
-    const selection = captureSelection(content, 3, 6)
-    const { result } = renderHook(
+  it('resets preview lock when stepKey changes', async () => {
+    aiSuggest.mockResolvedValue({ suggestion: '候选', variants: [] })
+    const content = '钩子。旧中间段。CTA。'
+    const selection = captureSelection(content, 3, 7)
+    let stepKey = 'script'
+    const { result, rerender } = renderHook(
       () =>
         useSelectionRewrite({
           projectId: 'p1',
-          stepKey: 'script',
+          stepKey,
           aiEnabled: true,
           isPublish: false,
           content,
@@ -124,6 +126,14 @@ describe('useSelectionRewrite', () => {
       { wrapper },
     )
 
-    expect(result.current.showFloat).toBe(false)
+    await act(async () => {
+      result.current.onRewrite('更简短')
+    })
+    await waitFor(() => expect(result.current.preview).toBe('候选'))
+
+    stepKey = 'hook'
+    rerender()
+    expect(result.current.preview).toBeNull()
+    expect(result.current.locked).toBe(false)
   })
 })

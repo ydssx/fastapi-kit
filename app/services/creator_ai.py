@@ -68,7 +68,7 @@ class CreatorAiService:
             if not span:
                 raise AppException(
                     "Selection rewrite requires non-empty selected_text",
-                    code=40022,
+                    code=40026,
                     status_code=400,
                 )
 
@@ -93,7 +93,14 @@ class CreatorAiService:
                 adjustment=adjustment,
             )
             raw = await self.llm.complete(system, user_prompt)
-            variants = [AiVariantOut(label="改写", content=raw.strip())]
+            rewritten = raw.strip()
+            if not rewritten:
+                raise AppException(
+                    "Selection rewrite returned empty content",
+                    code=40027,
+                    status_code=502,
+                )
+            variants = [AiVariantOut(label="改写", content=rewritten)]
         elif uses_multi_variant(step_key):
             system, user_prompt = build_multi_variant_prompt(
                 pipeline_id=project.pipeline_id,

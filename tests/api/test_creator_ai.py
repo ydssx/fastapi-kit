@@ -359,4 +359,27 @@ async def test_ai_suggest_selection_empty_text_rejected(
         json={"mode": "selection", "selected_text": "   "},
     )
     assert response.status_code == 400
-    assert response.json()["code"] == 40022
+    assert response.json()["code"] == 40026
+
+
+async def test_ai_suggest_selection_empty_llm_response_rejected(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
+        return "   "
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-sel-empty-llm@example.com")
+    project = await create_short_video_project(client, token)
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/topic/ai-suggest",
+        headers=auth_headers(token),
+        json={"mode": "selection", "selected_text": "旧选题片段"},
+    )
+    assert response.status_code == 502
+    assert response.json()["code"] == 40027
