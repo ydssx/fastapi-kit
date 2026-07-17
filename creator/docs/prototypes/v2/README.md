@@ -48,7 +48,7 @@ CREATOR_DEV_URL=http://localhost:5176/creator uv run python scripts/capture_crea
 ## 布局说明（2026-06-11 更新）
 
 - 向导页使用 **compact hero**（无缩略图/元数据块），步骤条 + 上下文芯片 **sticky**
-- 目标平台选择仅在 **前两步** 显示
+- 目标平台选择仅在 **前两步** 显示；此时平台文案只在折叠条，hero meta 不重复
 - 向导类截图脚本会 `scrollintoview #creator-step-workspace` 并对齐 AI 面板
 
 对照 spec Success Criteria 五项勾选。

@@ -215,12 +215,6 @@ export function ProjectWizardView({
   return (
     <div className={`${shared.page} ${styles.page}`}>
       {dialog}
-      <div className={styles.toolbar}>
-        <Link to="/" className={shared.backLink}>
-          ← 返回列表
-        </Link>
-        {moreMenu}
-      </div>
 
       {draftWarning && (
         <p className={shared.error} role="alert">
@@ -229,27 +223,35 @@ export function ProjectWizardView({
       )}
 
       <header className={styles.heroCompact}>
-        <div className={styles.heroCompactMain}>
-          <p className={styles.meta}>
-            {pipelineLabel(project.pipeline_id)}
-            {project.target_platforms.length > 0 && (
-              <>
-                <span className={styles.metaDot}>·</span>
-                {platformLabels(project.target_platforms)}
-              </>
-            )}
-          </p>
-          <label className={styles.titleEdit}>
-            <span className="sr-only">项目标题</span>
-            <input
-              className={styles.titleInputCompact}
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={onSaveTitle}
-            />
-          </label>
+        <div className={styles.heroChrome}>
+          <Link to="/" className={shared.backLink}>
+            ← 返回列表
+          </Link>
+          {moreMenu}
         </div>
-        <span className={styles.stepBadge}>{stepBadgeLabel}</span>
+        <div className={styles.heroBody}>
+          <div className={styles.heroCompactMain}>
+            <p className={styles.meta}>
+              {pipelineLabel(project.pipeline_id)}
+              {!showPlatformPicker && project.target_platforms.length > 0 && (
+                <>
+                  <span className={styles.metaDot}>·</span>
+                  {platformLabels(project.target_platforms)}
+                </>
+              )}
+            </p>
+            <label className={styles.titleEdit}>
+              <span className="sr-only">项目标题</span>
+              <input
+                className={styles.titleInputCompact}
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onBlur={onSaveTitle}
+              />
+            </label>
+          </div>
+          <span className={styles.stepBadge}>{stepBadgeLabel}</span>
+        </div>
       </header>
 
       {showPlatformPicker && (

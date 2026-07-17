@@ -32,6 +32,8 @@
 | `PublishChecklist` / `CompletedBanner` / `StepVersionHistory` | 变体态 |
 | `BrandField` | 品牌档案字段 + 字数 |
 
+进行中向导页头为单带（返回/更多 + compact hero）；完成态可保留独立 toolbar。前两步目标平台只在折叠条展示，hero meta 不重复平台名。
+
 ## UI 验收
 
 对照 `creator/docs/prototypes/v2/` 10 张 PNG 与 README；v1 资产见 `creator/docs/prototypes/`。v2 截图为 2026-06-11 顶栏布局；2026-06-25 侧栏重设计后，视觉 token 与布局以本文及 `docs/solutions/design-patterns/creator-workspace-ui-redesign-studio-sidebar.md` 为准，原型图待重新截图。
