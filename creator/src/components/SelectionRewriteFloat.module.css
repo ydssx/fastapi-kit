@@ -43,7 +43,7 @@
 .placementAbove::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: var(--float-arrow-x, 50%);
   width: 10px;
   height: 10px;
   background: color-mix(in srgb, var(--surface) 92%, var(--ai));
@@ -63,7 +63,8 @@
 
 .rootPreview.placementBelow::after,
 .rootPreview.placementAbove::after {
-  display: none;
+  /* Keep the caret tip so preview stays visually tied to the selection. */
+  background: color-mix(in srgb, var(--ai) 12%, var(--surface));
 }
 
 .bar {

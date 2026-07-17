@@ -4,6 +4,7 @@ import { apiFetch } from './client'
 export interface AiSuggestOptions {
   mode?: 'selection'
   selectedText?: string
+  signal?: AbortSignal
 }
 
 export function aiSuggest(
@@ -28,6 +29,7 @@ export function aiSuggest(
     {
       method: 'POST',
       body: JSON.stringify(body),
+      signal: options?.signal,
     },
   )
 }

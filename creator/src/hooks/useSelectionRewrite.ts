@@ -32,6 +32,9 @@ interface UseSelectionRewriteArgs {
   setSelection: (value: TextSelection | null) => void
   handleApiError: (err: unknown) => void
   setQuotaError: (value: QuotaLimitKind | null) => void
+  setActionError?: (value: string | null) => void
+  /** Flush local draft to server before selection rewrite (skips when already clean). */
+  flushDraft?: () => Promise<void>
   aiPending?: boolean
   quotaBlocked?: boolean
 }
@@ -41,6 +44,11 @@ const FALLBACK_CHIPS = [{ label: '改写选中', adjustment: '改写选中片段
 function hasRewritableSelection(selection: TextSelection | null, content: string): boolean {
   if (!hasActiveSelection(selection, content) || selection === null) return false
   return content.slice(selection.start, selection.end).trim().length > 0
+}
+
+function isAbortError(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === 'AbortError') return true
+  return err instanceof Error && err.name === 'AbortError'
 }
 
 export function useSelectionRewrite({
@@ -54,6 +62,8 @@ export function useSelectionRewrite({
   setSelection,
   handleApiError,
   setQuotaError,
+  setActionError,
+  flushDraft,
   aiPending = false,
   quotaBlocked = false,
 }: UseSelectionRewriteArgs): SelectionRewriteController {
@@ -61,7 +71,10 @@ export function useSelectionRewrite({
   const [preview, setPreview] = useState<string | null>(null)
   const [lockedSelection, setLockedSelection] = useState<TextSelection | null>(null)
   const [lastAdjustment, setLastAdjustment] = useState<string | null>(null)
+  /** False after user cancel so pending network no longer locks the editor. */
+  const [requestOwned, setRequestOwned] = useState(false)
   const cancelledRef = useRef(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const chips =
     stepKey && adjustmentsForStep(stepKey).length > 0
@@ -70,9 +83,12 @@ export function useSelectionRewrite({
 
   useEffect(() => {
     cancelledRef.current = true
+    abortRef.current?.abort()
+    abortRef.current = null
     setPreview(null)
     setLockedSelection(null)
     setLastAdjustment(null)
+    setRequestOwned(false)
   }, [projectId, stepKey])
 
   const rewriteMut = useMutation({
@@ -86,13 +102,18 @@ export function useSelectionRewrite({
       if (!selectedText) {
         return Promise.reject(new Error('no selection'))
       }
+      abortRef.current?.abort()
+      const ac = new AbortController()
+      abortRef.current = ac
       return aiSuggest(projectId, stepKey, adjustment, {
         mode: 'selection',
         selectedText,
+        signal: ac.signal,
       })
     },
     onMutate: (adjustment) => {
       cancelledRef.current = false
+      setRequestOwned(true)
       setLastAdjustment(adjustment)
       const hadPreview = preview !== null
       if (!lockedSelection && hasRewritableSelection(selection, content) && selection) {
@@ -107,39 +128,67 @@ export function useSelectionRewrite({
       void queryClient.invalidateQueries({ queryKey: ['usage'] })
     },
     onError: (err, _adjustment, ctx) => {
-      if (cancelledRef.current) return
+      if (cancelledRef.current || isAbortError(err)) return
       if (!ctx?.hadPreview) {
         setLockedSelection(null)
         setPreview(null)
         setLastAdjustment(null)
+        setRequestOwned(false)
       }
       handleApiError(err)
     },
+    onSettled: () => {
+      if (cancelledRef.current) {
+        setRequestOwned(false)
+      }
+    },
   })
 
-  const locked = preview !== null || rewriteMut.isPending
-  const blocked = aiPending || quotaBlocked || rewriteMut.isPending
+  const requestActive = rewriteMut.isPending && requestOwned
+  const locked = preview !== null || requestActive
+  const blocked = aiPending || quotaBlocked || requestActive
+  // Keep float reachable while locked even if quota just failed (Cancel must remain).
   const showFloat =
     !!aiEnabled &&
     !isPublish &&
-    !quotaBlocked &&
-    (locked || hasRewritableSelection(selection, content))
+    (locked || (!quotaBlocked && hasRewritableSelection(selection, content)))
+
+  function clearSession() {
+    cancelledRef.current = true
+    abortRef.current?.abort()
+    abortRef.current = null
+    setPreview(null)
+    setLockedSelection(null)
+    setLastAdjustment(null)
+    setRequestOwned(false)
+  }
 
   function confirmPreview() {
-    if (preview === null || !lockedSelection || rewriteMut.isPending) return
+    if (preview === null || !lockedSelection || requestActive) return
+    if (content !== lockedSelection.value) {
+      setActionError?.('稿面在预览期间已变化，请取消后重新改写')
+      clearSession()
+      return
+    }
     const result = applySelectionInsertion(lockedSelection.value, lockedSelection, preview)
     setContent(result.content)
     setSelection(result.selection)
-    setPreview(null)
-    setLockedSelection(null)
-    setLastAdjustment(null)
+    clearSession()
   }
 
   function cancelPreview() {
-    cancelledRef.current = true
-    setPreview(null)
-    setLockedSelection(null)
-    setLastAdjustment(null)
+    clearSession()
+  }
+
+  async function startRewrite(adjustment: string) {
+    if (locked || blocked) return
+    try {
+      await flushDraft?.()
+    } catch {
+      return
+    }
+    if (aiPending || quotaBlocked) return
+    rewriteMut.mutate(adjustment)
   }
 
   function regeneratePreview() {
@@ -152,10 +201,9 @@ export function useSelectionRewrite({
     chips,
     locked,
     preview,
-    loading: rewriteMut.isPending,
+    loading: requestActive,
     onRewrite: (adjustment: string) => {
-      if (locked || blocked) return
-      rewriteMut.mutate(adjustment)
+      void startRewrite(adjustment)
     },
     onRegenerate: regeneratePreview,
     onConfirm: confirmPreview,

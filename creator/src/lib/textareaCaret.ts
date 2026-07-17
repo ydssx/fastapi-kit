@@ -6,6 +6,23 @@ export interface TextareaCaretPoint {
   height: number
 }
 
+export interface FloatingAnchor {
+  top: number
+  left: number
+  placement: 'below' | 'above'
+  /** Arrow X within the float, relative to float left edge. */
+  arrowLeft: number
+}
+
+export interface FloatingAnchorOptions {
+  /** Horizontal alignment relative to the selection. Preview panels prefer `start`. */
+  align?: 'center' | 'start'
+  gap?: number
+  viewportPadding?: number
+  /** When true, prefer keeping the float within the textarea's horizontal band. */
+  clampToTextareaX?: boolean
+}
+
 function copyTextareaStyles(textarea: HTMLTextAreaElement, mirror: HTMLDivElement) {
   const style = window.getComputedStyle(textarea)
   mirror.style.position = 'absolute'
@@ -60,10 +77,8 @@ export function getTextareaCaretPoint(
   return { top, left, height }
 }
 
-export interface FloatingAnchor {
-  top: number
-  left: number
-  placement: 'below' | 'above'
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(n, max))
 }
 
 /** Viewport-fixed anchor just below (or above) the current textarea selection. */
@@ -73,7 +88,15 @@ export function getSelectionFloatingAnchor(
   end: number,
   floatWidth = 320,
   floatHeight = 48,
+  options: FloatingAnchorOptions = {},
 ): FloatingAnchor {
+  const {
+    align = 'center',
+    gap = 10,
+    viewportPadding: pad = 8,
+    clampToTextareaX = true,
+  } = options
+
   const from = Math.min(start, end)
   const to = Math.max(start, end)
   const startPoint = getTextareaCaretPoint(textarea, from)
@@ -83,19 +106,61 @@ export function getSelectionFloatingAnchor(
   const selTop = rect.top + Math.min(startPoint.top, endPoint.top)
   const selBottom =
     rect.top + Math.max(startPoint.top + startPoint.height, endPoint.top + endPoint.height)
-  const selLeft = rect.left + (startPoint.left + endPoint.left) / 2
+  const selStartX = rect.left + startPoint.left
+  const selEndX = rect.left + endPoint.left
+  const selMidX = (selStartX + selEndX) / 2
+  const anchorX = align === 'start' ? selStartX : selMidX
 
-  const gap = 8
-  const spaceBelow = window.innerHeight - selBottom
-  const placement: 'below' | 'above' =
-    spaceBelow < floatHeight + gap && selTop > floatHeight + gap ? 'above' : 'below'
+  const spaceBelow = window.innerHeight - selBottom - pad
+  const spaceAbove = selTop - pad
+  const need = floatHeight + gap
+
+  let placement: 'below' | 'above'
+  if (spaceBelow >= need) {
+    placement = 'below'
+  } else if (spaceAbove >= need) {
+    placement = 'above'
+  } else {
+    // Neither side fits fully — pick the roomier side and clamp later.
+    placement = spaceBelow >= spaceAbove ? 'below' : 'above'
+  }
 
   let top = placement === 'below' ? selBottom + gap : selTop - floatHeight - gap
-  let left = selLeft - floatWidth / 2
 
-  const pad = 8
-  left = Math.max(pad, Math.min(left, window.innerWidth - floatWidth - pad))
-  top = Math.max(pad, Math.min(top, window.innerHeight - floatHeight - pad))
+  // If clamping would drag the float over the selection mid-line, flip when the other side has any room.
+  const midY = (selTop + selBottom) / 2
+  const clampedTop = clamp(top, pad, window.innerHeight - floatHeight - pad)
+  const coversMid =
+    clampedTop < midY && clampedTop + floatHeight > midY && Math.min(spaceAbove, spaceBelow) > gap
+  if (coversMid) {
+    const alt: 'below' | 'above' = placement === 'below' ? 'above' : 'below'
+    const altTop = alt === 'below' ? selBottom + gap : selTop - floatHeight - gap
+    const altSpace = alt === 'below' ? spaceBelow : spaceAbove
+    if (altSpace > gap) {
+      placement = alt
+      top = altTop
+    }
+  }
 
-  return { top, left, placement }
+  top = clamp(top, pad, Math.max(pad, window.innerHeight - floatHeight - pad))
+
+  let left =
+    align === 'start' ? anchorX : anchorX - floatWidth / 2
+
+  let minLeft = pad
+  let maxLeft = window.innerWidth - floatWidth - pad
+  if (clampToTextareaX) {
+    minLeft = Math.max(minLeft, rect.left)
+    maxLeft = Math.min(maxLeft, rect.right - floatWidth)
+    if (minLeft > maxLeft) {
+      // Textarea narrower than float — fall back to viewport clamp only.
+      minLeft = pad
+      maxLeft = window.innerWidth - floatWidth - pad
+    }
+  }
+  left = clamp(left, minLeft, Math.max(minLeft, maxLeft))
+
+  const arrowLeft = clamp(anchorX - left, 16, Math.max(16, floatWidth - 16))
+
+  return { top, left, placement, arrowLeft }
 }

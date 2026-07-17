@@ -123,6 +123,13 @@ export function ProjectDetailPage() {
     setSelection: setEditorSelection,
     handleApiError,
     setQuotaError,
+    setActionError,
+    flushDraft: async () => {
+      if (!id || !project || isPublish || project.status === 'completed') return
+      const serverDraft = project.draft_content[project.current_step_key] ?? ''
+      if (content === serverDraft) return
+      await draft.draftMut.mutateAsync({ text: content, toast: false })
+    },
     aiPending: stepAi.aiMut.isPending,
     quotaBlocked: quotaError === 'ai',
   })
@@ -174,6 +181,7 @@ export function ProjectDetailPage() {
       setActionError(null)
       applyProjectUpdate(updated, {
         onSyncContent: (next) => {
+          if (selectionRewrite.locked) return
           draft.markAutosaveSkip()
           setContent(next)
         },
@@ -245,6 +253,7 @@ export function ProjectDetailPage() {
   }
 
   function handleEditPlatformsChange(next: string[]) {
+    if (selectionRewrite.locked) return
     setEditPlatforms(next)
     let primary = editPrimaryPlatform
     if (next.length === 1) {
@@ -258,6 +267,7 @@ export function ProjectDetailPage() {
   }
 
   function handleEditPrimaryChange(key: string) {
+    if (selectionRewrite.locked) return
     setEditPrimaryPlatform(key)
     commitPlatformEdit(editPlatforms, key)
   }
@@ -404,7 +414,10 @@ export function ProjectDetailPage() {
       onToggleCheck={publish.toggleCheck}
       onComplete={() => publish.completeMut.mutate()}
       completing={publish.completeMut.isPending}
-      onStepOpen={(stepKey) => stepAi.openMut.mutate(stepKey)}
+      onStepOpen={(stepKey) => {
+        if (selectionRewrite.locked) return
+        stepAi.openMut.mutate(stepKey)
+      }}
       openingStepKey={stepAi.openMut.isPending ? stepAi.openMut.variables : null}
       prevCtx={prevStepContext()}
       quotaError={quotaError}

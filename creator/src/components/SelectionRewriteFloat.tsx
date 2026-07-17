@@ -50,6 +50,7 @@ interface FloatPos {
   left: number
   width: number
   placement: 'below' | 'above'
+  arrowLeft: number
 }
 
 export function SelectionRewriteFloat({
@@ -79,29 +80,41 @@ export function SelectionRewriteFloat({
       const ta = textareaRef?.current
       const el = rootRef.current
       if (!ta || !el) return
-      const width = Math.min(preview !== null ? 380 : 420, window.innerWidth - 16)
-      const height = el.offsetHeight || (preview !== null ? 200 : 48)
-      const anchor = getSelectionFloatingAnchor(
-        ta,
-        selectionStart,
-        selectionEnd,
-        width,
-        height,
-      )
+      const isPreview = preview !== null
+      const width = Math.min(isPreview ? 360 : 420, window.innerWidth - 16, ta.clientWidth || 420)
+      const height = el.offsetHeight || (isPreview ? 200 : 48)
+      const anchor = getSelectionFloatingAnchor(ta, selectionStart, selectionEnd, width, height, {
+        align: isPreview ? 'start' : 'center',
+        clampToTextareaX: true,
+        gap: isPreview ? 12 : 8,
+      })
       setPos({
         top: anchor.top,
         left: anchor.left,
         width,
         placement: anchor.placement,
+        arrowLeft: anchor.arrowLeft,
       })
     }
 
     update()
+    // Second pass after preview body lays out (height can grow with content).
+    const raf = window.requestAnimationFrame(update)
+
     const ta = textareaRef?.current
+    const el = rootRef.current
+    const ro =
+      typeof ResizeObserver !== 'undefined' && el
+        ? new ResizeObserver(() => update())
+        : null
+    if (el) ro?.observe(el)
+
     ta?.addEventListener('scroll', update)
     window.addEventListener('resize', update)
     window.addEventListener('scroll', update, true)
     return () => {
+      window.cancelAnimationFrame(raf)
+      ro?.disconnect()
       ta?.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
@@ -123,6 +136,7 @@ export function SelectionRewriteFloat({
                 top: pos.top,
                 left: pos.left,
                 width: pos.width,
+                ['--float-arrow-x' as string]: `${pos.arrowLeft}px`,
               }
             : { visibility: 'hidden' as const }
           : undefined
