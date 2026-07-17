@@ -22,5 +22,14 @@ async def ai_suggest(
     body: AiSuggestIn | None = None,
 ) -> ApiResponse[AiSuggestOut]:
     adjustment = body.adjustment if body else None
-    data = await ai.suggest(user, project_id, step_key, adjustment)
+    mode = body.mode if body else None
+    selected_text = body.selected_text if body else None
+    data = await ai.suggest(
+        user,
+        project_id,
+        step_key,
+        adjustment,
+        mode=mode,
+        selected_text=selected_text,
+    )
     return ApiResponse(data=data)

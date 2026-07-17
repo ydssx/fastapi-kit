@@ -263,3 +263,100 @@ async def test_ai_prompt_excludes_xhs_when_primary_wechat(
     assert response.status_code == 200
     assert captured
     assert "【平台写作要求 · 小红书" not in captured[-1]
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_selection_rewrite_success(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    captured: list[str] = []
+
+    async def fake_complete(_self, _system: str, user_prompt: str, **_kwargs: object) -> str:
+        captured.append(user_prompt)
+        return "新中间段"
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-sel@example.com")
+    project = await create_short_video_project(client, token)
+    for step_key, content in [("topic", "选题"), ("hook", "钩子")]:
+        await client.post(
+            f"/api/v1/creator/projects/{project['id']}/steps/{step_key}/confirm",
+            headers=auth_headers(token),
+            json={"content": content},
+        )
+    await client.patch(
+        f"/api/v1/creator/projects/{project['id']}/steps/script",
+        headers=auth_headers(token),
+        json={"content": "钩子。旧中间段。CTA。"},
+    )
+
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/script/ai-suggest",
+        headers=auth_headers(token),
+        json={
+            "mode": "selection",
+            "selected_text": "旧中间段",
+            "adjustment": "更简短",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["suggestion"] == "新中间段"
+    assert len(data["variants"]) == 1
+    assert "旧中间段" in captured[-1]
+    assert "只输出改写后的选中片段" in captured[-1] or "需要改写的选中片段" in captured[-1]
+    assert "更简短" in captured[-1]
+    usage = await client.get("/api/v1/creator/usage", headers=auth_headers(token))
+    assert usage.json()["data"]["ai_calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_selection_on_multi_variant_step_is_single(
+    client: AsyncClient,
+    test_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    called_json: list[bool] = []
+
+    async def fake_complete(
+        _self, _system: str, _user: str, *, json_output: bool = False, **_kwargs: object
+    ) -> str:
+        called_json.append(json_output)
+        return "局部改写选题"
+
+    monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)
+
+    token = await register_token(client, "creator-ai-sel-topic@example.com")
+    project = await create_short_video_project(client, token)
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/topic/ai-suggest",
+        headers=auth_headers(token),
+        json={"mode": "selection", "selected_text": "旧选题片段"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["suggestion"] == "局部改写选题"
+    assert len(data["variants"]) == 1
+    assert called_json == [False]
+
+
+@pytest.mark.asyncio
+async def test_ai_suggest_selection_empty_text_rejected(
+    client: AsyncClient,
+    test_settings,
+) -> None:
+    test_settings.llm_api_key = "test-key"
+    token = await register_token(client, "creator-ai-sel-empty@example.com")
+    project = await create_short_video_project(client, token)
+    response = await client.post(
+        f"/api/v1/creator/projects/{project['id']}/steps/topic/ai-suggest",
+        headers=auth_headers(token),
+        json={"mode": "selection", "selected_text": "   "},
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == 40022
