@@ -51,4 +51,29 @@ describe('AiSuggestionPanel', () => {
     expect(onAdoptAll).toHaveBeenCalledWith('整段建议稿')
     expect(onReplaceSelection).not.toHaveBeenCalled()
   })
+
+  it('折叠态标题为 AI 建议', () => {
+    render(
+      <AiSuggestionPanel
+        stepTitle="开场"
+        suggestion={null}
+        variants={[]}
+        loading={false}
+        quotaBlocked={false}
+        sourceParts={[]}
+        adjustments={[]}
+        hasActiveSelection={false}
+        onAdoptAll={vi.fn()}
+        onInsert={vi.fn()}
+        onReplaceSelection={vi.fn()}
+        onRegenerate={vi.fn()}
+        onAdjust={vi.fn()}
+        mobileCollapsed
+        onToggleMobile={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'AI 建议' })).toBeInTheDocument()
+    expect(screen.queryByText('要 AI 建议')).not.toBeInTheDocument()
+  })
 })

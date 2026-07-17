@@ -180,6 +180,13 @@ export function ProjectWizardView({
       confirming={confirming}
       draftStatus={draftStatus}
       editorDisabled={aiPending || !!selectionRewrite?.locked}
+      lockReason={
+        selectionRewrite?.locked
+          ? 'rewrite-preview'
+          : aiPending
+            ? 'ai-generating'
+            : undefined
+      }
       onPickImage={onPickImage}
       addingImage={addingImage}
       selectionToolbar={

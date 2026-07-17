@@ -278,20 +278,28 @@
 
 .adjustChip {
   padding: 5px 12px;
-  border: 1px solid var(--accent);
+  border: 1px solid color-mix(in srgb, var(--ai) 28%, var(--border));
   border-radius: 999px;
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--text);
   font-size: 0.8125rem;
   cursor: pointer;
   transition:
     background 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.adjustChip:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: var(--accent-hover);
+.adjustChip:hover:not(:disabled),
+.adjustChip:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+  background: color-mix(in srgb, var(--ai) 12%, var(--surface));
+  color: color-mix(in srgb, var(--ai) 35%, var(--text));
+  outline: none;
+}
+
+.adjustChip:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 18%, transparent);
 }
 
 .adjustChip:disabled {

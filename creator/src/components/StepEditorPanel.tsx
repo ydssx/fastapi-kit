@@ -4,6 +4,8 @@ import styles from './StepEditorPanel.module.css'
 
 export type DraftSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 
+export type EditorLockReason = 'ai-generating' | 'rewrite-preview'
+
 export interface StepEditorToolbarContext {
   textareaRef: RefObject<HTMLTextAreaElement | null>
 }
@@ -20,9 +22,15 @@ interface StepEditorPanelProps {
   confirming: boolean
   draftStatus?: DraftSaveStatus
   editorDisabled?: boolean
+  lockReason?: EditorLockReason
   onPickImage?: () => void
   addingImage?: boolean
   selectionToolbar?: ReactNode | ((ctx: StepEditorToolbarContext) => ReactNode)
+}
+
+function lockNoteLabel(reason: EditorLockReason | undefined): string {
+  if (reason === 'ai-generating') return 'AI 生成中，稿面已锁定'
+  return '预览确认中，稿面已锁定'
 }
 
 const CHAR_LIMIT = 2000
@@ -55,6 +63,7 @@ export function StepEditorPanel({
   confirming,
   draftStatus = 'idle',
   editorDisabled = false,
+  lockReason,
   onPickImage,
   addingImage = false,
   selectionToolbar,
@@ -121,7 +130,7 @@ export function StepEditorPanel({
         <div className={styles.metaRow} id="step-editor-meta">
           {editorDisabled ? (
             <span className={styles.lockNote} role="status">
-              预览确认中，稿面已锁定
+              {lockNoteLabel(lockReason)}
             </span>
           ) : (
             <span className={styles.metaHint}>划选文字可改这段</span>
