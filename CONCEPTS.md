@@ -44,6 +44,10 @@ An Inspiration Lab handoff mode where the creator can create a Content Project f
 
 A thin status strip on the Publish Sprint Hub showing the creator’s weekly publish target alongside in-progress and completed-this-week counts. It supplements near-publish prioritization; it does not replace the hub with a calendar of slots.
 
+### Selection Rewrite Preview
+
+A pipeline-step revision path where the creator selects a span in the active step draft, requests a floating rewrite, reviews a candidate replacement, and only then confirms to replace that selection. While the preview is open the draft is locked; it is not a dual-column editor, patch review UI, or cross-step batch rewrite.
+
 ## Creator UI vocabulary
 
 ### Design Tokens

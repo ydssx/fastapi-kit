@@ -51,11 +51,15 @@ export function useSelectionRewrite({
         return Promise.reject(new Error('no selection'))
       }
       const selectedText = content.slice(selection.start, selection.end)
-      setLockedSelection(selection)
       return aiSuggest(projectId, stepKey, adjustment, {
         mode: 'selection',
         selectedText,
       })
+    },
+    onMutate: () => {
+      if (hasActiveSelection(selection, content) && selection) {
+        setLockedSelection(selection)
+      }
     },
     onSuccess: (data) => {
       setQuotaError(null)
