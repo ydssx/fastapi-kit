@@ -24,6 +24,11 @@ interface UseSelectionRewriteArgs {
 
 const FALLBACK_CHIPS = [{ label: '改写选中', adjustment: '改写选中片段，保持原意' }]
 
+function hasRewritableSelection(selection: TextSelection | null, content: string): boolean {
+  if (!hasActiveSelection(selection, content) || selection === null) return false
+  return content.slice(selection.start, selection.end).trim().length > 0
+}
+
 export function useSelectionRewrite({
   projectId,
   stepKey,
@@ -47,17 +52,17 @@ export function useSelectionRewrite({
 
   const rewriteMut = useMutation({
     mutationFn: (adjustment: string) => {
-      if (!projectId || !stepKey || !hasActiveSelection(selection, content) || !selection) {
+      if (!projectId || !stepKey || !hasRewritableSelection(selection, content) || !selection) {
         return Promise.reject(new Error('no selection'))
       }
-      const selectedText = content.slice(selection.start, selection.end)
+      const selectedText = content.slice(selection.start, selection.end).trim()
       return aiSuggest(projectId, stepKey, adjustment, {
         mode: 'selection',
         selectedText,
       })
     },
     onMutate: () => {
-      if (hasActiveSelection(selection, content) && selection) {
+      if (hasRewritableSelection(selection, content) && selection) {
         setLockedSelection(selection)
       }
     },
@@ -77,7 +82,7 @@ export function useSelectionRewrite({
   const showFloat =
     !!aiEnabled &&
     !isPublish &&
-    (locked || hasActiveSelection(selection, content))
+    (locked || hasRewritableSelection(selection, content))
 
   function confirmPreview() {
     if (!preview || !lockedSelection) return

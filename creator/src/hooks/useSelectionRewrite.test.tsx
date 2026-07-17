@@ -103,4 +103,27 @@ describe('useSelectionRewrite', () => {
     expect(result.current.preview).toBeNull()
     expect(result.current.locked).toBe(false)
   })
+
+  it('hides float for whitespace-only selection', () => {
+    const content = '钩子。   。CTA'
+    const selection = captureSelection(content, 3, 6)
+    const { result } = renderHook(
+      () =>
+        useSelectionRewrite({
+          projectId: 'p1',
+          stepKey: 'script',
+          aiEnabled: true,
+          isPublish: false,
+          content,
+          selection,
+          setContent: vi.fn(),
+          setSelection: vi.fn(),
+          handleApiError: vi.fn(),
+          setQuotaError: vi.fn(),
+        }),
+      { wrapper },
+    )
+
+    expect(result.current.showFloat).toBe(false)
+  })
 })
