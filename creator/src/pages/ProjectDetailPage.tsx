@@ -10,6 +10,7 @@ import { useProjectDraftAutosave } from '../hooks/useProjectDraftAutosave'
 import { useProjectMediaAssociations } from '../hooks/useProjectMediaAssociations'
 import { useProjectPublish } from '../hooks/useProjectPublish'
 import { useProjectStepAi } from '../hooks/useProjectStepAi'
+import { useSelectionRewrite } from '../hooks/useSelectionRewrite'
 import {
   applySelectionInsertion,
   hasActiveSelection,
@@ -111,10 +112,31 @@ export function ProjectDetailPage() {
     queryClient,
   })
 
+  const selectionRewrite = useSelectionRewrite({
+    projectId: id,
+    stepKey: step?.key,
+    aiEnabled: !!step?.ai_enabled,
+    isPublish: !!isPublish,
+    content,
+    selection: editorSelection,
+    setContent,
+    setSelection: setEditorSelection,
+    handleApiError,
+    setQuotaError,
+  })
+
   useEffect(() => {
     autosaveBlockedRef.current =
-      stepAi.confirmMut.isPending || stepAi.aiMut.isPending
-  }, [stepAi.aiMut.isPending, stepAi.confirmMut.isPending])
+      stepAi.confirmMut.isPending ||
+      stepAi.aiMut.isPending ||
+      selectionRewrite.loading ||
+      selectionRewrite.locked
+  }, [
+    stepAi.aiMut.isPending,
+    stepAi.confirmMut.isPending,
+    selectionRewrite.loading,
+    selectionRewrite.locked,
+  ])
 
   const media = useProjectMediaAssociations({
     projectId: id,
@@ -390,6 +412,7 @@ export function ProjectDetailPage() {
       stepTitle={stepTitle}
       moreMenu={moreMenu}
       dialog={dialog}
+      selectionRewrite={selectionRewrite}
     />
   )
 }

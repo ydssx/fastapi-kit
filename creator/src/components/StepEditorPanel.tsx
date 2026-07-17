@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import shared from '../styles/shared.module.css'
 import styles from './StepEditorPanel.module.css'
 
@@ -17,6 +18,7 @@ interface StepEditorPanelProps {
   editorDisabled?: boolean
   onPickImage?: () => void
   addingImage?: boolean
+  selectionToolbar?: ReactNode
 }
 
 function draftStatusLabel(status: DraftSaveStatus): string | null {
@@ -48,6 +50,7 @@ export function StepEditorPanel({
   editorDisabled = false,
   onPickImage,
   addingImage = false,
+  selectionToolbar,
 }: StepEditorPanelProps) {
   const statusLabel = draftStatusLabel(draftStatus)
 
@@ -86,6 +89,7 @@ export function StepEditorPanel({
           maxLength={2000}
         />
         <span className={styles.charCount}>{content.length} / 2000</span>
+        {selectionToolbar}
       </div>
       {onPickImage && (
         <button

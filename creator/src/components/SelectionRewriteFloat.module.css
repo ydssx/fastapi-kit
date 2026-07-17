@@ -1,0 +1,82 @@
+.root {
+  margin-top: var(--space-sm);
+  border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--border));
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--ai) 8%, var(--surface));
+  padding: 10px 12px;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--ai-ink, var(--text));
+  letter-spacing: 0.02em;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border: 1px solid color-mix(in srgb, var(--ai) 40%, var(--border));
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-meta);
+  cursor: pointer;
+}
+
+.chip:hover:not(:disabled),
+.chip:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+}
+
+.chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.previewLabel {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.previewBody {
+  margin: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  font: inherit;
+  font-size: var(--text-body);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.previewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

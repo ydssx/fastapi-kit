@@ -10,6 +10,7 @@ import {
 import { PlatformPicker } from '../../components/PlatformPicker'
 import { PublishChecklist } from '../../components/PublishChecklist'
 import { QuotaLimitNotice, type QuotaLimitKind } from '../../components/QuotaLimitNotice'
+import { SelectionRewriteFloat } from '../../components/SelectionRewriteFloat'
 import { StepEditorPanel, type DraftSaveStatus } from '../../components/StepEditorPanel'
 import { StepProgress } from '../../components/StepProgress'
 import { StepWorkspace } from '../../components/StepWorkspace'
@@ -86,6 +87,16 @@ interface ProjectWizardViewProps {
   stepTitle: (key: string) => string
   moreMenu: ReactNode
   dialog: ReactNode
+  selectionRewrite?: {
+    showFloat: boolean
+    chips: { label: string; adjustment: string }[]
+    loading: boolean
+    preview: string | null
+    locked: boolean
+    onRewrite: (adjustment: string) => void
+    onConfirm: () => void
+    onCancel: () => void
+  }
 }
 
 export function ProjectWizardView({
@@ -141,6 +152,7 @@ export function ProjectWizardView({
   stepTitle,
   moreMenu,
   dialog,
+  selectionRewrite,
 }: ProjectWizardViewProps) {
   const totalSteps = pipeline?.steps.length ?? 0
   const showPlatformPicker = canEditPlatforms && stepIndex <= 1
@@ -162,20 +174,35 @@ export function ProjectWizardView({
       decisionHint={step?.description}
       content={content}
       onContentChange={(nextContent) => {
+        if (selectionRewrite?.locked) return
         setContent(nextContent)
         setEditorSelection(null)
       }}
-      onSelectionChange={(start, end) =>
+      onSelectionChange={(start, end) => {
+        if (selectionRewrite?.locked) return
         setEditorSelection(captureSelection(content, start, end))
-      }
+      }}
       onSaveDraft={onSaveDraft}
       onConfirm={onConfirm}
       savingDraft={savingDraft}
       confirming={confirming}
       draftStatus={draftStatus}
-      editorDisabled={aiPending}
+      editorDisabled={aiPending || !!selectionRewrite?.locked}
       onPickImage={onPickImage}
       addingImage={addingImage}
+      selectionToolbar={
+        selectionRewrite?.showFloat ? (
+          <SelectionRewriteFloat
+            chips={selectionRewrite.chips}
+            loading={selectionRewrite.loading}
+            preview={selectionRewrite.preview}
+            locked={selectionRewrite.locked}
+            onRewrite={selectionRewrite.onRewrite}
+            onConfirm={selectionRewrite.onConfirm}
+            onCancel={selectionRewrite.onCancel}
+          />
+        ) : null
+      }
     />
   )
 
