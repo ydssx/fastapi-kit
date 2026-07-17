@@ -202,6 +202,7 @@ export function ProjectWizardView({
                 selectionStart={editorSelection?.start ?? 0}
                 selectionEnd={editorSelection?.end ?? 0}
                 onRewrite={selectionRewrite.onRewrite}
+                onRegenerate={selectionRewrite.onRegenerate}
                 onConfirm={selectionRewrite.onConfirm}
                 onCancel={selectionRewrite.onCancel}
               />

@@ -4,6 +4,32 @@ import { getSelectionFloatingAnchor } from '../lib/textareaCaret'
 import shared from '../styles/shared.module.css'
 import styles from './SelectionRewriteFloat.module.css'
 
+function RefreshIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M20 12a8 8 0 1 1-2.34-5.66"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 4v5h-5"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 interface SelectionRewriteFloatProps {
   chips: { label: string; adjustment: string }[]
   loading: boolean
@@ -14,6 +40,7 @@ interface SelectionRewriteFloatProps {
   selectionStart?: number
   selectionEnd?: number
   onRewrite: (adjustment: string) => void
+  onRegenerate: () => void
   onConfirm: () => void
   onCancel: () => void
 }
@@ -35,10 +62,12 @@ export function SelectionRewriteFloat({
   selectionStart = 0,
   selectionEnd = 0,
   onRewrite,
+  onRegenerate,
   onConfirm,
   onCancel,
 }: SelectionRewriteFloatProps) {
   const chipDisabled = loading || locked || actionsDisabled
+  const previewActionsDisabled = loading || actionsDisabled
   const rootRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<FloatPos | null>(null)
   const floating = !!textareaRef
@@ -126,10 +155,22 @@ export function SelectionRewriteFloat({
         <div className={styles.preview}>
           <div className={styles.previewHead}>
             <span className={styles.mark} aria-hidden />
-            <p className={styles.previewLabel}>预览改写 · 确认后才写入稿面</p>
+            <p className={styles.previewLabel}>
+              {loading ? '重新生成中…' : '预览改写 · 确认后才写入稿面'}
+            </p>
           </div>
           <pre className={styles.previewBody}>{preview}</pre>
           <div className={styles.previewActions}>
+            <button
+              type="button"
+              className={styles.regenBtn}
+              aria-label="重新生成"
+              title="重新生成"
+              disabled={previewActionsDisabled}
+              onClick={onRegenerate}
+            >
+              <RefreshIcon />
+            </button>
             <button type="button" className={shared.btnGhost} onClick={onCancel}>
               取消
             </button>
@@ -137,6 +178,7 @@ export function SelectionRewriteFloat({
               type="button"
               className={`${shared.btn} ${styles.confirmBtn}`}
               onClick={onConfirm}
+              disabled={previewActionsDisabled}
             >
               确认替换选区
             </button>

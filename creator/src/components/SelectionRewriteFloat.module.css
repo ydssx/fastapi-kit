@@ -185,7 +185,43 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
   justify-content: flex-end;
+}
+
+.regenBtn {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ai-muted) 55%, var(--surface));
+  color: var(--ai);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.regenBtn:hover:not(:disabled),
+.regenBtn:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+  background: color-mix(in srgb, var(--ai) 16%, var(--surface));
+  outline: none;
+}
+
+.regenBtn:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 18%, transparent);
+}
+
+.regenBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .confirmBtn {

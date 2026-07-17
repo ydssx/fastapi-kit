@@ -104,6 +104,50 @@ describe('useSelectionRewrite', () => {
     expect(result.current.locked).toBe(false)
   })
 
+  it('regenerates preview with the same adjustment and locked selection', async () => {
+    aiSuggest
+      .mockResolvedValueOnce({ suggestion: '候选一', variants: [] })
+      .mockResolvedValueOnce({ suggestion: '候选二', variants: [] })
+    const content = '钩子。旧中间段。CTA。'
+    const selection = captureSelection(content, 3, 7)
+    const { result } = renderHook(
+      () =>
+        useSelectionRewrite({
+          projectId: 'p1',
+          stepKey: 'script',
+          aiEnabled: true,
+          isPublish: false,
+          content,
+          selection,
+          setContent: vi.fn(),
+          setSelection: vi.fn(),
+          handleApiError: vi.fn(),
+          setQuotaError: vi.fn(),
+        }),
+      { wrapper },
+    )
+
+    await act(async () => {
+      result.current.onRewrite('更简短')
+    })
+    await waitFor(() => expect(result.current.preview).toBe('候选一'))
+
+    await act(async () => {
+      result.current.onRegenerate()
+    })
+    await waitFor(() => expect(result.current.preview).toBe('候选二'))
+
+    expect(aiSuggest).toHaveBeenCalledTimes(2)
+    expect(aiSuggest).toHaveBeenNthCalledWith(
+      2,
+      'p1',
+      'script',
+      '更简短',
+      expect.objectContaining({ mode: 'selection', selectedText: '旧中间段' }),
+    )
+    expect(result.current.locked).toBe(true)
+  })
+
   it('resets preview lock when stepKey changes', async () => {
     aiSuggest.mockResolvedValue({ suggestion: '候选', variants: [] })
     const content = '钩子。旧中间段。CTA。'
