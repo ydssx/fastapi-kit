@@ -2,11 +2,17 @@
 
 > Shared domain vocabulary for this project — entities, named processes, and status concepts with project-specific meaning. Seeded with core domain vocabulary, then accretes as ce-compound and ce-compound-refresh process learnings; direct edits are fine. Glossary only, not a spec or catch-all.
 
+## Platform surfaces
+
+### Admin Console
+
+The browser SPA served at `/admin/` for operators — users, audit trails, application logs, and other ops views. Distinct from the Creator Workbench; both are path-mounted behind the same reverse proxy with trailing-slash bases.
+
 ## Creator domain
 
 ### Creator Workbench
 
-The browser SPA served at `/creator/` where authenticated users manage content projects, brand settings, and AI-assisted pipeline steps. Distinct from the admin console at `/admin/`.
+The browser SPA served at `/creator/` where authenticated users manage content projects, brand settings, and AI-assisted pipeline steps. Distinct from the Admin Console at `/admin/`.
 
 ### Content Pipeline
 

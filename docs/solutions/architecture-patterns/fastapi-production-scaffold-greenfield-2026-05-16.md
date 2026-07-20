@@ -38,7 +38,8 @@ tags:
   - hatchling
   - rate-limit-fail-closed
   - background-tasks
-last_refreshed: 2026-07-15
+  - commit-then-enqueue
+last_refreshed: 2026-07-20
 ---
 
 # Production FastAPI scaffold from greenfield (fastapi-kit)
@@ -48,10 +49,10 @@ last_refreshed: 2026-07-15
 `fastapi-kit` 从空目录起步，目标是可本地一键启动、可容器化部署、可扩展的生产级后端模板。最终形态包括：
 
 - **分层**：`api` → `service` → `repository` → SQLAlchemy 2 异步模型
-- **能力**：JWT 注册/登录/刷新、`/me`、Redis 缓存与限流、Celery 示例任务、structlog、`/metrics`、Alembic、pytest + testcontainers、GitHub Actions
+- **能力**：JWT 注册/登录/刷新、`/me`、Redis 缓存与限流、Celery 后台任务、structlog、`/metrics`、Alembic、pytest + testcontainers、GitHub Actions；后续在同一脚手架上扩展了 admin/creator SPA、对象存储（MinIO）与可选 ops profile（Flower/Loki）
 - **两种启动路径**：
   - `make dev-init` + `make dev`（底层仍是 `scripts/init_dev.sh`）：仅 Docker 起 Postgres + Redis，本机 `uvicorn --reload`（热重载开发）；需要时再配合 `make worker` / `make beat`
-  - `make up`（底层是 `scripts/start.sh -d`）：全栈 Compose（`postgres`、`redis`、`migrate`、`proxy`（Caddy + **admin**/**creator** 静态资源）、`api`、`celery-worker`、`celery-beat`）；对外入口 **https://localhost**
+  - `make up`（底层是 `scripts/start.sh -d`）：全栈 Compose（`postgres`、`redis`、`migrate`、`proxy`（Caddy + **admin**/**creator** 静态资源）、`api`、`celery-worker`、`celery-beat`，以及 MinIO 等）；对外入口 **https://localhost**
 
 实施与 code review 阶段还修复了 Docker 构建、hatchling 打包、注册/Celery 时序、限流策略与生产密钥校验等问题。
 
@@ -77,13 +78,18 @@ last_refreshed: 2026-07-15
 | `make api-rebuild` | - | 仅重建并重启 API（及共用镜像的 migrate / Celery）；`uv.lock` 未变时依赖层命中缓存 |
 | `make proxy-rebuild` | - | 仅重建并重启 proxy（admin + creator SPA） |
 | `make build` | - | BuildKit 下构建全部 Compose 镜像（不启动） |
+| `make up-ha` / `make rolling-update` | - | 多 API 副本与滚动替换 |
+| `make prod-config` / `make up-prod` | - | 生产 Compose 叠加配置 |
+| `make frontend-check` | - | admin + creator 的 test/lint/build |
 | `make down` | `scripts/stop.sh` | `docker compose down` |
 
 ### 生产加固（code review 落地）
 
 1. **Docker + hatchling**：`readme = "README.md"` 时 builder 必须 `COPY README.md`；`.dockerignore` 可用 `*.md` + `!README.md`。镜像用两层 `uv sync`（先 `--no-install-project` 缓存依赖，再装项目）+ BuildKit cache mount
-2. **Celery 入队时机**：注册等写库路由用 `BackgroundTasks` 调用 `send_notification.delay`，不要在 service 内与 `get_db` commit 竞态
-3. **限流 fail-closed**：Redis 异常返回 503（`50301`），不放行请求
+2. **Celery 入队时机（两种模式）**：
+   - **路由层轻量收尾**：注册欢迎通知等用 `BackgroundTasks` 在 handler 返回后入队，避免与 `get_db` teardown commit 竞态
+   - **service 内需 worker 可见已提交行**：用 `commit_then_enqueue`（`app/db/celery_dispatch.py`）先 `session.commit()` 再 `task.delay(...)`（如 creator 媒体/图片生成）
+3. **限流 fail-closed**：Redis 异常返回 503（`50301`），不放行请求（同 code 也可能用于其他依赖不可用场景）
 4. **生产 JWT**：`ENVIRONMENT=prod` 且仍为默认 `JWT_SECRET` 时启动失败（`model_validator`）
 5. **邮箱**：注册/登录统一 `email.lower()`，避免大小写重复账号
 6. **`/me`**：已有 `CurrentUser` 时直接 `UserPublic.model_validate(current_user)`，避免重复查库
@@ -134,7 +140,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 !README.md
 ```
 
-### Celery：BackgroundTasks 在 commit 之后
+### Celery：两种入队时机
 
 `get_db` 在 handler 返回后的 teardown 中 `commit`：
 
@@ -149,16 +155,27 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
 ```
 
-注册路由（当前实现）：
+**模式 A — 路由层 `BackgroundTasks`（注册欢迎通知）：**
 
 ```python
-async def register(..., background_tasks: BackgroundTasks):
-    result = await AuthService(db).register(payload)
+async def register(..., background_tasks: BackgroundTasks, settings: SettingsDep):
+    result = await AuthService(db, settings).register(payload)
     background_tasks.add_task(_queue_welcome_notification, str(result.user.id))
     return ApiResponse(data=result)
 ```
 
-**避免：** 在 `AuthService.register` 内直接 `send_notification.delay(...)`。
+**避免：** 在 `AuthService.register` 内直接 `send_notification.delay(...)`（worker 可能在 teardown commit 前查库）。
+
+**模式 B — service 内 `commit_then_enqueue`（worker 必须先看到行）：**
+
+```python
+# app/db/celery_dispatch.py
+async def commit_then_enqueue(session, enqueue, *args, **kwargs):
+    await session.commit()
+    return enqueue(*args, **kwargs)
+```
+
+普通写库若无 worker 可见性要求，仍优先依赖 teardown commit，不要到处 early-commit。
 
 ### 限流：Redis 不可用 → 503
 
@@ -176,7 +193,9 @@ except Exception:
 @model_validator(mode="after")
 def reject_default_jwt_secret_in_production(self) -> "Settings":
     if self.environment == "prod" and self.jwt_secret == _DEFAULT_JWT_SECRET:
-        raise ValueError("JWT_SECRET must be set to a strong unique value when ENVIRONMENT=prod")
+        raise ValueError(
+            "JWT_SECRET must be set to a strong unique value when ENVIRONMENT=prod"
+        )
     return self
 ```
 
@@ -198,4 +217,5 @@ API 文档（经 Caddy）：**https://localhost/docs**（直连 `http://localhos
 
 ## Related Issues
 
+- [Admin SPA trailing slash routing](../integration-issues/admin-caddy-path-without-trailing-slash-2026-05-18.md) — Caddy 挂载 `/admin/` 与 `/creator/` 的路径约定
 - 无 GitHub issue 关联（本地 greenfield 搭建）
