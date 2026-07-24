@@ -18,6 +18,11 @@ import {
 } from '../components/QuotaLimitNotice'
 import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
+import {
+  primaryPlatformReady,
+  resolvePrimaryPlatformKey,
+  syncPrimaryPlatform,
+} from '../lib/platformSelection'
 import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
 import { TopicSeedPanel } from '../components/TopicSeedPanel'
 import { WeeklyRhythmStrip } from '../components/WeeklyRhythmStrip'
@@ -53,14 +58,10 @@ export function ProjectsPage() {
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
-    if (next.length === 1) {
-      setPrimaryPlatform(next[0]!)
-    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
-      setPrimaryPlatform('')
-    }
+    setPrimaryPlatform((prev) => syncPrimaryPlatform(next, prev))
   }
 
-  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const primaryReady = primaryPlatformReady(platforms, primaryPlatform)
 
   const priorityView = useMemo(() => buildProjectPriorityView(projects, pipelines), [projects, pipelines])
   const weeklyRhythm = useMemo(() => countWeeklyRhythm(projects), [projects])
@@ -88,7 +89,7 @@ export function ProjectsPage() {
         pipeline_id: pipelineId,
         title,
         target_platform_keys: platforms,
-        primary_platform_key: platforms.length === 1 ? platforms[0] : primaryPlatform || null,
+        primary_platform_key: resolvePrimaryPlatformKey(platforms, primaryPlatform),
       }),
     onSuccess: async (project) => {
       setQuotaError(null)

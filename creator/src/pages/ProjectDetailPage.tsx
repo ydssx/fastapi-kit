@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { deleteProject, updateProject } from '../api/creator'
 import { LoadingBlock } from '../components/LoadingBlock'
 import { useToast } from '../components/Toast'
 import { useConfirmDialog } from '../hooks/useConfirmDialog'
+import { useDismissiblePopover } from '../hooks/useDismissiblePopover'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectDraftAutosave } from '../hooks/useProjectDraftAutosave'
 import { useProjectMediaAssociations } from '../hooks/useProjectMediaAssociations'
@@ -16,6 +17,7 @@ import {
   hasActiveSelection,
   type TextSelection,
 } from '../lib/editorSelection'
+import { resolvePrimaryPlatformKey, syncPrimaryPlatform } from '../lib/platformSelection'
 import { ProjectCompletedView } from './project-detail/ProjectCompletedView'
 import { ProjectWizardView } from './project-detail/ProjectWizardView'
 import styles from './ProjectDetailPage.module.css'
@@ -55,8 +57,11 @@ export function ProjectDetailPage() {
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
   const [editPrimaryPlatform, setEditPrimaryPlatform] = useState('')
   const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
-  const [moreOpen, setMoreOpen] = useState(false)
-  const moreRef = useRef<HTMLDivElement>(null)
+  const {
+    open: moreOpen,
+    setOpen: setMoreOpen,
+    rootRef: moreRef,
+  } = useDismissiblePopover()
   const moreMenuId = useId()
   const autosaveBlockedRef = useRef(false)
 
@@ -205,22 +210,6 @@ export function ProjectDetailPage() {
     onError: handleApiError,
   })
 
-  useEffect(() => {
-    if (!moreOpen) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMoreOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [moreOpen])
-
   if (isLoading || !project) {
     return (
       <div className={styles.loadingWrap}>
@@ -255,14 +244,8 @@ export function ProjectDetailPage() {
   function handleEditPlatformsChange(next: string[]) {
     if (selectionRewrite.locked) return
     setEditPlatforms(next)
-    let primary = editPrimaryPlatform
-    if (next.length === 1) {
-      primary = next[0]!
-      setEditPrimaryPlatform(primary)
-    } else if (primary && !next.includes(primary)) {
-      primary = ''
-      setEditPrimaryPlatform('')
-    }
+    const primary = syncPrimaryPlatform(next, editPrimaryPlatform)
+    setEditPrimaryPlatform(primary)
     commitPlatformEdit(next, primary)
   }
 
@@ -299,7 +282,7 @@ export function ProjectDetailPage() {
     }
     updateMut.mutate({
       target_platform_keys: next,
-      primary_platform_key: next.length === 1 ? next[0] : primary,
+      primary_platform_key: resolvePrimaryPlatformKey(next, primary),
     })
   }
 
@@ -317,20 +300,20 @@ export function ProjectDetailPage() {
   }
 
   const moreMenu = (
-    <div className={styles.moreMenu} ref={moreRef}>
+    <div className={styles.moreMenu} ref={moreMenuPopover.rootRef}>
       <button
         type="button"
         className={styles.moreTrigger}
-        aria-expanded={moreOpen}
-        aria-controls={moreMenuId}
+        aria-expanded={moreMenuPopover.open}
+        aria-controls={moreMenuPopover.menuId}
         aria-haspopup="menu"
-        onClick={() => setMoreOpen((v) => !v)}
+        onClick={moreMenuPopover.toggle}
         aria-label="更多操作"
       >
         ⋯
       </button>
-      {moreOpen && (
-        <div id={moreMenuId} className={styles.morePopover} role="menu">
+      {moreMenuPopover.open && (
+        <div id={moreMenuPopover.menuId} className={styles.morePopover} role="menu">
           <button
             type="button"
             role="menuitem"
@@ -369,75 +352,75 @@ export function ProjectDetailPage() {
 
   return (
     <ProjectWizardView
-      project={project}
-      pipeline={pipeline}
-      step={step}
-      stepIndex={stepIndex}
-      brand={brand}
-      isPublish={!!isPublish}
-      canEditPlatforms={!!canEditPlatforms}
-      draftWarning={draftWarning}
-      editTitle={editTitle}
-      setEditTitle={setEditTitle}
-      onSaveTitle={saveTitle}
-      editPlatforms={editPlatforms}
-      editPrimaryPlatform={editPrimaryPlatform}
-      onEditPlatformsChange={handleEditPlatformsChange}
-      onEditPrimaryChange={handleEditPrimaryChange}
-      content={content}
-      setContent={setContent}
-      editorSelection={editorSelection}
-      setEditorSelection={setEditorSelection}
-      draftStatus={draft.draftStatus}
-      onSaveDraft={() => draft.draftMut.mutate({ text: content, toast: true })}
-      onConfirm={() => stepAi.confirmMut.mutate()}
-      savingDraft={draft.draftMut.isPending}
-      confirming={stepAi.confirmMut.isPending}
-      aiPending={stepAi.aiMut.isPending}
-      suggestion={stepAi.suggestion}
-      variants={stepAi.variants}
-      onAdoptAll={(text) => {
-        if (selectionRewrite.locked) return
-        setContent(text)
-      }}
-      onInsert={(text) => applyAiText(text, 'insert')}
-      onReplaceSelection={(text) => applyAiText(text, 'replace')}
-      onRegenerate={() => {
-        if (selectionRewrite.locked) return
-        stepAi.aiMut.mutate(undefined)
-      }}
-      onAdjust={(adj) => {
-        if (selectionRewrite.locked) return
-        stepAi.aiMut.mutate(adj)
-      }}
-      checklist={publish.checklist}
-      onToggleCheck={publish.toggleCheck}
-      onComplete={() => publish.completeMut.mutate()}
-      completing={publish.completeMut.isPending}
-      onStepOpen={(stepKey) => {
-        if (selectionRewrite.locked) return
-        stepAi.openMut.mutate(stepKey)
-      }}
-      openingStepKey={stepAi.openMut.isPending ? stepAi.openMut.variables : null}
-      prevCtx={prevStepContext()}
-      quotaError={quotaError}
-      actionError={actionError}
-      usedImageAssets={media.usedImageAssets}
-      onRemoveAsset={(item) => media.disassociateMediaMut.mutate(item)}
-      removingAssociationId={
-        media.disassociateMediaMut.isPending
+      model={{
+        project,
+        pipeline,
+        step,
+        stepIndex,
+        brand,
+        isPublish: !!isPublish,
+        canEditPlatforms: !!canEditPlatforms,
+        draftWarning,
+        editTitle,
+        setEditTitle,
+        onSaveTitle: saveTitle,
+        editPlatforms,
+        editPrimaryPlatform,
+        onEditPlatformsChange: handleEditPlatformsChange,
+        onEditPrimaryChange: handleEditPrimaryChange,
+        content,
+        setContent,
+        editorSelection,
+        setEditorSelection,
+        draftStatus: draft.draftStatus,
+        onSaveDraft: () => draft.draftMut.mutate({ text: content, toast: true }),
+        onConfirm: () => stepAi.confirmMut.mutate(),
+        savingDraft: draft.draftMut.isPending,
+        confirming: stepAi.confirmMut.isPending,
+        aiPending: stepAi.aiMut.isPending,
+        suggestion: stepAi.suggestion,
+        variants: stepAi.variants,
+        onAdoptAll: (text) => {
+          if (selectionRewrite.locked) return
+          setContent(text)
+        },
+        onInsert: (text) => applyAiText(text, 'insert'),
+        onReplaceSelection: (text) => applyAiText(text, 'replace'),
+        onRegenerate: () => {
+          if (selectionRewrite.locked) return
+          stepAi.aiMut.mutate(undefined)
+        },
+        onAdjust: (adj) => {
+          if (selectionRewrite.locked) return
+          stepAi.aiMut.mutate(adj)
+        },
+        checklist: publish.checklist,
+        onToggleCheck: publish.toggleCheck,
+        onComplete: () => publish.completeMut.mutate(),
+        completing: publish.completeMut.isPending,
+        onStepOpen: (stepKey) => {
+          if (selectionRewrite.locked) return
+          stepAi.openMut.mutate(stepKey)
+        },
+        openingStepKey: stepAi.openMut.isPending ? stepAi.openMut.variables : null,
+        prevCtx: prevStepContext(),
+        quotaError,
+        actionError,
+        usedImageAssets: media.usedImageAssets,
+        onRemoveAsset: (item) => media.disassociateMediaMut.mutate(item),
+        removingAssociationId: media.disassociateMediaMut.isPending
           ? media.disassociateMediaMut.variables.association.id
-          : null
-      }
-      assetPickerOpen={media.assetPickerOpen}
-      onCloseAssetPicker={() => media.setAssetPickerOpen(false)}
-      onPickImage={() => media.setAssetPickerOpen(true)}
-      onSelectAsset={(asset) => media.associateMediaMut.mutate(asset)}
-      addingImage={media.associateMediaMut.isPending}
-      stepTitle={stepTitle}
-      moreMenu={moreMenu}
-      dialog={dialog}
-      selectionRewrite={selectionRewrite}
+          : null,
+        assetPickerOpen: media.assetPickerOpen,
+        onCloseAssetPicker: () => media.setAssetPickerOpen(false),
+        onPickImage: () => media.setAssetPickerOpen(true),
+        onSelectAsset: (asset) => media.associateMediaMut.mutate(asset),
+        addingImage: media.associateMediaMut.isPending,
+        stepTitle,
+        moreMenu,
+        dialog,
+        selectionRewrite,
+      }}
     />
   )
 }

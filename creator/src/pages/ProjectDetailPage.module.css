@@ -247,3 +247,8 @@
   border-radius: 0;
   background: transparent;
 }
+
+.titleEdit {
+  display: block;
+  margin: 0;
+}

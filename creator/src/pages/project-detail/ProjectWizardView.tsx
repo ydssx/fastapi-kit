@@ -1,151 +1,88 @@
-import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AiSuggestionPanel } from '../../components/AiSuggestionPanel'
 import { ContextChips } from '../../components/ContextChips'
 import { ImageAssetPicker } from '../../components/ImageAssetPicker'
-import {
-  ImageAssetPreview,
-  type UsedImageAsset,
-} from '../../components/ImageAssetPreview'
+import { ImageAssetPreview } from '../../components/ImageAssetPreview'
 import { PlatformPicker } from '../../components/PlatformPicker'
 import { PublishChecklist } from '../../components/PublishChecklist'
-import { QuotaLimitNotice, type QuotaLimitKind } from '../../components/QuotaLimitNotice'
+import { QuotaLimitNotice } from '../../components/QuotaLimitNotice'
 import { SelectionRewriteFloat } from '../../components/SelectionRewriteFloat'
-import { StepEditorPanel, type DraftSaveStatus } from '../../components/StepEditorPanel'
-import type { SelectionRewriteController } from '../../hooks/useSelectionRewrite'
+import { StepEditorPanel } from '../../components/StepEditorPanel'
 import { StepProgress } from '../../components/StepProgress'
 import { StepWorkspace } from '../../components/StepWorkspace'
 import { StepVersionHistory } from '../../components/StepVersionHistory'
+import type { ProjectWizardModel } from '../../hooks/useProjectWizardModel'
 import { CREATOR_PLATFORMS } from '../../lib/platforms'
 import { pipelineLabel, platformLabels } from '../../lib/labels'
 import { adjustmentsForStep } from '../../lib/stepAiAdjustments'
 import {
   captureSelection,
   hasActiveSelection,
-  type TextSelection,
 } from '../../lib/editorSelection'
-import type {
-  AiVariant,
-  BrandProfile,
-  MediaAsset,
-  Pipeline,
-  Project,
-  PublishChecklistItem,
-} from '../../types/api'
 import shared from '../../styles/shared.module.css'
 import styles from '../ProjectDetailPage.module.css'
 
 interface ProjectWizardViewProps {
-  project: Project
-  pipeline: Pipeline | undefined
-  step: Pipeline['steps'][number] | undefined
-  stepIndex: number
-  brand: BrandProfile
-  isPublish: boolean
-  canEditPlatforms: boolean
-  draftWarning: string | null
-  editTitle: string
-  setEditTitle: (value: string) => void
-  onSaveTitle: () => void
-  editPlatforms: string[]
-  editPrimaryPlatform: string
-  onEditPlatformsChange: (next: string[]) => void
-  onEditPrimaryChange: (key: string) => void
-  content: string
-  setContent: (value: string) => void
-  editorSelection: TextSelection | null
-  setEditorSelection: (value: TextSelection | null) => void
-  draftStatus: DraftSaveStatus
-  onSaveDraft: () => void
-  onConfirm: () => void
-  savingDraft: boolean
-  confirming: boolean
-  aiPending: boolean
-  suggestion: string | null
-  variants: AiVariant[]
-  onAdoptAll: (text: string) => void
-  onInsert: (text: string) => void
-  onReplaceSelection: (text: string) => void
-  onRegenerate: () => void
-  onAdjust: (adj: string) => void
-  checklist: PublishChecklistItem[]
-  onToggleCheck: (item: PublishChecklistItem) => void
-  onComplete: () => void
-  completing: boolean
-  onStepOpen: (stepKey: string) => void
-  openingStepKey: string | null
-  prevCtx: { title?: string; summary?: string }
-  quotaError: QuotaLimitKind | null
-  actionError: string | null
-  usedImageAssets: UsedImageAsset[]
-  onRemoveAsset: (item: UsedImageAsset) => void
-  removingAssociationId: string | null
-  assetPickerOpen: boolean
-  onCloseAssetPicker: () => void
-  onPickImage: () => void
-  onSelectAsset: (asset: MediaAsset) => void
-  addingImage: boolean
-  stepTitle: (key: string) => string
-  moreMenu: ReactNode
-  dialog: ReactNode
-  selectionRewrite?: SelectionRewriteController
+  model: ProjectWizardModel
 }
 
-export function ProjectWizardView({
-  project,
-  pipeline,
-  step,
-  stepIndex,
-  brand,
-  isPublish,
-  canEditPlatforms,
-  draftWarning,
-  editTitle,
-  setEditTitle,
-  onSaveTitle,
-  editPlatforms,
-  editPrimaryPlatform,
-  onEditPlatformsChange,
-  onEditPrimaryChange,
-  content,
-  setContent,
-  editorSelection,
-  setEditorSelection,
-  draftStatus,
-  onSaveDraft,
-  onConfirm,
-  savingDraft,
-  confirming,
-  aiPending,
-  suggestion,
-  variants,
-  onAdoptAll,
-  onInsert,
-  onReplaceSelection,
-  onRegenerate,
-  onAdjust,
-  checklist,
-  onToggleCheck,
-  onComplete,
-  completing,
-  onStepOpen,
-  openingStepKey,
-  prevCtx,
-  quotaError,
-  actionError,
-  usedImageAssets,
-  onRemoveAsset,
-  removingAssociationId,
-  assetPickerOpen,
-  onCloseAssetPicker,
-  onPickImage,
-  onSelectAsset,
-  addingImage,
-  stepTitle,
-  moreMenu,
-  dialog,
-  selectionRewrite,
-}: ProjectWizardViewProps) {
+export function ProjectWizardView({ model }: ProjectWizardViewProps) {
+  const {
+    project,
+    pipeline,
+    step,
+    stepIndex,
+    brand,
+    isPublish,
+    canEditPlatforms,
+    draftWarning,
+    editTitle,
+    setEditTitle,
+    onSaveTitle,
+    editPlatforms,
+    editPrimaryPlatform,
+    onEditPlatformsChange,
+    onEditPrimaryChange,
+    content,
+    setContent,
+    editorSelection,
+    setEditorSelection,
+    draftStatus,
+    onSaveDraft,
+    onConfirm,
+    savingDraft,
+    confirming,
+    aiPending,
+    suggestion,
+    variants,
+    onAdoptAll,
+    onInsert,
+    onReplaceSelection,
+    onRegenerate,
+    onAdjust,
+    checklist,
+    onToggleCheck,
+    onComplete,
+    completing,
+    onStepOpen,
+    openingStepKey,
+    prevCtx,
+    quotaError,
+    actionError,
+    usedImageAssets,
+    onRemoveAsset,
+    removingAssociationId,
+    assetPickerOpen,
+    onCloseAssetPicker,
+    onPickImage,
+    onSelectAsset,
+    addingImage,
+    stepTitle,
+    moreMenu,
+    dialog,
+    selectionRewrite,
+  } = model
+
   const totalSteps = pipeline?.steps.length ?? 0
   const showPlatformPicker = canEditPlatforms && stepIndex <= 1
   const sourceParts = [
