@@ -72,9 +72,11 @@ export function StepEditorPanel({
   const statusLabel = draftStatusLabel(draftStatus)
   const nearLimit = content.length >= CHAR_WARN_AT
   const atLimit = content.length >= CHAR_LIMIT
+  // Render-prop receives the ref object for effect-based float anchoring; `.current` is not read here.
   const toolbar =
     typeof selectionToolbar === 'function'
-      ? selectionToolbar({ textareaRef })
+      ? // eslint-disable-next-line react-hooks/refs -- pass-through for SelectionRewriteFloat portal
+        selectionToolbar({ textareaRef })
       : selectionToolbar
 
   return (

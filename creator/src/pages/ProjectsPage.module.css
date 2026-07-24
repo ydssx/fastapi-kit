@@ -261,16 +261,6 @@
   );
 }
 
-.sprintKicker {
-  margin: 0 0 4px;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
 .sprintHead {
   display: flex;
   flex-direction: column;
@@ -404,7 +394,7 @@
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .workspace {
     grid-template-columns: 1fr;
   }

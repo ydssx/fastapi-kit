@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { fetchBrand, updateBrand } from '../api/creator'
 import type { BrandProfile } from '../types/api'
 import { BrandField } from '../components/BrandField'
+import { LoadingBlock } from '../components/LoadingBlock'
 import { PageHeader } from '../components/PageHeader'
 import { useToast } from '../components/Toast'
 import shared from '../styles/shared.module.css'
@@ -38,7 +39,7 @@ function buildPreview(form: BrandProfile): string {
 export function BrandPage() {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
-  const { data } = useQuery({ queryKey: ['brand'], queryFn: fetchBrand })
+  const { data, isLoading, isError, error } = useQuery({ queryKey: ['brand'], queryFn: fetchBrand })
   const [form, setForm] = useState<BrandProfile>(empty)
 
   useEffect(() => {
@@ -62,56 +63,65 @@ export function BrandPage() {
         description="完善品牌档案，帮助 AI 更好理解你的创作边界与表达偏好。"
       />
 
-      <div className={styles.layout}>
-        <section className={shared.panel}>
-          <div className={styles.grid}>
-            {FIELDS.map((field) => (
-              <BrandField
-                key={field.key}
-                label={field.label}
-                hint={field.hint}
-                rows={field.rows}
-                value={form[field.key]}
-                onChange={(value) => setForm({ ...form, [field.key]: value })}
-              />
-            ))}
+      {isLoading && <LoadingBlock label="加载品牌档案…" />}
+      {isError && <p className={shared.error}>{(error as Error).message}</p>}
+
+      {!isLoading && !isError && (
+        <>
+          <div className={styles.layout}>
+            <section className={shared.panel}>
+              <div className={styles.grid}>
+                {FIELDS.map((field) => (
+                  <BrandField
+                    key={field.key}
+                    label={field.label}
+                    hint={field.hint}
+                    rows={field.rows}
+                    value={form[field.key]}
+                    onChange={(value) => setForm({ ...form, [field.key]: value })}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className={`${shared.panel} ${styles.preview} ${styles.previewSticky}`}>
+              <p className={styles.previewLabel}>实时预览</p>
+              <h2 className={shared.panelTitle}>语气效果</h2>
+              <p className={styles.previewHint}>
+                将用于选题、大纲与步骤 AI。
+                <Link to="/playground" className={styles.previewLink}>
+                  去灵感实验室试试
+                </Link>
+              </p>
+              <p className={styles.previewSentence}>{buildPreview(form)}</p>
+              {previewChips.length > 0 && (
+                <div className={styles.previewChips}>
+                  {previewChips.map((chip) => (
+                    <span key={chip.key} className={styles.previewChip}>
+                      {chip.label}: {form[chip.key].trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
-        </section>
 
-        <section className={`${shared.panel} ${styles.preview} ${styles.previewSticky}`}>
-          <p className={styles.previewLabel}>实时预览</p>
-          <h2 className={shared.panelTitle}>语气效果</h2>
-          <p className={styles.previewHint}>
-            将用于选题、大纲与步骤 AI。
-            <Link to="/playground" className={styles.previewLink}>
-              去灵感实验室试试
-            </Link>
-          </p>
-          <p className={styles.previewSentence}>{buildPreview(form)}</p>
-          {previewChips.length > 0 && (
-            <div className={styles.previewChips}>
-              {previewChips.map((chip) => (
-                <span key={chip.key} className={styles.previewChip}>
-                  {chip.label}: {form[chip.key].trim()}
-                </span>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+          <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>
 
-      <p className={styles.footerNote}>保存后，AI 将基于此档案生成内容与建议。</p>
+          {saveMut.isError && <p className={shared.error}>{(saveMut.error as Error).message}</p>}
 
-      <div className={shared.btnRow}>
-        <button
-          type="button"
-          className={shared.btnPrimary}
-          disabled={saveMut.isPending}
-          onClick={() => saveMut.mutate()}
-        >
-          {saveMut.isPending ? '保存中…' : '保存档案'}
-        </button>
-      </div>
+          <div className={shared.btnRow}>
+            <button
+              type="button"
+              className={shared.btnPrimary}
+              disabled={saveMut.isPending}
+              onClick={() => saveMut.mutate()}
+            >
+              {saveMut.isPending ? '保存中…' : '保存档案'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

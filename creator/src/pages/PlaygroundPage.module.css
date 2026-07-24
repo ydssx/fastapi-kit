@@ -7,12 +7,34 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  border: 1px solid color-mix(in srgb, var(--warn) 25%, var(--border-subtle));
-  background: var(--quota-high);
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
   font-size: 0.82rem;
   color: var(--text-muted);
+}
+
+.sessionTools {
+  margin: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  padding: 8px 12px;
+}
+
+.sessionTools > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sessionTools > summary::-webkit-details-marker {
+  display: none;
 }
 
 .persistLabel {
@@ -172,7 +194,7 @@
   font-weight: 500;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .empty {
     padding: var(--space-xl) var(--space-lg);
   }

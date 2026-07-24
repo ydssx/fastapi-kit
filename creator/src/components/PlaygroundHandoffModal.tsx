@@ -6,6 +6,11 @@ import {
   outlineHandoffStepLabel,
 } from '../utils/playgroundOutline'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
+import {
+  primaryPlatformReady,
+  resolvePrimaryPlatformKey,
+  syncPrimaryPlatform,
+} from '../lib/platformSelection'
 import shared from '../styles/shared.module.css'
 import { PlatformPicker } from './PlatformPicker'
 import styles from './PlaygroundHandoffModal.module.css'
@@ -109,14 +114,10 @@ export function PlaygroundHandoffModal({
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
-    if (next.length === 1) {
-      setPrimaryPlatform(next[0]!)
-    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
-      setPrimaryPlatform('')
-    }
+    setPrimaryPlatform((prev) => syncPrimaryPlatform(next, prev))
   }
 
-  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const primaryReady = primaryPlatformReady(platforms, primaryPlatform)
   const hasOutlinePayload = Boolean(outline)
   const needsQuotaWarning =
     mode === 'all' &&
@@ -170,7 +171,7 @@ export function PlaygroundHandoffModal({
       brief: editableBrief,
       raw_notes: understanding ?? '',
       target_platform_keys: platforms,
-      primary_platform_key: platforms.length === 1 ? platforms[0]! : primaryPlatform || null,
+      primary_platform_key: resolvePrimaryPlatformKey(platforms, primaryPlatform),
       mode: multiSelect ? mode : 'current',
     }
     if (outline) {

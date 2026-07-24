@@ -1,41 +1,45 @@
+import { useMutation } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { changePassword } from '../api/auth'
 import { IconInput, LockIcon } from '../components/IconInput'
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../components/Toast'
 import shared from '../styles/shared.module.css'
 import styles from './AccountPage.module.css'
 
 export function AccountPage() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
+  const changeMut = useMutation({
+    mutationFn: () => changePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      setError(null)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      showToast('密码已更新，当前会话已刷新。')
+    },
+    onError: (err: unknown) => {
+      setError(err instanceof Error ? err.message : '修改失败')
+    },
+  })
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    setSuccess(null)
+    changeMut.reset()
     if (newPassword !== confirmPassword) {
       setError('两次输入的新密码不一致')
       return
     }
-    setSubmitting(true)
-    try {
-      await changePassword(currentPassword, newPassword)
-      setSuccess('密码已更新，当前会话已刷新。')
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '修改失败')
-    } finally {
-      setSubmitting(false)
-    }
+    changeMut.mutate()
   }
 
   return (
@@ -55,7 +59,6 @@ export function AccountPage() {
               {error}
             </p>
           )}
-          {success && <p className={styles.success}>{success}</p>}
           <label className={shared.fieldLabel}>
             当前密码
             <IconInput
@@ -91,14 +94,14 @@ export function AccountPage() {
               autoComplete="new-password"
             />
           </label>
-          <button type="submit" className={shared.btnPrimary} disabled={submitting}>
-            {submitting ? '保存中…' : '更新密码'}
+          <button type="submit" className={shared.btnPrimary} disabled={changeMut.isPending}>
+            {changeMut.isPending ? '保存中…' : '更新密码'}
           </button>
         </form>
         <p className={styles.hint}>
           忘记密码？请前往
           <Link to="/forgot-password"> 找回密码 </Link>
-          或使用管理后台重置（验证期）。
+          页面重置。
         </p>
       </section>
     </div>
