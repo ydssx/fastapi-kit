@@ -61,13 +61,22 @@ def _build_topic_draft(title: str, brief: str, raw_notes: str | None) -> str:
 
 
 class CreatorPlaygroundService:
-    def __init__(self, session: AsyncSession, settings: Settings | None = None) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        *,
+        settings: Settings | None = None,
+        brand: CreatorBrandService | None = None,
+        usage: CreatorUsageService | None = None,
+        projects: CreatorProjectService | None = None,
+        events: CreatorEventService | None = None,
+    ) -> None:
         self.session = session
         self.settings = settings or get_settings()
-        self.brand_service = CreatorBrandService(session)
-        self.usage = CreatorUsageService(session, self.settings)
-        self.project_service = CreatorProjectService(session)
-        self.events = CreatorEventService(session)
+        self.brand_service = brand or CreatorBrandService(session)
+        self.usage = usage or CreatorUsageService(session, self.settings)
+        self.project_service = projects or CreatorProjectService(session)
+        self.events = events or CreatorEventService(session)
         self.llm = LlmClient(self.settings)
 
     async def generate_topics(self, user: User, seed: str | None = None) -> PlaygroundTopicsOut:
@@ -78,7 +87,7 @@ class CreatorPlaygroundService:
         )
         system, user_prompt = build_topics_prompt(brand, seed)
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             seed_text = seed.strip() if seed else ""
             if seed_text:
                 topics = parse_topics_json(raw, min_count=3, max_count=3)
@@ -132,7 +141,7 @@ class CreatorPlaygroundService:
         )
         system, user_prompt = build_outline_generate_prompt(brand, selected_topic)
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             outline = await self._parse_outline_llm(raw)
         except AppException:
             raise
@@ -154,7 +163,7 @@ class CreatorPlaygroundService:
             brand, payload.selected_topic, payload.outline, payload.messages
         )
         try:
-            raw = await self.llm.complete(system, user_prompt)
+            raw = await self.llm.complete(system, user_prompt, json_output=True)
             outline = await self._parse_outline_llm(raw)
         except AppException:
             raise
@@ -191,7 +200,7 @@ class CreatorPlaygroundService:
                 primary_platform_key=payload.primary_platform_key,
             ),
         )
-        project = await self.project_service._get_owned(user, project_out.id)
+        project = await self.project_service.get_owned(user, project_out.id)
         drafts = {**dict(project.draft_content)}
         topic_draft = _build_topic_draft(payload.title, payload.brief, payload.raw_notes)
         if payload.outline is not None:

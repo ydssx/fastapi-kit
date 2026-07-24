@@ -1,61 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ApiError } from '../api/client'
-import { creatorApiErrorMessage } from '../lib/errors'
-import {
-  aiSuggest,
-  associateMedia,
-  completeProject,
-  confirmStep,
-  deleteProject,
-  disassociateMedia,
-  fetchBrand,
-  fetchPipelines,
-  fetchProject,
-  fetchProjectMediaAssociations,
-  fetchPublishChecklist,
-  openStep,
-  saveDraft,
-  updateProject,
-  updatePublishChecklist,
-} from '../api/creator'
-import { AiSuggestionPanel } from '../components/AiSuggestionPanel'
-import { CompletedBanner } from '../components/CompletedBanner'
-import { ContextChips } from '../components/ContextChips'
-import { ImageAssetPicker } from '../components/ImageAssetPicker'
-import { ImageAssetPreview, type UsedImageAsset } from '../components/ImageAssetPreview'
+import { useMutation } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { deleteProject, updateProject } from '../api/creator'
 import { LoadingBlock } from '../components/LoadingBlock'
-import { PlatformPicker } from '../components/PlatformPicker'
-import { PublishChecklist } from '../components/PublishChecklist'
-import {
-  QuotaLimitNotice,
-  quotaLimitKindFromCode,
-  type QuotaLimitKind,
-} from '../components/QuotaLimitNotice'
-import { StepEditorPanel, type DraftSaveStatus } from '../components/StepEditorPanel'
-import { StepProgress } from '../components/StepProgress'
-import { StepWorkspace } from '../components/StepWorkspace'
-import { StepVersionHistory } from '../components/StepVersionHistory'
-import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { useToast } from '../components/Toast'
-import { adjustmentsForStep, shouldAutoSuggest } from '../lib/stepAiAdjustments'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
+import { useDismissiblePopover } from '../hooks/useDismissiblePopover'
+import { useProjectDetail } from '../hooks/useProjectDetail'
+import { useProjectDraftAutosave } from '../hooks/useProjectDraftAutosave'
+import { useProjectMediaAssociations } from '../hooks/useProjectMediaAssociations'
+import { useProjectPublish } from '../hooks/useProjectPublish'
+import { useProjectStepAi } from '../hooks/useProjectStepAi'
+import { useSelectionRewrite } from '../hooks/useSelectionRewrite'
 import {
   applySelectionInsertion,
-  captureSelection,
   hasActiveSelection,
   type TextSelection,
 } from '../lib/editorSelection'
-import { pipelineLabel, platformLabels } from '../lib/labels'
-import { CREATOR_PLATFORMS } from '../lib/platforms'
-import type {
-  AiVariant,
-  MediaAsset,
-  Project,
-  ProjectMediaAssociation,
-  PublishChecklistItem,
-} from '../types/api'
-import shared from '../styles/shared.module.css'
+import { resolvePrimaryPlatformKey, syncPrimaryPlatform } from '../lib/platformSelection'
+import { ProjectCompletedView } from './project-detail/ProjectCompletedView'
+import { ProjectWizardView } from './project-detail/ProjectWizardView'
 import styles from './ProjectDetailPage.module.css'
 
 export function ProjectDetailPage() {
@@ -66,71 +30,41 @@ export function ProjectDetailPage() {
   const { showToast } = useToast()
   const draftWarning =
     (location.state as { draftWarning?: string } | null)?.draftWarning ?? null
-  const queryClient = useQueryClient()
-  const { data: project, isLoading } = useQuery({
-    queryKey: ['project', id],
-    queryFn: () => fetchProject(id!),
-    enabled: !!id,
-  })
-  const { data: projectMediaAssociations = [] } = useQuery({
-    queryKey: ['project-media-associations', id],
-    queryFn: () => fetchProjectMediaAssociations(id!),
-    enabled: !!id,
-  })
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ['pipelines'],
-    queryFn: fetchPipelines,
-  })
-  const { data: brand = { tone: '', audience: '', taboos: '', structure_notes: '' } } = useQuery({
-    queryKey: ['brand'],
-    queryFn: fetchBrand,
-  })
-  const isPublish = project?.current_step_key === 'publish'
-  const canEditPlatforms = project?.status !== 'completed' && !isPublish
-  const { data: checklist = [] } = useQuery({
-    queryKey: ['checklist', id],
-    queryFn: () => fetchPublishChecklist(id!),
-    enabled: !!id && isPublish,
-  })
+
+  const detail = useProjectDetail(id)
+  const {
+    project,
+    isLoading,
+    brand,
+    pipeline,
+    step,
+    stepIndex,
+    isPublish,
+    canEditPlatforms,
+    quotaError,
+    setQuotaError,
+    actionError,
+    setActionError,
+    handleApiError,
+    applyProjectUpdate,
+    stepTitle,
+    prevStepContext,
+    queryClient,
+  } = detail
 
   const [content, setContent] = useState('')
-  const [suggestion, setSuggestion] = useState<string | null>(null)
-  const [variants, setVariants] = useState<AiVariant[]>([])
   const [editTitle, setEditTitle] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
-  const [editPrimaryPlatform, setEditPrimaryPlatform] = useState<string>('')
-  const [quotaError, setQuotaError] = useState<QuotaLimitKind | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const [editPrimaryPlatform, setEditPrimaryPlatform] = useState('')
   const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
-  const [assetPickerOpen, setAssetPickerOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
-  const [draftSaveError, setDraftSaveError] = useState(false)
-  const [draftSavedFlash, setDraftSavedFlash] = useState(false)
-  const moreRef = useRef<HTMLDivElement>(null)
-  const moreMenuId = useId()
-  const autosaveSkipRef = useRef(false)
-  const usedImageAssets = useMemo(
-    () =>
-      projectMediaAssociations.map((association: ProjectMediaAssociation) => ({
-        asset: association.asset,
-        association,
-      })),
-    [projectMediaAssociations],
-  )
-
-  const pipeline = pipelines.find((p) => p.id === project?.pipeline_id)
-  const step = pipeline?.steps.find((s) => s.key === project?.current_step_key)
-  const stepIndex = pipeline?.steps.findIndex((s) => s.key === project?.current_step_key) ?? 0
-
-  useEffect(() => {
-    if (project) {
-      autosaveSkipRef.current = true
-      setContent(project.draft_content[project.current_step_key] ?? '')
-      setEditorSelection(null)
-      setDraftSaveError(false)
-      setDraftSavedFlash(false)
-    }
-  }, [project?.id, project?.current_step_key])
+  const {
+    open: moreOpen,
+    toggle: toggleMore,
+    close: closeMore,
+    rootRef: moreRef,
+    menuId: moreMenuId,
+  } = useDismissiblePopover()
+  const autosaveBlockedRef = useRef(false)
 
   useEffect(() => {
     if (project) {
@@ -138,6 +72,8 @@ export function ProjectDetailPage() {
       setEditPlatforms(project.target_platforms)
       setEditPrimaryPlatform(project.primary_platform_key ?? '')
     }
+    // Intentionally keyed by fields that should reset local edit buffers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     project?.id,
     project?.title,
@@ -145,183 +81,100 @@ export function ProjectDetailPage() {
     project?.primary_platform_key,
   ])
 
-  function stepTitle(key: string) {
-    return pipeline?.steps.find((s) => s.key === key)?.title ?? key
-  }
+  useEffect(() => {
+    if (project) setEditorSelection(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, project?.current_step_key])
 
-  function prevStepContext() {
-    if (!pipeline || !project || stepIndex <= 0) return { title: undefined, summary: undefined }
-    const prev = pipeline.steps[stepIndex - 1]
-    const art = [...project.artifacts]
-      .filter((a) => a.step_key === prev.key)
-      .sort((a, b) => b.version - a.version)[0]
-    return { title: prev.title, summary: art?.content }
-  }
-
-  function applyProjectUpdate(updated: Project, options?: { syncContent?: boolean }) {
-    queryClient.setQueryData(['project', id], updated)
-    if (options?.syncContent !== false) {
-      autosaveSkipRef.current = true
-      setContent(updated.draft_content[updated.current_step_key] ?? '')
-    }
-    setEditTitle(updated.title)
-    setEditPlatforms(updated.target_platforms)
-    setEditPrimaryPlatform(updated.primary_platform_key ?? '')
-    void queryClient.invalidateQueries({ queryKey: ['projects'] })
-    void queryClient.invalidateQueries({ queryKey: ['usage'] })
-  }
-
-  function handleApiError(err: unknown) {
-    if (err instanceof ApiError) {
-      const kind = quotaLimitKindFromCode(err.code)
-      if (kind) {
-        setQuotaError(kind)
-        setActionError(null)
-        return
-      }
-      setActionError(creatorApiErrorMessage(err.code, err.message))
-      return
-    }
-    setActionError(err instanceof Error ? err.message : '操作失败')
-  }
-
-  function applyAiText(text: string, mode: 'insert' | 'replace') {
-    if (!hasActiveSelection(editorSelection, content) || editorSelection === null) {
-      setContent((current) => (current ? `${current}\n\n${text}` : text))
-      setEditorSelection(null)
-      return
-    }
-
-    const insertion = mode === 'insert' ? `${text}\n\n` : text
-    const result = applySelectionInsertion(content, editorSelection, insertion)
-    setContent(result.content)
-    setEditorSelection(result.selection)
-  }
-
-  const draftMut = useMutation({
-    mutationFn: ({ text }: { text: string; toast?: boolean }) =>
-      saveDraft(id!, project!.current_step_key, text),
-    onSuccess: (updated, vars) => {
-      setActionError(null)
-      setDraftSaveError(false)
-      setDraftSavedFlash(true)
-      applyProjectUpdate(updated, { syncContent: false })
-      if (vars.toast) showToast('草稿已保存')
-    },
-    onError: (err) => {
-      setDraftSaveError(true)
-      handleApiError(err)
-    },
+  const draft = useProjectDraftAutosave({
+    projectId: id,
+    project,
+    isPublish: !!isPublish,
+    content,
+    setContent,
+    blockedRef: autosaveBlockedRef,
+    applyProjectUpdate,
+    handleApiError,
+    setActionError,
+    showToast,
   })
 
-  const confirmMut = useMutation({
-    mutationFn: () => confirmStep(id!, project!.current_step_key, content),
-    onSuccess: (updated) => {
-      setQuotaError(null)
-      setActionError(null)
-      setDraftSaveError(false)
-      setDraftSavedFlash(false)
-      applyProjectUpdate(updated)
-      showToast('已进入下一步')
-    },
-    onError: handleApiError,
+  const stepAi = useProjectStepAi({
+    projectId: id,
+    project,
+    step,
+    stepIndex,
+    isPublish: !!isPublish,
+    content,
+    setContent,
+    applyProjectUpdate,
+    handleApiError,
+    setQuotaError,
+    setActionError,
+    setDraftSaveError: draft.setDraftSaveError,
+    setDraftSavedFlash: draft.setDraftSavedFlash,
+    markAutosaveSkip: draft.markAutosaveSkip,
+    showToast,
+    queryClient,
   })
 
-  const aiMut = useMutation({
-    mutationFn: (adjustment?: string) => aiSuggest(id!, project!.current_step_key, adjustment),
-    onSuccess: (data) => {
-      setQuotaError(null)
-      setActionError(null)
-      setSuggestion(data.suggestion)
-      setVariants(data.variants ?? [])
-      void queryClient.invalidateQueries({ queryKey: ['usage'] })
+  const selectionRewrite = useSelectionRewrite({
+    projectId: id,
+    stepKey: step?.key,
+    aiEnabled: !!step?.ai_enabled,
+    isPublish: !!isPublish,
+    content,
+    selection: editorSelection,
+    setContent,
+    setSelection: setEditorSelection,
+    handleApiError,
+    setQuotaError,
+    setActionError,
+    flushDraft: async () => {
+      if (!id || !project || isPublish || project.status === 'completed') return
+      const serverDraft = project.draft_content[project.current_step_key] ?? ''
+      if (content === serverDraft) return
+      await draft.draftMut.mutateAsync({ text: content, toast: false })
     },
-    onError: handleApiError,
-  })
-
-  const associateMediaMut = useMutation({
-    mutationFn: (asset: MediaAsset) =>
-      associateMedia(asset.id, {
-        project_id: id!,
-        step_key: project!.current_step_key,
-        reference_position: editorSelection
-          ? `${editorSelection.start}:${editorSelection.end}`
-          : 'append',
-      }).then((association) => ({ asset, association })),
-    onSuccess: ({ asset, association }) => {
-      const reference = association.asset_reference
-      if (hasActiveSelection(editorSelection, content) && editorSelection !== null) {
-        const result = applySelectionInsertion(content, editorSelection, reference)
-        setContent(result.content)
-        setEditorSelection(result.selection)
-      } else {
-        setContent((current) => (current ? `${current}\n\n${reference}` : reference))
-        setEditorSelection(null)
-      }
-      queryClient.setQueryData<ProjectMediaAssociation[]>(
-        ['project-media-associations', id],
-        (items = []) => [...items, { ...association, asset, is_invalid: false }],
-      )
-      setAssetPickerOpen(false)
-      setActionError(null)
-      void queryClient.invalidateQueries({ queryKey: ['media-assets'] })
-      void queryClient.invalidateQueries({ queryKey: ['project-media-associations', id] })
-    },
-    onError: handleApiError,
-  })
-
-  const disassociateMediaMut = useMutation({
-    mutationFn: (item: UsedImageAsset) =>
-      disassociateMedia(item.asset.id, item.association.id).then(() => item.association.id),
-    onSuccess: (associationId) => {
-      queryClient.setQueryData<ProjectMediaAssociation[]>(
-        ['project-media-associations', id],
-        (items) => items?.filter((item) => item.id !== associationId),
-      )
-      setActionError(null)
-      void queryClient.invalidateQueries({ queryKey: ['media-assets'] })
-      void queryClient.invalidateQueries({ queryKey: ['project-media-associations', id] })
-    },
-    onError: handleApiError,
+    aiPending: stepAi.aiMut.isPending,
+    quotaBlocked: quotaError === 'ai',
   })
 
   useEffect(() => {
-    if (!project || !step || isPublish) return
-    setSuggestion(null)
-    setVariants([])
-    const draft = project.draft_content[project.current_step_key] ?? ''
-    if (shouldAutoSuggest(stepIndex, step.ai_enabled, !draft.trim())) {
-      aiMut.mutate(undefined)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on step change
-  }, [project?.current_step_key])
+    autosaveBlockedRef.current =
+      stepAi.confirmMut.isPending ||
+      stepAi.aiMut.isPending ||
+      selectionRewrite.loading ||
+      selectionRewrite.locked
+  }, [
+    stepAi.aiMut.isPending,
+    stepAi.confirmMut.isPending,
+    selectionRewrite.loading,
+    selectionRewrite.locked,
+  ])
 
-  const completeMut = useMutation({
-    mutationFn: () => completeProject(id!),
-    onSuccess: (updated) => {
-      setQuotaError(null)
-      setActionError(null)
-      applyProjectUpdate(updated)
-    },
-    onError: handleApiError,
+  const media = useProjectMediaAssociations({
+    projectId: id,
+    projectStepKey: project?.current_step_key,
+    content,
+    setContent,
+    editorSelection,
+    setEditorSelection,
+    handleApiError,
+    setActionError,
+    queryClient,
   })
 
-  const checklistMut = useMutation({
-    mutationFn: (keys: string[]) => updatePublishChecklist(id!, keys),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['checklist', id] })
-      void queryClient.invalidateQueries({ queryKey: ['project', id] })
-      void queryClient.invalidateQueries({ queryKey: ['projects'] })
-    },
-  })
-
-  const openMut = useMutation({
-    mutationFn: (stepKey: string) => openStep(id!, stepKey),
-    onSuccess: (updated) => {
-      setActionError(null)
-      applyProjectUpdate(updated)
-    },
-    onError: handleApiError,
+  const publish = useProjectPublish({
+    projectId: id,
+    isPublish: !!isPublish,
+    applyProjectUpdate,
+    handleApiError,
+    setQuotaError,
+    setActionError,
+    markAutosaveSkip: draft.markAutosaveSkip,
+    setContent,
+    queryClient,
   })
 
   const updateMut = useMutation({
@@ -332,7 +185,16 @@ export function ProjectDetailPage() {
     }) => updateProject(id!, payload),
     onSuccess: (updated) => {
       setActionError(null)
-      applyProjectUpdate(updated)
+      applyProjectUpdate(updated, {
+        onSyncContent: (next) => {
+          if (selectionRewrite.locked) return
+          draft.markAutosaveSkip()
+          setContent(next)
+        },
+      })
+      setEditTitle(updated.title)
+      setEditPlatforms(updated.target_platforms)
+      setEditPrimaryPlatform(updated.primary_platform_key ?? '')
       if (canEditPlatforms) {
         void queryClient.invalidateQueries({ queryKey: ['checklist', id] })
       }
@@ -349,62 +211,6 @@ export function ProjectDetailPage() {
     onError: handleApiError,
   })
 
-  useEffect(() => {
-    if (!moreOpen) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMoreOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [moreOpen])
-
-  const serverDraft =
-    project && !isPublish ? (project.draft_content[project.current_step_key] ?? '') : ''
-  const isDraftDirty = Boolean(
-    project && project.status !== 'completed' && !isPublish && content !== serverDraft,
-  )
-
-  useEffect(() => {
-    if (isDraftDirty) setDraftSavedFlash(false)
-  }, [isDraftDirty])
-
-  useEffect(() => {
-    if (!draftSavedFlash) return
-    const timer = window.setTimeout(() => setDraftSavedFlash(false), 2500)
-    return () => window.clearTimeout(timer)
-  }, [draftSavedFlash])
-
-  useEffect(() => {
-    if (autosaveSkipRef.current) {
-      autosaveSkipRef.current = false
-      return
-    }
-    if (!project || isPublish || project.status === 'completed') return
-    if (!isDraftDirty) return
-    if (confirmMut.isPending || aiMut.isPending || draftMut.isPending) return
-
-    const text = content
-    const timer = window.setTimeout(() => {
-      draftMut.mutate({ text, toast: false })
-    }, 1100)
-    return () => window.clearTimeout(timer)
-  }, [
-    aiMut.isPending,
-    confirmMut.isPending,
-    content,
-    draftMut,
-    isDraftDirty,
-    isPublish,
-    project,
-  ])
-
   if (isLoading || !project) {
     return (
       <div className={styles.loadingWrap}>
@@ -414,7 +220,7 @@ export function ProjectDetailPage() {
   }
 
   async function handleDelete() {
-    setMoreOpen(false)
+    closeMore()
     const ok = await confirm({
       title: '删除项目',
       message: '确定删除此项目？此操作不可恢复。',
@@ -433,23 +239,19 @@ export function ProjectDetailPage() {
   }
 
   function commitPlatformEdit(next: string[], primary: string) {
-    savePlatforms(next, primary)
+    void savePlatforms(next, primary)
   }
 
   function handleEditPlatformsChange(next: string[]) {
+    if (selectionRewrite.locked) return
     setEditPlatforms(next)
-    let primary = editPrimaryPlatform
-    if (next.length === 1) {
-      primary = next[0]!
-      setEditPrimaryPlatform(primary)
-    } else if (primary && !next.includes(primary)) {
-      primary = ''
-      setEditPrimaryPlatform('')
-    }
+    const primary = syncPrimaryPlatform(next, editPrimaryPlatform)
+    setEditPrimaryPlatform(primary)
     commitPlatformEdit(next, primary)
   }
 
   function handleEditPrimaryChange(key: string) {
+    if (selectionRewrite.locked) return
     setEditPrimaryPlatform(key)
     commitPlatformEdit(editPlatforms, key)
   }
@@ -481,289 +283,145 @@ export function ProjectDetailPage() {
     }
     updateMut.mutate({
       target_platform_keys: next,
-      primary_platform_key: next.length === 1 ? next[0] : primary,
+      primary_platform_key: resolvePrimaryPlatformKey(next, primary),
     })
   }
 
-  function renderMoreMenu() {
-    return (
-      <div className={styles.moreMenu} ref={moreRef}>
-        <button
-          type="button"
-          className={styles.moreTrigger}
-          aria-expanded={moreOpen}
-          aria-controls={moreMenuId}
-          aria-haspopup="menu"
-          onClick={() => setMoreOpen((v) => !v)}
-          aria-label="更多操作"
-        >
-          ⋯
-        </button>
-        {moreOpen && (
-          <div id={moreMenuId} className={styles.morePopover} role="menu">
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.moreDanger}
-              onClick={() => void handleDelete()}
-              disabled={deleteMut.isPending}
-            >
-              删除项目
-            </button>
-          </div>
-        )}
-      </div>
-    )
+  function applyAiText(text: string, mode: 'insert' | 'replace') {
+    if (selectionRewrite.locked) return
+    if (!hasActiveSelection(editorSelection, content) || editorSelection === null) {
+      setContent((current) => (current ? `${current}\n\n${text}` : text))
+      setEditorSelection(null)
+      return
+    }
+    const insertion = mode === 'insert' ? `${text}\n\n` : text
+    const result = applySelectionInsertion(content, editorSelection, insertion)
+    setContent(result.content)
+    setEditorSelection(result.selection)
   }
+
+  const moreMenu = (
+    <div className={styles.moreMenu} ref={moreRef}>
+      <button
+        type="button"
+        className={styles.moreTrigger}
+        aria-expanded={moreOpen}
+        aria-controls={moreMenuId}
+        aria-haspopup="menu"
+        onClick={toggleMore}
+        aria-label="更多操作"
+      >
+        ⋯
+      </button>
+      {moreOpen && (
+        <div id={moreMenuId} className={styles.morePopover} role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.moreDanger}
+            onClick={() => void handleDelete()}
+            disabled={deleteMut.isPending}
+          >
+            删除项目
+          </button>
+        </div>
+      )}
+    </div>
+  )
 
   if (project.status === 'completed') {
     return (
-      <div className={`${shared.page} ${styles.page}`}>
-        {dialog}
-        <div className={styles.toolbar}>
-          <Link to="/" className={shared.backLink}>
-            ← 返回列表
-          </Link>
-          {renderMoreMenu()}
-        </div>
-        <CompletedBanner title={project.title} />
-        <section className={styles.metaEdit}>
-          <label className={shared.fieldLabel}>
-            项目标题
-            <input
-              className={shared.input}
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={saveTitle}
-            />
-          </label>
-        </section>
-        <ImageAssetPreview
-          assets={usedImageAssets}
-          currentStepKey={project.current_step_key}
-          onRemove={(item) => disassociateMediaMut.mutate(item)}
-          removingAssociationId={
-            disassociateMediaMut.isPending ? disassociateMediaMut.variables.association.id : null
-          }
-        />
-        <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
-        {actionError && <p className={shared.error}>{actionError}</p>}
-      </div>
+      <ProjectCompletedView
+        project={project}
+        editTitle={editTitle}
+        setEditTitle={setEditTitle}
+        onSaveTitle={saveTitle}
+        usedImageAssets={media.usedImageAssets}
+        onRemoveAsset={(item) => media.disassociateMediaMut.mutate(item)}
+        removingAssociationId={
+          media.disassociateMediaMut.isPending
+            ? media.disassociateMediaMut.variables.association.id
+            : null
+        }
+        stepTitle={stepTitle}
+        actionError={actionError}
+        moreMenu={moreMenu}
+        dialog={dialog}
+      />
     )
   }
 
-  function checklistKey(item: PublishChecklistItem) {
-    return `${item.platform}:${item.item_key}`
-  }
-
-  function toggleCheck(item: PublishChecklistItem) {
-    const key = checklistKey(item)
-    const current = checklist.filter((c) => c.checked).map(checklistKey)
-    const next = item.checked ? current.filter((k) => k !== key) : [...current, key]
-    checklistMut.mutate(next)
-  }
-
-  const prevCtx = prevStepContext()
-  const sourceParts = [
-    '品牌档案',
-    prevCtx.title ? `步骤${prevCtx.title}` : null,
-    project.primary_platform_key
-      ? `主平台 ${platformLabels([project.primary_platform_key])}`
-      : platformLabels(project.target_platforms) || null,
-  ].filter(Boolean) as string[]
-
-  const totalSteps = pipeline?.steps.length ?? 0
-  const showPlatformPicker = canEditPlatforms && stepIndex <= 1
-
-  const draftStatus: DraftSaveStatus = draftMut.isPending
-    ? 'saving'
-    : draftSaveError && isDraftDirty
-      ? 'error'
-      : isDraftDirty
-        ? 'dirty'
-        : draftSavedFlash
-          ? 'saved'
-          : 'idle'
-
-  const editorPanel = (
-    <StepEditorPanel
-      title={step?.title ?? project.current_step_key}
-      decisionHint={step?.description}
-      content={content}
-      onContentChange={(nextContent) => {
-        setContent(nextContent)
-        setEditorSelection(null)
-      }}
-      onSelectionChange={(start, end) => setEditorSelection(captureSelection(content, start, end))}
-      onSaveDraft={() => draftMut.mutate({ text: content, toast: true })}
-      onConfirm={() => confirmMut.mutate()}
-      savingDraft={draftMut.isPending}
-      confirming={confirmMut.isPending}
-      draftStatus={draftStatus}
-      editorDisabled={aiMut.isPending}
-      onPickImage={() => setAssetPickerOpen(true)}
-      addingImage={associateMediaMut.isPending}
-    />
-  )
-
-  const stepBadgeLabel = isPublish
-    ? (project.publish_progress?.summary_label ?? '发布核对')
-    : `步骤 ${stepIndex + 1}/${totalSteps}`
-
   return (
-    <div className={`${shared.page} ${styles.page}`}>
-      {dialog}
-      <div className={styles.toolbar}>
-        <Link to="/" className={shared.backLink}>
-          ← 返回列表
-        </Link>
-        {renderMoreMenu()}
-      </div>
-
-      {draftWarning && (
-        <p className={shared.error} role="alert">
-          {draftWarning}
-        </p>
-      )}
-
-      <header className={styles.heroCompact}>
-        <div className={styles.heroCompactMain}>
-          <p className={styles.meta}>
-            {pipelineLabel(project.pipeline_id)}
-            {project.target_platforms.length > 0 && (
-              <>
-                <span className={styles.metaDot}>·</span>
-                {platformLabels(project.target_platforms)}
-              </>
-            )}
-          </p>
-          <label className={styles.titleEdit}>
-            <span className="sr-only">项目标题</span>
-            <input
-              className={styles.titleInputCompact}
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={saveTitle}
-            />
-          </label>
-        </div>
-        <span className={styles.stepBadge}>{stepBadgeLabel}</span>
-      </header>
-
-      {showPlatformPicker && (
-        <details className={styles.platformFold}>
-          <summary className={styles.platformFoldSummary}>
-            <span className={styles.platformFoldLabel}>目标平台</span>
-            <span className={styles.platformFoldValue}>
-              {platformLabels(editPlatforms.length > 0 ? editPlatforms : project.target_platforms)}
-              {editPrimaryPlatform || project.primary_platform_key
-                ? ` · 主平台 ${platformLabels([editPrimaryPlatform || project.primary_platform_key!])}`
-                : ''}
-            </span>
-          </summary>
-          <div className={styles.metaEdit}>
-            <PlatformPicker
-              options={CREATOR_PLATFORMS}
-              value={editPlatforms}
-              onChange={handleEditPlatformsChange}
-              legend="目标平台（前两步可修改）"
-              showPrimary
-              primaryKey={editPrimaryPlatform || null}
-              onPrimaryChange={handleEditPrimaryChange}
-            />
-          </div>
-        </details>
-      )}
-
-      {isPublish ? (
-        pipeline && (
-          <StepProgress
-            steps={pipeline.steps}
-            currentStepKey={project.current_step_key}
-            onStepOpen={(stepKey) => openMut.mutate(stepKey)}
-            openingStepKey={openMut.isPending ? openMut.variables : null}
-          />
-        )
-      ) : (
-        <div className={styles.stickyWizardHead}>
-          {pipeline && (
-            <StepProgress
-              steps={pipeline.steps}
-              currentStepKey={project.current_step_key}
-              onStepOpen={(stepKey) => openMut.mutate(stepKey)}
-              openingStepKey={openMut.isPending ? openMut.variables : null}
-            />
-          )}
-          <ContextChips
-            brand={brand}
-            prevStepTitle={prevCtx.title}
-            prevStepSummary={prevCtx.summary}
-          />
-        </div>
-      )}
-
-      {isPublish ? (
-        <>
-          <PublishChecklist
-            items={checklist}
-            onToggle={toggleCheck}
-            onComplete={() => completeMut.mutate()}
-            completing={completeMut.isPending}
-          />
-          {quotaError && <QuotaLimitNotice kind={quotaError} />}
-          {actionError && <p className={shared.error}>{actionError}</p>}
-        </>
-      ) : (
-        <>
-          {step?.ai_enabled ? (
-            <>
-              <StepWorkspace
-                editor={editorPanel}
-                aiPanel={
-                  <AiSuggestionPanel
-                    stepTitle={step.title}
-                    suggestion={suggestion}
-                    variants={variants}
-                    loading={aiMut.isPending}
-                    quotaBlocked={quotaError === 'ai'}
-                    sourceParts={sourceParts}
-                    adjustments={adjustmentsForStep(project.current_step_key)}
-                    onAdoptAll={(text) => setContent(text)}
-                    hasActiveSelection={hasActiveSelection(editorSelection, content)}
-                    onInsert={(text) => applyAiText(text, 'insert')}
-                    onReplaceSelection={(text) => applyAiText(text, 'replace')}
-                    onRegenerate={() => aiMut.mutate(undefined)}
-                    onAdjust={(adj) => aiMut.mutate(adj)}
-                  />
-                }
-              />
-              {quotaError === 'projects' && <QuotaLimitNotice kind={quotaError} />}
-            </>
-          ) : (
-            <>
-              {editorPanel}
-              {quotaError && <QuotaLimitNotice kind={quotaError} />}
-            </>
-          )}
-          {actionError && <p className={shared.error}>{actionError}</p>}
-        </>
-      )}
-
-      <ImageAssetPreview
-        assets={usedImageAssets}
-        currentStepKey={project.current_step_key}
-        onRemove={(item) => disassociateMediaMut.mutate(item)}
-        removingAssociationId={
-          disassociateMediaMut.isPending ? disassociateMediaMut.variables.association.id : null
-        }
-      />
-      <StepVersionHistory artifacts={project.artifacts} stepTitle={stepTitle} />
-      <ImageAssetPicker
-        open={assetPickerOpen}
-        onClose={() => setAssetPickerOpen(false)}
-        onSelect={(asset) => associateMediaMut.mutate(asset)}
-        selecting={associateMediaMut.isPending}
-      />
-    </div>
+    <ProjectWizardView
+      model={{
+        project,
+        pipeline,
+        step,
+        stepIndex,
+        brand,
+        isPublish: !!isPublish,
+        canEditPlatforms: !!canEditPlatforms,
+        draftWarning,
+        editTitle,
+        setEditTitle,
+        onSaveTitle: saveTitle,
+        editPlatforms,
+        editPrimaryPlatform,
+        onEditPlatformsChange: handleEditPlatformsChange,
+        onEditPrimaryChange: handleEditPrimaryChange,
+        content,
+        setContent,
+        editorSelection,
+        setEditorSelection,
+        draftStatus: draft.draftStatus,
+        onSaveDraft: () => draft.draftMut.mutate({ text: content, toast: true }),
+        onConfirm: () => stepAi.confirmMut.mutate(),
+        savingDraft: draft.draftMut.isPending,
+        confirming: stepAi.confirmMut.isPending,
+        aiPending: stepAi.aiMut.isPending,
+        suggestion: stepAi.suggestion,
+        variants: stepAi.variants,
+        onAdoptAll: (text) => {
+          if (selectionRewrite.locked) return
+          setContent(text)
+        },
+        onInsert: (text) => applyAiText(text, 'insert'),
+        onReplaceSelection: (text) => applyAiText(text, 'replace'),
+        onRegenerate: () => {
+          if (selectionRewrite.locked) return
+          stepAi.aiMut.mutate(undefined)
+        },
+        onAdjust: (adj) => {
+          if (selectionRewrite.locked) return
+          stepAi.aiMut.mutate(adj)
+        },
+        checklist: publish.checklist,
+        onToggleCheck: publish.toggleCheck,
+        onComplete: () => publish.completeMut.mutate(),
+        completing: publish.completeMut.isPending,
+        onStepOpen: (stepKey) => {
+          if (selectionRewrite.locked) return
+          stepAi.openMut.mutate(stepKey)
+        },
+        openingStepKey: stepAi.openMut.isPending ? stepAi.openMut.variables : null,
+        prevCtx: prevStepContext(),
+        quotaError,
+        actionError,
+        usedImageAssets: media.usedImageAssets,
+        onRemoveAsset: (item) => media.disassociateMediaMut.mutate(item),
+        removingAssociationId: media.disassociateMediaMut.isPending
+          ? media.disassociateMediaMut.variables.association.id
+          : null,
+        assetPickerOpen: media.assetPickerOpen,
+        onCloseAssetPicker: () => media.setAssetPickerOpen(false),
+        onPickImage: () => media.setAssetPickerOpen(true),
+        onSelectAsset: (asset) => media.associateMediaMut.mutate(asset),
+        addingImage: media.associateMediaMut.isPending,
+        stepTitle,
+        moreMenu,
+        dialog,
+        selectionRewrite,
+      }}
+    />
   )
 }

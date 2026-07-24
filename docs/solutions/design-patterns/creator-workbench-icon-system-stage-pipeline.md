@@ -21,6 +21,7 @@ tags:
   - favicon
 related_components:
   - admin
+last_refreshed: 2026-07-20
 ---
 
 # 创作者工作台图标体系：舞台流水线 SVG 与三层图标规范
@@ -38,10 +39,10 @@ related_components:
 | 层级 | 文件 | 用途 |
 |------|------|------|
 | 品牌层 | `icons/CreatorMark.tsx`、`components/AuthBrandMark.tsx`、`public/favicon.svg`、`public/apple-touch-icon.png` | 侧栏 Mark、认证页、favicon |
-| 导航层 | `icons/NavIcons.tsx` | 侧栏四项；灵感实验室激活态用 `navActiveAi`（`--ai`） |
+| 导航层 | `icons/NavIcons.tsx` | 侧栏四项主导航；灵感实验室激活态由 `CreatorLayout` 的 `.navActiveAi`（`--ai`）着色 |
 | 步骤层 | `icons/StepIcons.tsx` | `StepProgress` 按 `step_key` 渲染；完成态用 `CheckIcon` |
 
-目录：`creator/src/components/icons/`。
+目录：`creator/src/components/icons/`。账号入口不在侧栏主导航，而在顶栏 / 移动端 `UserMenu`（见 [侧栏布局文档](./creator-workspace-ui-redesign-studio-sidebar.md)）。
 
 ### 2. 品牌 Mark（Direction A）
 
@@ -56,8 +57,11 @@ related_components:
 
 ### 3. 导航与双色 accent
 
-- 项目 / 品牌 / 账号：激活态 `--accent`（珊瑚）
+侧栏主导航（`CreatorLayout` `NAV`）：
+
+- 项目 / 图片素材库 / 品牌档案：激活态 `--accent`（珊瑚）；素材库用 `AssetsIcon`
 - 灵感实验室：激活态 `--ai`（薄荷），与 Playground 空态、AI 面板视觉链路一致
+- 账号：`UserMenu` 菜单项（`AccountIcon`），不是侧栏第四项
 
 图标规范：24×24 viewBox、1.5px stroke、`currentColor`、与 `MailIcon`/`LockIcon` 一致。
 
@@ -83,11 +87,11 @@ assert keys == icons
 
 ### 5. 认证页品牌
 
-`AuthBrandMark`：
+`AuthBrandMark`（组件本身只有 `compact` prop 与 `.root` / `.rootCompact` / `.mark`）：
 
 - 桌面登录：hero 区完整品牌（Mark + 文案）
 - 移动登录 / 找回 / 重置：卡片顶 `compact` Mark
-- CSS：`.heroBrand`（≥861px）；`.cardBrand`（≤860px）
+- 布局容器 CSS 在 `LoginPage.module.css`（及找回/重置页同类类名）：`.heroBrand` / `.cardBrand`；移动布局用 `@media (max-width: 860px)` 隐藏 hero、显示卡片顶 Mark
 
 ### 6. HTML 静态资源
 
@@ -107,7 +111,7 @@ Unicode 占位符在小尺寸模糊、无法继承 token、无语义。统一 SV
 ## When to Apply
 
 - 新增 pipeline `step_key` → 先在 `STEP_ICONS` 增加图标再发 UI
-- 新增侧栏项 → 扩展 `NavIcons.tsx`，18px stroke
+- 新增侧栏项 → 扩展 `NavIcons.tsx`（默认渲染约 18px，`strokeWidth` 1.5，与 `IconInput` 对齐）
 - 新认证/空态 surface → 复用 `AuthBrandMark` / 对应 Nav 或 Step 图标，禁止退回 Unicode
 - 更新 touch icon → 压缩 PNG（目标 <100KB）；优先 SVG 导出而非 AI 大图
 
@@ -119,8 +123,11 @@ Unicode 占位符在小尺寸模糊、无法继承 token、无语义。统一 SV
 // Before
 { to: '/playground', label: '灵感实验室', icon: '✦' }
 
-// After
-{ to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' }
+// After — 侧栏主导航示例
+{ to: '/', label: '项目', Icon: ProjectsIcon },
+{ to: '/assets', label: '图片素材库', Icon: AssetsIcon },
+{ to: '/playground', label: '灵感实验室', Icon: PlaygroundIcon, accent: 'ai' },
+{ to: '/brand', label: '品牌档案', Icon: BrandIcon },
 ```
 
 **步进圆点：**
@@ -143,5 +150,5 @@ Unicode 占位符在小尺寸模糊、无法继承 token、无语义。统一 SV
 
 ## Known follow-ups
 
-- `apple-touch-icon.png` 约 1.3MB（AI 生成）— 上线前需压缩或改用 SVG→PNG 脚本
+- `apple-touch-icon.png` 仍约 1.2MB（2026-07-20 复核）— 上线前需压缩或改用 SVG→PNG 脚本
 - `creator/FRONTEND.md` 尚未列出 `icons/` 与 `AuthBrandMark` — 可选文档同步

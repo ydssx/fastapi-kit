@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { fetchMedia } from '../api/creator'
-import { useMediaPreview } from '../hooks/useMediaPreview'
 import type { MediaAsset } from '../types/api'
+import { MediaThumbnail } from './assets/MediaThumbnail'
 import { LoadingBlock } from './LoadingBlock'
 import shared from '../styles/shared.module.css'
 import styles from './ImageAssetPicker.module.css'
@@ -12,14 +12,6 @@ interface ImageAssetPickerProps {
   onClose: () => void
   onSelect: (asset: MediaAsset) => void
   selecting?: boolean
-}
-
-function AssetImage({ asset }: { asset: MediaAsset }) {
-  const { data, isError } = useMediaPreview(asset)
-
-  if (asset.status !== 'ready') return <span className={styles.previewPlaceholder}>尚未就绪</span>
-  if (isError || !data) return <span className={styles.previewPlaceholder}>预览不可用</span>
-  return <img className={styles.previewImage} src={data.url} alt="" />
 }
 
 export function ImageAssetPicker({ open, onClose, onSelect, selecting = false }: ImageAssetPickerProps) {
@@ -88,7 +80,12 @@ export function ImageAssetPicker({ open, onClose, onSelect, selecting = false }:
           {!isLoading && !isError && data?.items.length === 0 && <p className={shared.muted}>没有找到可用的图片素材。</p>}
           {data?.items.map((asset) => (
             <article key={asset.id} className={styles.asset}>
-              <AssetImage asset={asset} />
+              <MediaThumbnail
+                asset={asset}
+                className={styles.previewImage}
+                placeholderClassName={styles.previewPlaceholder}
+                alt=""
+              />
               <div className={styles.assetInfo}>
                 <strong>{asset.original_filename}</strong>
                 <span>{asset.category} · {asset.tags.join('、') || '未标记'}</span>

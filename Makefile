@@ -5,7 +5,8 @@ RUN := $(UV) run
 PYTHON := python
 
 .PHONY: help install sync dev-init dev run worker beat \
-	certs up up-ha down logs migrate rolling-update \
+	certs up up-ha down logs migrate rolling-update prod-config up-prod down-prod \
+	build api-rebuild proxy-rebuild \
 	admin-install admin-dev admin-docker-dev admin-build create-admin \
 	admin-check creator-install creator-dev creator-build creator-check \
 	frontend-install frontend-check promote-creator-pro \
@@ -42,8 +43,26 @@ up: ## Start full Docker stack (detached, 1 API replica)
 up-ha: ## Start stack with 2 API replicas (zero-downtime capable)
 	SCALE_API=2 bash scripts/start.sh -d
 
+prod-config: ## Validate and render production Compose configuration
+	bash scripts/start_prod.sh config
+
+up-prod: ## Build and start production Compose stack
+	bash scripts/start_prod.sh up -d
+
+down-prod: ## Stop production Compose stack
+	bash scripts/start_prod.sh down
+
 rolling-update: ## Rolling replace API containers (requires up-ha / SCALE_API>=2)
 	bash scripts/rolling_update.sh
+
+build: ## Build all Compose images (BuildKit on)
+	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose build
+
+api-rebuild: ## Rebuild and restart API + migrate (deps layer cached unless lock changes)
+	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose up --build -d migrate api celery-worker celery-beat
+
+proxy-rebuild: ## Rebuild and restart proxy (admin + creator SPAs)
+	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose up --build -d proxy
 
 down: ## Stop Docker stack
 	bash scripts/stop.sh
@@ -69,8 +88,8 @@ admin-install: ## Install admin SPA dependencies
 admin-build: ## Build admin SPA on host (optional; compose rebuilds admin into proxy image)
 	cd admin && npm run build
 
-admin-check: ## Lint and build admin SPA
-	cd admin && npm run lint && npm run build
+admin-check: ## Test, lint, and build admin SPA
+	cd admin && npm test && npm run lint && npm run build
 
 creator-install: ## Install creator SPA dependencies
 	cd creator && npm install
@@ -81,10 +100,10 @@ creator-dev: ## Run creator SPA dev server (:5174, proxies /api to https://local
 creator-build: ## Build creator SPA on host (optional; compose rebuilds into proxy image)
 	cd creator && npm run build
 
-creator-check: ## Lint and build creator SPA
-	cd creator && npm run lint && npm run build
+creator-check: ## Test, lint, and build creator SPA
+	cd creator && npm test && npm run lint && npm run build
 
-frontend-check: admin-check creator-check ## Lint and build both SPAs
+frontend-check: admin-check creator-check ## Test, lint, and build both SPAs
 
 frontend-install: admin-install creator-install ## Install both SPA dependency trees
 

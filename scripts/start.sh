@@ -19,6 +19,8 @@ for arg in "$@"; do
       echo "  postgres, redis, proxy (API + admin SPA), api (with migrations), celery-worker, celery-beat"
       echo ""
       echo "  SCALE_API=2 bash scripts/start.sh -d   # two API replicas for zero-downtime deploys"
+      echo "  make api-rebuild                       # rebuild API only (lockfile-stable cache)"
+      echo "  make proxy-rebuild                     # rebuild admin/creator proxy image only"
       echo ""
       echo "Options:"
       echo "  -d, --detach   Run in background"
@@ -47,6 +49,10 @@ if [ ! -f docker/certs/cert.pem ] || [ ! -f docker/certs/key.pem ]; then
 fi
 
 SCALE_API="${SCALE_API:-1}"
+
+# BuildKit enables Dockerfile cache mounts (uv / npm) across rebuilds.
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 
 COMPOSE_ARGS=(up --build --scale "api=${SCALE_API}" "${EXTRA_ARGS[@]}")
 if $DETACHED; then

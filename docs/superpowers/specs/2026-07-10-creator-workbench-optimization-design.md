@@ -1,7 +1,15 @@
+---
+status: implemented
+date: 2026-07-10
+implemented_date: 2026-07-15
+plan: docs/superpowers/plans/2026-07-10-creator-workbench-optimization.md
+---
+
 # 创作者工作台优化设计
 
 **日期：** 2026-07-10  
 **范围：** `creator/` 中已登录创作工作台；不包含登录、找回密码和重置密码页面。
+**实现状态：** 已落地（见 linked plan）；本文保留为设计权威，细节以现网代码为准。
 
 ## 目标
 

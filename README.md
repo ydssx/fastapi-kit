@@ -44,7 +44,7 @@ Equivalent:
 docker compose up --build -d
 ```
 
-Then open http://localhost:8000/docs
+Then open https://localhost/docs (the local certificate is self-signed).
 
 Stop the stack:
 
@@ -56,6 +56,23 @@ bash scripts/stop.sh
 Follow logs: `docker compose logs -f`
 
 > If port `8000` is already used by a local `uvicorn`, stop it first or change the port mapping in `docker-compose.yml`.
+
+### Production Compose entry
+
+Production keeps the local `docker-compose.yml` as its base and applies
+`docker-compose.prod.yml`:
+
+```bash
+cp .env.prod.example .env.prod
+# Replace every example credential, domain, and URL in .env.prod.
+make prod-config
+make up-prod
+```
+
+`make down-prod` stops the production stack. The override enables Caddy ACME TLS,
+publishes only `443`, keeps PostgreSQL/Redis/MinIO off host ports, and protects
+Redis with AOF plus a named volume. Public `/metrics` returns 404; Prometheus
+metrics remain available inside the Compose network at `http://api:8000/metrics`.
 
 ### Local development (hybrid: Docker DB + local API)
 

@@ -39,6 +39,11 @@ def get_session_factory(settings: Settings | None = None) -> async_sessionmaker[
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield a request-scoped session and commit on success.
+
+    Early ``session.commit()`` is reserved for Celery visibility boundaries —
+    see ``app.db.celery_dispatch.commit_then_enqueue``.
+    """
     session_factory = get_session_factory()
     async with session_factory() as session:
         try:

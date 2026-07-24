@@ -59,3 +59,48 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+.modeFieldset {
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.modeLegend {
+  padding: 0 var(--space-xs);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modeOption {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  margin-top: var(--space-sm);
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modeOption input {
+  margin-top: 3px;
+}
+
+.quotaWarn {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--danger, #c44) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger, #c44) 8%, var(--surface));
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.quotaWarn input {
+  margin-top: 3px;
+}

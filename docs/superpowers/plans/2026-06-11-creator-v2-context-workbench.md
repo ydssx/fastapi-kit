@@ -1,6 +1,12 @@
+---
+status: completed
+completed_date: 2026-07-15
+note: "Progress checkboxes refreshed against current codebase; treat as shipped reference."
+---
+
 # Creator v2 上下文工作台 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Shipped reference:** 本文已按现网代码标记为 `completed`。不要按 checkbox 重新实现；仅作历史实现与文件职责参考。
 
 **Goal:** 将 Creator 向导页从「AI 按钮」升级为「上下文工作台」（双栏编辑区 + AI 内嵌面板），补齐 v2 原型资产与关联页面改版，使品牌记忆与上步上下文在向导内可见。
 
@@ -44,7 +50,7 @@
 **Files:**
 - Create: `creator/docs/prototypes/v2/README.md`
 
-- [ ] **Step 1: 创建 README**
+- [x] **Step 1: 创建 README**
 
 ```markdown
 # Creator v2 原型（上下文工作台）
@@ -82,7 +88,7 @@
 对照 spec Success Criteria 五项勾选。
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/docs/prototypes/v2/README.md
@@ -96,7 +102,7 @@ git commit -m "docs: add creator v2 prototype README"
 **Files:**
 - Create: `creator/docs/prototypes/v2/prototype-v2-wizard.png`
 
-- [ ] **Step 1: 生成高保真 mock**
+- [x] **Step 1: 生成高保真 mock**
 
 使用图像生成工具，提示词要点：
 
@@ -109,7 +115,7 @@ git commit -m "docs: add creator v2 prototype README"
 - 右栏左侧 3px 琥珀竖线，背景略深 `#141a22`
 - 底栏：「暂存草稿」「确认并下一步 →」
 
-- [ ] **Step 2: 放入 v2 目录并 Commit**
+- [x] **Step 2: 放入 v2 目录并 Commit**
 
 ```bash
 git add creator/docs/prototypes/v2/prototype-v2-wizard.png
@@ -123,11 +129,11 @@ git commit -m "docs: add creator v2 wizard prototype mock"
 **Files:**
 - Create: `creator/docs/prototypes/v2/prototype-v2-*.png`（9 张）
 
-- [ ] **Step 1: 按 spec Screen Inventory 逐张生成**
+- [x] **Step 1: 按 spec Screen Inventory 逐张生成**
 
 每张沿用相同 token 与字体（DM Sans）。P3 变体三张可基于 P3 改状态（骨架屏、配额提示、底部抽屉布局）。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/docs/prototypes/v2/
@@ -149,7 +155,7 @@ git commit -m "docs: add creator v2 prototype set (10 screens)"
 - Modify: `app/api/v1/creator/ai.py`
 - Test: `tests/api/test_creator_ai.py`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 在 `tests/api/test_creator_ai.py` 末尾追加：
 
@@ -194,7 +200,7 @@ async def test_ai_suggest_with_adjustment(
     assert "更口语" in captured[-1]
 ```
 
-- [ ] **Step 2: 运行测试确认 FAIL**
+- [x] **Step 2: 运行测试确认 FAIL**
 
 ```bash
 uv run pytest tests/api/test_creator_ai.py::test_ai_suggest_with_adjustment -v
@@ -202,7 +208,7 @@ uv run pytest tests/api/test_creator_ai.py::test_ai_suggest_with_adjustment -v
 
 Expected: FAIL（422 或 adjustment 未进入 prompt）
 
-- [ ] **Step 3: 实现 schema**
+- [x] **Step 3: 实现 schema**
 
 `app/schemas/creator.py` 增加：
 
@@ -211,7 +217,7 @@ class AiSuggestIn(BaseModel):
     adjustment: str | None = Field(default=None, max_length=100)
 ```
 
-- [ ] **Step 4: 更新 prompt builder**
+- [x] **Step 4: 更新 prompt builder**
 
 `app/creator/prompts/__init__.py` — `build_step_prompt` 签名增加 `adjustment: str | None = None`，在 `user_parts` 末尾：
 
@@ -220,7 +226,7 @@ class AiSuggestIn(BaseModel):
         user_parts.append(f"\n额外要求: {adjustment}")
 ```
 
-- [ ] **Step 5: 更新 service 与 route**
+- [x] **Step 5: 更新 service 与 route**
 
 `app/services/creator_ai.py` — `suggest` 增加 `adjustment: str | None = None`，传入 `build_step_prompt`。
 
@@ -240,7 +246,7 @@ async def ai_suggest(
     return ApiResponse(data=data)
 ```
 
-- [ ] **Step 6: 运行测试确认 PASS**
+- [x] **Step 6: 运行测试确认 PASS**
 
 ```bash
 uv run pytest tests/api/test_creator_ai.py -v
@@ -248,7 +254,7 @@ uv run pytest tests/api/test_creator_ai.py -v
 
 Expected: 全部 PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/schemas/creator.py app/creator/prompts/__init__.py app/services/creator_ai.py app/api/v1/creator/ai.py tests/api/test_creator_ai.py
@@ -265,7 +271,7 @@ git commit -m "feat(creator): support optional adjustment on ai-suggest"
 - Modify: `creator/src/index.css`
 - Create: `creator/src/lib/stepAiAdjustments.ts`
 
-- [ ] **Step 1: 添加 token**
+- [x] **Step 1: 添加 token**
 
 `creator/src/index.css` `:root` 内追加：
 
@@ -275,7 +281,7 @@ git commit -m "feat(creator): support optional adjustment on ai-suggest"
   --bp-wizard: 900px;
 ```
 
-- [ ] **Step 2: 创建 stepAiAdjustments**
+- [x] **Step 2: 创建 stepAiAdjustments**
 
 `creator/src/lib/stepAiAdjustments.ts`：
 
@@ -327,7 +333,7 @@ export function shouldAutoSuggest(stepIndex: number, aiEnabled: boolean, editorE
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add creator/src/index.css creator/src/lib/stepAiAdjustments.ts
@@ -344,7 +350,7 @@ git commit -m "feat(creator): v2 design tokens and step AI adjustment config"
 - Create: `creator/src/components/ContextChips.tsx`
 - Create: `creator/src/components/ContextChips.module.css`
 
-- [ ] **Step 1: 实现组件**
+- [x] **Step 1: 实现组件**
 
 ```tsx
 import { Link } from 'react-router-dom'
@@ -392,7 +398,7 @@ export function ContextChips({ brand, prevStepTitle, prevStepSummary }: ContextC
 
 CSS：深底、`border: 1px solid var(--accent)`、`border-radius: 999px`、横向 `overflow-x: auto`。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/src/components/ContextChips.tsx creator/src/components/ContextChips.module.css
@@ -408,7 +414,7 @@ git commit -m "feat(creator): add ContextChips for wizard brand context"
 - Create: `creator/src/components/AiSuggestionPanel.module.css`
 - Modify: `creator/src/api/creator.ts`
 
-- [ ] **Step 1: 扩展 API client**
+- [x] **Step 1: 扩展 API client**
 
 ```typescript
 export function aiSuggest(
@@ -426,7 +432,7 @@ export function aiSuggest(
 }
 ```
 
-- [ ] **Step 2: 实现 AiSuggestionPanel**
+- [x] **Step 2: 实现 AiSuggestionPanel**
 
 Props:
 
@@ -458,7 +464,7 @@ interface AiSuggestionPanelProps {
 
 CSS：`background: var(--ai-panel)`、`border-left: 3px solid var(--accent)`。
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add creator/src/components/AiSuggestionPanel.tsx creator/src/components/AiSuggestionPanel.module.css creator/src/api/creator.ts
@@ -474,13 +480,13 @@ git commit -m "feat(creator): add AiSuggestionPanel with adopt and adjust action
 - Create: `creator/src/components/StepWorkspace.module.css`
 - Modify: `creator/src/components/StepEditorPanel.tsx`（移除 AI 按钮，仅保留编辑区与底栏）
 
-- [ ] **Step 1: 精简 StepEditorPanel**
+- [x] **Step 1: 精简 StepEditorPanel**
 
 删除 `aiEnabled`、`onAiSuggest`、`aiPending` props 与「AI 建议」按钮。保留 title、description、content、onSaveDraft、onConfirm。
 
 在 `description` 前增加可选 `decisionHint` prop，渲染为 `本步你要决定：{decisionHint}`（取自 `step.description`）。
 
-- [ ] **Step 2: 实现 StepWorkspace**
+- [x] **Step 2: 实现 StepWorkspace**
 
 ```tsx
 export function StepWorkspace({
@@ -496,7 +502,7 @@ export function StepWorkspace({
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add creator/src/components/StepWorkspace.tsx creator/src/components/StepWorkspace.module.css creator/src/components/StepEditorPanel.tsx
@@ -511,7 +517,7 @@ git commit -m "feat(creator): add StepWorkspace dual-column layout"
 - Modify: `creator/src/pages/ProjectDetailPage.tsx`
 - Modify: `creator/src/pages/ProjectDetailPage.module.css`
 
-- [ ] **Step 1: 增加 brand query 与 suggestion 状态**
+- [x] **Step 1: 增加 brand query 与 suggestion 状态**
 
 ```typescript
 const { data: brand } = useQuery({ queryKey: ['brand'], queryFn: fetchBrand })
@@ -520,7 +526,7 @@ const [suggestion, setSuggestion] = useState<string | null>(null)
 
 `suggestion` 与 `content`（编辑区）分离——`aiMut.onSuccess` 只 `setSuggestion(data.suggestion)`，**不** `setContent`。
 
-- [ ] **Step 2: 进入步骤时自动拉取建议**
+- [x] **Step 2: 进入步骤时自动拉取建议**
 
 ```typescript
 useEffect(() => {
@@ -535,7 +541,7 @@ useEffect(() => {
 
 注意：`aiMut` 需支持 `mutate(adjustment?: string)`。
 
-- [ ] **Step 3: 计算上步摘要与 sourceParts**
+- [x] **Step 3: 计算上步摘要与 sourceParts**
 
 ```typescript
 function prevStepSummary(project: Project, pipeline: Pipeline): { title?: string; summary?: string } {
@@ -550,7 +556,7 @@ function prevStepSummary(project: Project, pipeline: Pipeline): { title?: string
 const sourceParts = ['品牌档案', prev.title && `步骤${prev.title}`, ...platformLabels(...)].filter(Boolean)
 ```
 
-- [ ] **Step 4: 组装向导 JSX**
+- [x] **Step 4: 组装向导 JSX**
 
 在 `StepProgress` 与编辑区之间插入 `<ContextChips />`。
 
@@ -561,15 +567,15 @@ Handlers:
 - `onInsert` → `setContent((c) => c + (suggestion ?? ''))`（或光标处，最简追加）
 - `onRegenerate` / `onAdjust` → `aiMut.mutate(adjustment)`
 
-- [ ] **Step 5: 移除 AiLoadingOverlay**
+- [x] **Step 5: 移除 AiLoadingOverlay**
 
 删除 `<AiLoadingOverlay active={aiMut.isPending} />`  import 与用法；loading 由 `AiSuggestionPanel` 承担。
 
-- [ ] **Step 6: 配额提示移入 AI 面板**
+- [x] **Step 6: 配额提示移入 AI 面板**
 
 `quotaError === 'ai'` 时传给 `AiSuggestionPanel quotaBlocked`，底栏 `QuotaLimitNotice` 可移除或仅保留 projects 类错误。
 
-- [ ] **Step 7: 本地验证**
+- [x] **Step 7: 本地验证**
 
 ```bash
 make dev-init
@@ -583,7 +589,7 @@ make creator-dev
 - 点击「采纳全部」后内容进入编辑区
 - 点击「更口语」后建议刷新且编辑区不变
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add creator/src/pages/ProjectDetailPage.tsx creator/src/pages/ProjectDetailPage.module.css
@@ -600,7 +606,7 @@ git commit -m "feat(creator): v2 context workbench on project wizard"
 - Modify: `creator/src/components/ProjectCard.tsx`
 - Modify: `creator/src/components/ProjectCard.module.css`
 
-- [ ] **Step 1: 用圆点替换进度条**
+- [x] **Step 1: 用圆点替换进度条**
 
 ```tsx
 <div className={styles.dots} aria-label={`步骤 ${stepNum}/${totalSteps}`}>
@@ -617,7 +623,7 @@ git commit -m "feat(creator): v2 context workbench on project wizard"
 
 已完成项目全部 `dotDone`；`publish` 步用 `stepNum === totalSteps`。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/src/components/ProjectCard.tsx creator/src/components/ProjectCard.module.css
@@ -632,7 +638,7 @@ git commit -m "feat(creator): project card step dots per v2 spec"
 - Modify: `creator/src/pages/BrandPage.tsx`
 - Modify: `creator/src/pages/BrandPage.module.css`
 
-- [ ] **Step 1: 纯前端预览区（不调 API）**
+- [x] **Step 1: 纯前端预览区（不调 API）**
 
 ```typescript
 function buildPreview(form: BrandProfile): string {
@@ -646,7 +652,7 @@ function buildPreview(form: BrandProfile): string {
 
 保存成功后在 panel 上方显示 `shared.notice`：「品牌档案已更新，后续 AI 建议将应用新约束」（3 秒消失）。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/src/pages/BrandPage.tsx creator/src/pages/BrandPage.module.css
@@ -661,7 +667,7 @@ git commit -m "feat(creator): brand profile preview section"
 - Modify: `creator/src/components/PublishChecklist.tsx`
 - Modify: `creator/src/components/PublishChecklist.module.css`
 
-- [ ] **Step 1: 顶部汇总**
+- [x] **Step 1: 顶部汇总**
 
 ```typescript
 const platforms = new Set(items.map((i) => i.platform))
@@ -676,7 +682,7 @@ const pending = items.filter((i) => !i.checked).length
 
 渲染：``{donePlatforms.size}/{platforms.size} 平台已核对 · {pending} 项待完成``
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add creator/src/components/PublishChecklist.tsx creator/src/components/PublishChecklist.module.css
@@ -691,11 +697,11 @@ git commit -m "feat(creator): publish checklist summary bar"
 - Modify: `creator/FRONTEND.md`
 - Modify: `creator/docs/prototypes/v2/README.md`
 
-- [ ] **Step 1: 更新 FRONTEND.md 组件表**
+- [x] **Step 1: 更新 FRONTEND.md 组件表**
 
 新增：`ContextChips`、`AiSuggestionPanel`、`StepWorkspace`；UI 验收指向 `creator/docs/prototypes/v2/`。
 
-- [ ] **Step 2: 运行检查**
+- [x] **Step 2: 运行检查**
 
 ```bash
 uv run ruff check app/creator app/api/v1/creator app/services/creator_ai.py app/schemas/creator.py
@@ -703,7 +709,7 @@ uv run pytest tests/api/test_creator_ai.py tests/api/test_creator_projects.py -v
 cd creator && npm run build
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add creator/FRONTEND.md creator/docs/prototypes/v2/README.md

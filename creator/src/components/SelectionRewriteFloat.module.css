@@ -1,0 +1,290 @@
+.root {
+  position: relative;
+  z-index: 40;
+  border: 1px solid color-mix(in srgb, var(--ai) 38%, var(--border));
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ai) 14%, transparent),
+      color-mix(in srgb, var(--surface) 92%, transparent) 55%
+    ),
+    color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.38),
+    0 0 0 1px color-mix(in srgb, var(--ai) 12%, transparent);
+  padding: 6px 8px 6px 10px;
+  backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.rootFloating {
+  position: fixed;
+  max-width: calc(100vw - 16px);
+  animation: floatIn 0.18s ease both;
+}
+
+.rootPreview {
+  border-radius: 14px;
+  padding: 10px 12px;
+  border-color: color-mix(in srgb, var(--ai) 50%, var(--border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ai) 12%, transparent),
+      color-mix(in srgb, var(--surface) 94%, transparent)
+    );
+}
+
+.rootLoading .label {
+  color: var(--ai);
+}
+
+.placementBelow::after,
+.placementAbove::after {
+  content: '';
+  position: absolute;
+  left: var(--float-arrow-x, 50%);
+  width: 10px;
+  height: 10px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--ai));
+  border-left: 1px solid color-mix(in srgb, var(--ai) 38%, var(--border));
+  border-top: 1px solid color-mix(in srgb, var(--ai) 38%, var(--border));
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.placementBelow::after {
+  top: -5px;
+}
+
+.placementAbove::after {
+  bottom: -5px;
+  transform: translateX(-50%) rotate(225deg);
+}
+
+.rootPreview.placementBelow::after,
+.rootPreview.placementAbove::after {
+  /* Keep the caret tip so preview stays visually tied to the selection. */
+  background: color-mix(in srgb, var(--ai) 12%, var(--surface));
+}
+
+.bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bar::-webkit-scrollbar {
+  display: none;
+}
+
+.lead,
+.previewHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ai);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 22%, transparent);
+  flex-shrink: 0;
+}
+
+.rootLoading .mark {
+  animation: pulseMark 1s ease-in-out infinite;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ai) 70%, var(--text));
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chip {
+  border: 1px solid color-mix(in srgb, var(--ai) 28%, var(--border));
+  border-radius: 999px;
+  padding: 5px 11px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-meta);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.chip:hover:not(:disabled),
+.chip:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+  background: color-mix(in srgb, var(--ai) 12%, var(--surface));
+  color: color-mix(in srgb, var(--ai) 35%, var(--text));
+  outline: none;
+}
+
+.chip:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 18%, transparent);
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.previewLabel {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--ai) 55%, var(--text-muted));
+}
+
+.previewBody {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--ai) 22%, var(--border-subtle));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--ai) 55%, transparent);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.previewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.regenBtn {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ai-muted) 55%, var(--surface));
+  color: var(--ai);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.regenBtn:hover:not(:disabled),
+.regenBtn:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+  background: color-mix(in srgb, var(--ai) 16%, var(--surface));
+  outline: none;
+}
+
+.regenBtn:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai) 18%, transparent);
+}
+
+.regenBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirmBtn {
+  border-color: color-mix(in srgb, var(--ai) 45%, var(--border));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ai) 88%, white),
+    var(--ai)
+  );
+  color: var(--on-accent);
+  font-weight: 600;
+  box-shadow:
+    0 8px 20px color-mix(in srgb, var(--ai) 18%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
+}
+
+.confirmBtn:hover:not(:disabled),
+.confirmBtn:focus-visible:not(:disabled) {
+  border-color: var(--ai);
+  filter: brightness(1.04);
+  outline: none;
+}
+
+.confirmBtn:focus-visible:not(:disabled) {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ai) 22%, transparent),
+    0 8px 20px color-mix(in srgb, var(--ai) 18%, transparent);
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseMark {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rootFloating {
+    animation: none;
+  }
+
+  .rootLoading .mark {
+    animation: none;
+  }
+
+  .chip {
+    transition: none;
+  }
+}

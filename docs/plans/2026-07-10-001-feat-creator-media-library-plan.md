@@ -1,6 +1,7 @@
 ---
+status: completed
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: implementation-ready
+artifact_readiness: shipped
 execution: code
 product_contract_source: ce-plan-bootstrap
 title: "feat: 创作者图片素材库"

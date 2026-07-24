@@ -2,11 +2,17 @@
 
 > Shared domain vocabulary for this project — entities, named processes, and status concepts with project-specific meaning. Seeded with core domain vocabulary, then accretes as ce-compound and ce-compound-refresh process learnings; direct edits are fine. Glossary only, not a spec or catch-all.
 
+## Platform surfaces
+
+### Admin Console
+
+The browser SPA served at `/admin/` for operators — users, audit trails, application logs, and other ops views. Distinct from the Creator Workbench; both are path-mounted behind the same reverse proxy with trailing-slash bases.
+
 ## Creator domain
 
 ### Creator Workbench
 
-The browser SPA served at `/creator/` where authenticated users manage content projects, brand settings, and AI-assisted pipeline steps. Distinct from the admin console at `/admin/`.
+The browser SPA served at `/creator/` where authenticated users manage content projects, brand settings, and AI-assisted pipeline steps. Distinct from the Admin Console at `/admin/`.
 
 ### Content Pipeline
 
@@ -36,6 +42,18 @@ The terminal pipeline step variant: per-target-platform tasks the user marks com
 
 The Creator Workbench projects-home framing where near-publish content projects are prioritized over recency or creation. Its job is to help creators resume the content project most likely to reach the Publish Checklist next.
 
+### Mixed Handoff
+
+An Inspiration Lab handoff mode where the creator can create a Content Project for the current topic only while keeping other selected topics in the same lab session, or create one Content Project per selected topic in a single confirmation. It extends single-topic handoff; it is not a separate durable topic-queue product.
+
+### Weekly Rhythm Strip
+
+A thin status strip on the Publish Sprint Hub showing the creator’s weekly publish target alongside in-progress and completed-this-week counts. It supplements near-publish prioritization; it does not replace the hub with a calendar of slots.
+
+### Selection Rewrite Preview
+
+A pipeline-step revision path where the creator selects a span in the active step draft, requests a floating rewrite, reviews a candidate replacement, and only then confirms to replace that selection. While the preview is open the draft is locked; it is not a dual-column editor, patch review UI, or cross-step batch rewrite.
+
 ## Creator UI vocabulary
 
 ### Design Tokens
@@ -56,7 +74,7 @@ The convention that primary navigation uses coral accent for active states while
 
 ### Studio Sidebar
 
-The desktop navigation pattern for the creator workbench: a fixed left column for wayfinding and account utilities, with the main canvas for page content.
+The desktop navigation pattern for the creator workbench: a fixed left column for brand and primary navigation (projects, media library, Inspiration Lab, brand profile), with quota and account utilities in the content-area top bar (or mobile header), and the main canvas for page content.
 
 ## Flagged ambiguities
 

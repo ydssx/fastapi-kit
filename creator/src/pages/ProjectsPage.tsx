@@ -10,17 +10,24 @@ import { PageHeader } from '../components/PageHeader'
 import { PipelineThumbnail } from '../components/PipelineThumbnail'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { ProjectCard } from '../components/ProjectCard'
-import { ProjectSprintCard } from '../components/ProjectSprintCard'
 import {
   QuotaLimitNotice,
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
+import { SprintHubSection } from '../components/SprintHubSection'
+import { TopicSeedPanel } from '../components/TopicSeedPanel'
+import { WeeklyRhythmStrip } from '../components/WeeklyRhythmStrip'
 import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
+import {
+  primaryPlatformReady,
+  resolvePrimaryPlatformKey,
+  syncPrimaryPlatform,
+} from '../lib/platformSelection'
 import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
-import { TopicSeedPanel } from '../components/TopicSeedPanel'
 import type { PlaygroundTopic } from '../types/api'
+import { countWeeklyRhythm } from '../lib/weeklyRhythm'
 import shared from '../styles/shared.module.css'
 import styles from './ProjectsPage.module.css'
 
@@ -51,16 +58,13 @@ export function ProjectsPage() {
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
-    if (next.length === 1) {
-      setPrimaryPlatform(next[0]!)
-    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
-      setPrimaryPlatform('')
-    }
+    setPrimaryPlatform((prev) => syncPrimaryPlatform(next, prev))
   }
 
-  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const primaryReady = primaryPlatformReady(platforms, primaryPlatform)
 
   const priorityView = useMemo(() => buildProjectPriorityView(projects, pipelines), [projects, pipelines])
+  const weeklyRhythm = useMemo(() => countWeeklyRhythm(projects), [projects])
   const activeProjects = priorityView.activeProjects
   const sprintProjects = priorityView.sprintProjects
   const otherActiveProjects = priorityView.otherActiveProjects
@@ -70,6 +74,7 @@ export function ProjectsPage() {
   const hasActiveProjects = activeProjects.length > 0
   const hasSprintProjects = sprintProjects.length > 0
   const collapseCreateByDefault = hasSprintProjects
+  const showRhythmStrip = !isLoading && projects.length > 0
 
   useEffect(() => {
     if (collapseCreateByDefault) setCreateExpanded(false)
@@ -84,7 +89,7 @@ export function ProjectsPage() {
         pipeline_id: pipelineId,
         title,
         target_platform_keys: platforms,
-        primary_platform_key: platforms.length === 1 ? platforms[0] : primaryPlatform || null,
+        primary_platform_key: resolvePrimaryPlatformKey(platforms, primaryPlatform),
       }),
     onSuccess: async (project) => {
       setQuotaError(null)
@@ -190,6 +195,14 @@ export function ProjectsPage() {
         className={`${styles.workspace} ${hasSprintProjects ? styles.workspaceWithSprint : ''}`}
       >
         <div className={styles.projectsMain}>
+          {showRhythmStrip ? (
+            <WeeklyRhythmStrip
+              target={weeklyRhythm.target}
+              inProgress={weeklyRhythm.inProgress}
+              completedThisWeek={weeklyRhythm.completedThisWeek}
+            />
+          ) : null}
+
           {isLoading && (
             <section className={styles.section}>
               <div className={styles.listPanel}>
@@ -199,49 +212,20 @@ export function ProjectsPage() {
           )}
 
           {!isLoading && hasSprintProjects && featuredSprintProject && (
-            <section className={`${styles.section} ${styles.sprintSection}`}>
-              <div className={styles.sprintHead}>
-                <div className={styles.sprintTitleRow}>
-                  <h2 className={shared.panelTitle}>发布冲刺</h2>
-                  <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
-                </div>
-                <p className={styles.sectionHint}>先把最接近发布的项目推过终点线。</p>
-              </div>
-              <div
-                className={`${styles.sprintLayout} ${
-                  sprintQueue.length === 0 ? styles.sprintLayoutSingle : ''
-                }`}
-              >
-                <div className={styles.sprintSpotlight}>
-                  <ProjectSprintCard item={featuredSprintProject} featured />
-                </div>
-                {sprintQueue.length > 0 && (
-                  <div className={styles.sprintQueue}>
-                    <div className={styles.queueHead}>
-                      <h3 className={styles.queueTitle}>接下来可继续推进</h3>
-                      <span className={styles.queueMeta}>{sprintQueue.length} 个</span>
-                    </div>
-                    <div className={styles.queueList}>
-                      {sprintQueue.map((item) => (
-                        <ProjectSprintCard key={item.project.id} item={item} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
+            <SprintHubSection
+              featured={featuredSprintProject}
+              queue={sprintQueue}
+              totalCount={sprintProjects.length}
+            />
           )}
 
           {!isLoading && !hasActiveProjects && (
             <section className={styles.section}>
-              <div className={shared.sectionHead}>
-                <h2 className={shared.panelTitle}>开始你的第一个内容项目</h2>
-              </div>
               <div className={styles.listPanel}>
                 <EmptyState
                   icon={<ProjectsIcon size={22} />}
                   title="还没有项目"
-                  description="创建第一条流水线，或先去灵感实验室生成选题。"
+                  description="在右侧创建第一条流水线，或先去灵感实验室生成选题。"
                 >
                   <Link to="/playground" className={shared.btnSecondary}>
                     去灵感实验室
@@ -424,10 +408,6 @@ export function ProjectsPage() {
                 <button type="submit" className={shared.btnPrimary} disabled={!canCreate}>
                   {createMut.isPending ? '创建中…' : '开始创作 →'}
                 </button>
-                <p className={styles.playgroundHint}>
-                  还没想好主题？
-                  <Link to="/playground"> 去灵感实验室找选题</Link>
-                </p>
               </div>
             </form>
             ) : null}

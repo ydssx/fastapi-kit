@@ -1,7 +1,7 @@
 ---
 title: "feat: Creator 灵感 Sprint — N-Choice 多方案 AI + 项目页 Direct Topic Seed"
 type: feat
-status: active
+status: completed
 date: 2026-06-26
 origin: docs/ideation/2026-06-25-creator-inspiration-ideation.html
 ---

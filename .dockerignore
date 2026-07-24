@@ -11,3 +11,14 @@ __pycache__
 !README.md
 admin/node_modules
 admin/dist
+creator/node_modules
+creator/dist
+creator/docs
+docs
+.context
+.superpowers
+.cursor
+tools
+tests
+.dogfood-*
+test.md

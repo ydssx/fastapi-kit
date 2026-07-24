@@ -58,6 +58,7 @@
   --panel: #181c28;
   --ai-panel: #12161f;
   --bp-wizard: 900px;
+  /* Layout breakpoints: shell + page layouts use 900px; narrow stacks use 640px. */
   --sidebar-width: 248px;
   --layout-sticky-top: 0px;
   --stage-line: linear-gradient(

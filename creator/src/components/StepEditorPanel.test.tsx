@@ -44,4 +44,45 @@ describe('StepEditorPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '从素材库添加图片' }))
     expect(onPickImage).toHaveBeenCalledOnce()
   })
+
+  it('改写预览锁定时提示预览确认中', () => {
+    render(
+      <StepEditorPanel
+        title="正文"
+        content="草稿"
+        onContentChange={vi.fn()}
+        onSelectionChange={vi.fn()}
+        onSaveDraft={vi.fn()}
+        onConfirm={vi.fn()}
+        savingDraft={false}
+        confirming={false}
+        editorDisabled
+        lockReason="rewrite-preview"
+      />,
+    )
+
+    expect(screen.getByText('预览确认中，稿面已锁定')).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toBeDisabled()
+  })
+
+  it('AI 生成锁定时提示 AI 生成中', () => {
+    render(
+      <StepEditorPanel
+        title="正文"
+        content="草稿"
+        onContentChange={vi.fn()}
+        onSelectionChange={vi.fn()}
+        onSaveDraft={vi.fn()}
+        onConfirm={vi.fn()}
+        savingDraft={false}
+        confirming={false}
+        editorDisabled
+        lockReason="ai-generating"
+      />,
+    )
+
+    expect(screen.getByText('AI 生成中，稿面已锁定')).toBeInTheDocument()
+    expect(screen.queryByText('预览确认中，稿面已锁定')).not.toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toBeDisabled()
+  })
 })

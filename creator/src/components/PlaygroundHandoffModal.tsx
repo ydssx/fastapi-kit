@@ -6,11 +6,19 @@ import {
   outlineHandoffStepLabel,
 } from '../utils/playgroundOutline'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
+import {
+  primaryPlatformReady,
+  resolvePrimaryPlatformKey,
+  syncPrimaryPlatform,
+} from '../lib/platformSelection'
 import shared from '../styles/shared.module.css'
 import { PlatformPicker } from './PlatformPicker'
 import styles from './PlaygroundHandoffModal.module.css'
 
 const LAST_PIPELINE_KEY = 'creator-last-pipeline'
+const DEFAULT_PIPELINE_ID = 'long_article'
+
+export type MixedHandoffMode = 'current' | 'all'
 
 export interface HandoffPayload {
   pipeline_id: string
@@ -21,6 +29,7 @@ export interface HandoffPayload {
   raw_notes?: string
   target_platform_keys: string[]
   primary_platform_key: string | null
+  mode: MixedHandoffMode
 }
 
 interface PlaygroundHandoffModalProps {
@@ -31,6 +40,9 @@ interface PlaygroundHandoffModalProps {
   understanding: string | null
   outline: PlaygroundOutline | null
   pipelines: Pipeline[]
+  selectedCount: number
+  /** `undefined` = usage still loading; `null` = unknown after load; number = remaining completes. */
+  remainingCompletedQuota: number | null | undefined
   onClose: () => void
   onConfirm: (payload: HandoffPayload) => void
   loading: boolean
@@ -44,6 +56,8 @@ export function PlaygroundHandoffModal({
   understanding,
   outline,
   pipelines,
+  selectedCount,
+  remainingCompletedQuota,
   onClose,
   onConfirm,
   loading,
@@ -55,6 +69,10 @@ export function PlaygroundHandoffModal({
   const [editableBrief, setEditableBrief] = useState(brief)
   const [editableHooks, setEditableHooks] = useState(hooks)
   const [editableOutlineText, setEditableOutlineText] = useState('')
+  const [mode, setMode] = useState<MixedHandoffMode>('current')
+  const [quotaAck, setQuotaAck] = useState(false)
+
+  const multiSelect = selectedCount > 1
 
   useEffect(() => {
     if (!open) return
@@ -63,11 +81,15 @@ export function PlaygroundHandoffModal({
     setEditableOutlineText(outline ? formatOutlineMarkdown(outline) : '')
     setPlatforms(['xiaohongshu'])
     setPrimaryPlatform('xiaohongshu')
+    setMode('current')
+    setQuotaAck(false)
     const last = localStorage.getItem(LAST_PIPELINE_KEY)
     if (last && pipelines.some((p) => p.id === last)) {
       setPipelineId(last)
+    } else if (pipelines.some((p) => p.id === DEFAULT_PIPELINE_ID)) {
+      setPipelineId(DEFAULT_PIPELINE_ID)
     } else {
-      setPipelineId('')
+      setPipelineId(pipelines[0]?.id ?? '')
     }
   }, [open, brief, hooks, outline, pipelines])
 
@@ -92,21 +114,25 @@ export function PlaygroundHandoffModal({
 
   function handlePlatformsChange(next: string[]) {
     setPlatforms(next)
-    if (next.length === 1) {
-      setPrimaryPlatform(next[0]!)
-    } else if (primaryPlatform && !next.includes(primaryPlatform)) {
-      setPrimaryPlatform('')
-    }
+    setPrimaryPlatform((prev) => syncPrimaryPlatform(next, prev))
   }
 
-  const primaryReady = platforms.length <= 1 || primaryPlatform.length > 0
+  const primaryReady = primaryPlatformReady(platforms, primaryPlatform)
   const hasOutlinePayload = Boolean(outline)
+  const needsQuotaWarning =
+    mode === 'all' &&
+    remainingCompletedQuota !== undefined &&
+    remainingCompletedQuota !== null &&
+    selectedCount > remainingCompletedQuota
+  const usagePending = multiSelect && mode === 'all' && remainingCompletedQuota === undefined
   const canConfirm =
     Boolean(pipelineId) &&
     Boolean(editableBrief.trim()) &&
     platforms.length > 0 &&
     primaryReady &&
-    (!hasOutlinePayload || Boolean(editableOutlineText.trim()))
+    (!hasOutlinePayload || Boolean(editableOutlineText.trim())) &&
+    !usagePending &&
+    (!needsQuotaWarning || quotaAck)
 
   const preview = useMemo(() => {
     const topicBlock = `→ topic 步\n# ${title}\n\n${editableBrief}`
@@ -145,7 +171,8 @@ export function PlaygroundHandoffModal({
       brief: editableBrief,
       raw_notes: understanding ?? '',
       target_platform_keys: platforms,
-      primary_platform_key: platforms.length === 1 ? platforms[0]! : primaryPlatform || null,
+      primary_platform_key: resolvePrimaryPlatformKey(platforms, primaryPlatform),
+      mode: multiSelect ? mode : 'current',
     }
     if (outline) {
       payload.outline = outline
@@ -182,6 +209,13 @@ export function PlaygroundHandoffModal({
     }
   }
 
+  const confirmLabel =
+    loading
+      ? '创建中…'
+      : multiSelect && mode === 'all'
+        ? `创建 ${selectedCount} 个项目`
+        : '创建并进入项目'
+
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
       <div
@@ -198,6 +232,55 @@ export function PlaygroundHandoffModal({
         <p className={shared.muted}>
           确认将主题、目标平台和大纲交接到新项目。创建后可在项目中继续编辑。
         </p>
+
+        {multiSelect ? (
+          <fieldset className={styles.modeFieldset}>
+            <legend className={styles.modeLegend}>混合交接</legend>
+            <label className={styles.modeOption}>
+              <input
+                type="radio"
+                name="mixed-handoff-mode"
+                checked={mode === 'current'}
+                onChange={() => {
+                  setMode('current')
+                  setQuotaAck(false)
+                }}
+              />
+              <span>
+                只建当前这条，其余 {selectedCount - 1} 条留在本会话
+              </span>
+            </label>
+            <label className={styles.modeOption}>
+              <input
+                type="radio"
+                name="mixed-handoff-mode"
+                checked={mode === 'all'}
+                onChange={() => setMode('all')}
+              />
+              <span>立刻把勾选的 {selectedCount} 条都建成项目</span>
+            </label>
+          </fieldset>
+        ) : null}
+
+        {usagePending ? (
+          <p className={shared.muted} role="status">
+            正在读取本月完成额度…
+          </p>
+        ) : null}
+
+        {needsQuotaWarning ? (
+          <label className={styles.quotaWarn}>
+            <input
+              type="checkbox"
+              checked={quotaAck}
+              onChange={(e) => setQuotaAck(e.target.checked)}
+            />
+            <span>
+              本月还可完成 {remainingCompletedQuota} 个项目，一次创建 {selectedCount}{' '}
+              个草稿后，完成时可能触达免费额度。我已知晓并继续。
+            </span>
+          </label>
+        ) : null}
 
         <label className={styles.label}>
           流水线
@@ -227,6 +310,9 @@ export function PlaygroundHandoffModal({
 
         <label className={styles.label}>
           选题说明 → topic 步（可编辑）
+          {mode === 'all' && multiSelect ? (
+            <span className={shared.muted}>（全建时仅当前焦点选题带此说明/大纲；其余用各自标题与理由）</span>
+          ) : null}
           <textarea
             className={styles.textarea}
             rows={4}
@@ -258,12 +344,12 @@ export function PlaygroundHandoffModal({
         )}
 
         <div className={styles.preview}>
-          <strong>将写入项目</strong>
+          <strong>将写入项目{mode === 'all' && multiSelect ? '（当前焦点）' : ''}</strong>
           <pre>{preview}</pre>
         </div>
 
         <div className={shared.btnRow}>
-          <button type="button" className={shared.btnGhost} onClick={onClose}>
+          <button type="button" className={shared.btnGhost} onClick={onClose} disabled={loading}>
             取消
           </button>
           <button
@@ -272,7 +358,7 @@ export function PlaygroundHandoffModal({
             onClick={confirm}
             disabled={!canConfirm || loading}
           >
-            {loading ? '创建中…' : '创建并进入项目'}
+            {confirmLabel}
           </button>
         </div>
       </div>

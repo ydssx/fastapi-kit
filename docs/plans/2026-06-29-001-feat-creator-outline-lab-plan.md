@@ -1,4 +1,5 @@
 ---
+status: completed
 title: "feat: Add Creator Outline Lab"
 type: feat
 date: 2026-06-29

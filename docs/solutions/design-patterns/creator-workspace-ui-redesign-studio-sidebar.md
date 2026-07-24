@@ -20,7 +20,7 @@ tags:
   - vite
 related_components:
   - admin
-last_refreshed: 2026-06-30
+last_refreshed: 2026-07-15
 ---
 
 # 创作者工作台 UI 重设计：工作室侧栏与设计 token 体系
@@ -50,13 +50,13 @@ last_refreshed: 2026-06-30
 
 在 `index.html` 引入 Google Fonts；全局背景用多层 radial-gradient + 低透明度噪点纹理。
 
-### 2. 布局：顶栏 → 侧栏（`creator/src/layouts/CreatorLayout.*`）
+### 2. 布局：侧栏导航 + 内容区顶栏（`creator/src/layouts/CreatorLayout.*`）
 
-- **桌面（≥900px）**：固定左侧 `aside`（品牌、导航、QuotaDisplay、账号/退出）；主内容 `margin-left: var(--sidebar-width)`，最大宽度约 1040px。
-- **移动（<900px）**：隐藏侧栏；sticky 顶栏 + 汉堡菜单展开导航面板。
+- **桌面（≥900px）**：固定左侧 `aside` 仅含品牌 + 主导航；主内容区顶部 `topBar` 放 `QuotaDisplay`（compact）与 `UserMenu`（账号 / 退出）；主内容 `margin-left: var(--sidebar-width)`，最大宽度约 1040px。
+- **移动（<900px）**：隐藏侧栏；sticky `mobileHeader`（品牌 + `UserMenu` 内嵌配额）+ 汉堡菜单展开导航面板。
 - 在 `.shell` 上设置 `--layout-sticky-top`，供 `ProjectDetailPage` 的 `.stickyWizardHead` 使用 `top: var(--layout-sticky-top)`。
 
-导航项带 SVG 图标与 `aria-current="page"`；激活态左侧珊瑚色条 + `--accent-muted` 背景。灵感实验室激活态单独使用 `--ai`（见 [图标体系](./creator-workbench-icon-system-stage-pipeline.md)）。
+主导航：项目 / 图片素材库 / 灵感实验室 / 品牌档案。导航项带 SVG 图标与 `aria-current="page"`；激活态左侧珊瑚色条 + `--accent-muted` 背景。灵感实验室激活态单独使用 `--ai`（见 [图标体系](./creator-workbench-icon-system-stage-pipeline.md)）。
 
 ### 3. 共享样式层（`creator/src/styles/shared.module.css`）
 
@@ -71,12 +71,13 @@ last_refreshed: 2026-06-30
 
 | 区域 | 文件 | 要点 |
 |------|------|------|
-| 项目首页 | `ProjectsPage.*`、`ProjectCard.*`、`ProjectSprintCard.*` | 双栏布局（列表 + 右侧创建区）；**发布冲刺**优先区（`ProjectSprintCard` 焦点卡 + 队列，`buildProjectPriorityView`）；其余进行中与已完成分区；卡片左侧 hover 色条 + 进度条 |
+| 项目首页 | `ProjectsPage.*`、`ProjectCard.*`、`ProjectSprintCard.*`、`WeeklyRhythmStrip.*` | 双栏布局（列表 + 右侧创建区）；**发布冲刺**优先区（`ProjectSprintCard` 焦点卡 + 队列，`buildProjectPriorityView`）；周节奏条；其余进行中与已完成分区；卡片左侧 hover 色条 + 进度条 |
+| 图片素材库 | `AssetLibraryPage.*`、`ImageAssetPicker.*` | 素材网格；上传 / URL 导入 / AI 生成；编辑器内选择器插入 `asset://` |
 | 登录/认证 | `LoginPage.*`、Forgot/Reset | 左侧流水线步骤示意；登录/注册分段 Tab；卡片顶线 |
-| 灵感实验室 | `PlaygroundPage.*`、TopicCards、RefinePanel | 薄荷空态；选题卡片左色条选中；对话气泡区分用户/助手 |
+| 灵感实验室 | `PlaygroundPage.*`、TopicCards、RefinePanel、`PlaygroundHandoffModal.*` | 薄荷空态；多选选题 + Mixed Handoff；对话气泡区分用户/助手 |
 | 品牌档案 | `BrandPage.*` | 桌面双栏：表单 + sticky 预览（AI 色系） |
-| 账号 | `AccountPage.*` | 账号信息卡与改密卡分离 |
-| 项目向导 | `StepProgress.*`、`StepWorkspace.*`、`ProjectDetailPage.*` | 步骤间连接线；编辑区与 AI 面板竖线分隔 |
+| 账号 | `AccountPage.*` | 账号信息卡与改密卡分离；入口在顶栏 `UserMenu`，不在侧栏 |
+| 项目向导 | `StepProgress.*`、`StepWorkspace.*`、`ProjectDetailPage.*` | 步骤间连接线；编辑区与 AI 面板竖线分隔；选区感知共写 |
 
 ### 5. 文档与验收
 
@@ -97,7 +98,7 @@ cd creator && npm run build
 
 ## Why This Matters
 
-- **信息架构**：侧栏把「项目 / 实验室 / 品牌 / 账号」固定为工作室导航，主内容区专注创作，符合流水线心智。
+- **信息架构**：侧栏固定「项目 / 图片素材库 / 实验室 / 品牌」；配额与账号在内容区顶栏，主画布专注创作，符合流水线心智。
 - **语义色分离**：珊瑚=用户操作，薄荷=AI/实验，降低 AI 面板与主 UI 混淆。
 - **可维护性**：token 集中在一处，组件只引用 `var(--*)`，后续换肤或对齐 admin 时改动面可控。
 - **可访问性**：保留 `focus-visible`、ARIA（导航 `aria-current`、菜单 `aria-expanded`）、`prefers-reduced-motion`。
@@ -116,10 +117,11 @@ cd creator && npm run build
 ### 布局：侧栏 shell
 
 ```tsx
-// CreatorLayout.tsx — 桌面侧栏 + 移动顶栏
+// CreatorLayout.tsx — 侧栏导航 + 内容区顶栏（配额 / 账号）
 <div className={styles.shell}>
-  <aside className={styles.sidebar}>…nav + QuotaDisplay + user…</aside>
+  <aside className={styles.sidebar}>…brand + NAV…</aside>
   <div className={styles.content}>
+    <header className={styles.topBar}>…QuotaDisplay + UserMenu…</header>
     <header className={styles.mobileHeader}>…</header>
     <main className={styles.main}><Outlet /></main>
   </div>

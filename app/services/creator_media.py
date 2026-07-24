@@ -8,8 +8,14 @@ from app.clients.object_storage import ObjectStorageClient
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException
 from app.core.logging import get_logger
+from app.db.celery_dispatch import commit_then_enqueue
 from app.models.creator import CreatorMediaAsset, ProjectMediaAsset
 from app.repositories.creator_media_asset import CreatorMediaAssetRepository
+from app.schemas.creator import (
+    CreatorMediaAssetOut,
+    CreatorMediaAssociationOut,
+    CreatorProjectMediaAssociationOut,
+)
 from app.services.creator_media_import import (
     CreatorMediaImportService,
     ValidatedImage,
@@ -87,8 +93,8 @@ class CreatorMediaService:
             raise AppException("Media asset not found", code=40420, status_code=404)
         if not await self.repository.soft_delete_for_user(asset_id, user_id):
             raise AppException("Media asset not found", code=40420, status_code=404)
-        await self.session.commit()
-        self.schedule_cleanup(asset.object_key)
+        # Commit before Celery so the worker sees the soft-delete.
+        await commit_then_enqueue(self.session, self.schedule_cleanup, asset.object_key)
 
     async def get(self, *, user_id: uuid.UUID, asset_id: uuid.UUID) -> CreatorMediaAsset:
         asset = await self.repository.get_by_id_for_user(asset_id, user_id)
@@ -140,7 +146,7 @@ class CreatorMediaService:
             asset.category = category
         if tags is not None:
             asset.tags = tags
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(asset)
         return asset
 
@@ -168,7 +174,6 @@ class CreatorMediaService:
         )
         if association is None:
             raise AppException("Media asset or project not found", code=40420, status_code=404)
-        await self.session.commit()
         return association
 
     async def disassociate(
@@ -184,7 +189,6 @@ class CreatorMediaService:
             user_id=user_id,
         ):
             raise AppException("Media association not found", code=40421, status_code=404)
-        await self.session.commit()
 
     async def _validate_upload(
         self, content: bytes | AsyncIterable[bytes], declared_mime_type: str | None
@@ -243,8 +247,39 @@ class CreatorMediaService:
         )
         await self.storage.upload(asset.object_key, image.content, content_type=image.mime_type)
         await self.repository.create(asset)
+        # Commit after object-storage write so the row exists if the request fails later.
         await self.session.commit()
         return asset
+
+    @staticmethod
+    def to_asset_out(asset: CreatorMediaAsset) -> CreatorMediaAssetOut:
+        data = CreatorMediaAssetOut.model_validate(asset, from_attributes=True)
+        if asset.deleted_at is not None:
+            return data.model_copy(update={"status": "deleted"})
+        return data
+
+    @staticmethod
+    def to_association_out(association: ProjectMediaAsset) -> CreatorMediaAssociationOut:
+        return CreatorMediaAssociationOut(
+            id=association.id,
+            project_id=association.project_id,
+            media_asset_id=association.media_asset_id,
+            step_key=association.step_key,
+            reference_position=association.reference_position,
+            asset_reference=f"asset://{association.media_asset_id}",
+            created_at=association.created_at,
+        )
+
+    def to_project_association_out(
+        self,
+        association: ProjectMediaAsset,
+        asset: CreatorMediaAsset,
+    ) -> CreatorProjectMediaAssociationOut:
+        return CreatorProjectMediaAssociationOut(
+            **self.to_association_out(association).model_dump(),
+            asset=self.to_asset_out(asset),
+            is_invalid=asset.deleted_at is not None or asset.status != "ready",
+        )
 
     @staticmethod
     def _schedule_cleanup(object_key: str) -> None:

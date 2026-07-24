@@ -1,18 +1,17 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
 import { fetchUsage } from '../api/creator'
 import { QuotaDisplay } from '../components/QuotaDisplay'
+import { UserMenu } from '../components/UserMenu'
 import { CreatorMark } from '../components/icons/CreatorMark'
 import {
-  AccountIcon,
   AssetsIcon,
   BrandIcon,
   PlaygroundIcon,
   ProjectsIcon,
 } from '../components/icons/NavIcons'
-import type { Usage } from '../types/api'
 import styles from './CreatorLayout.module.css'
 
 type NavAccent = 'accent' | 'ai'
@@ -29,98 +28,6 @@ const NAV: {
   { to: '/brand', label: '品牌档案', Icon: BrandIcon },
 ]
 
-function UserMenu({
-  email,
-  usage,
-  showQuota = false,
-  onLogout,
-  onNavigate,
-}: {
-  email: string | undefined
-  usage?: Usage
-  /** Show usage inside menu (mobile). Desktop shows quota in top bar. */
-  showQuota?: boolean
-  onLogout: () => void
-  onNavigate?: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const menuId = useId()
-  const accountActive = useLocation().pathname.startsWith('/account')
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
-
-  return (
-    <div className={styles.userMenu} ref={rootRef}>
-      <button
-        type="button"
-        className={styles.userTrigger}
-        aria-expanded={open}
-        aria-controls={menuId}
-        aria-haspopup="menu"
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span className={styles.userAvatar} aria-hidden>
-          <AccountIcon />
-        </span>
-        <span className={styles.email} title={email ?? ''}>
-          {email}
-        </span>
-        <span className={styles.userChevron} aria-hidden>
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
-      {open && (
-        <div id={menuId} className={styles.userPopover} role="menu" aria-label="账号菜单">
-          {showQuota && usage && (
-            <div className={styles.userQuota}>
-              <p className={styles.userQuotaLabel}>本月用量</p>
-              <QuotaDisplay usage={usage} compact embedded />
-            </div>
-          )}
-          <Link
-            to="/account"
-            role="menuitem"
-            className={accountActive ? styles.userMenuItemActive : styles.userMenuItem}
-            aria-current={accountActive ? 'page' : undefined}
-            onClick={() => {
-              setOpen(false)
-              onNavigate?.()
-            }}
-          >
-            账号设置
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.userMenuLogout}
-            onClick={() => {
-              setOpen(false)
-              onLogout()
-            }}
-          >
-            退出
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function CreatorLayout() {
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -130,6 +37,15 @@ export function CreatorLayout() {
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [menuOpen])
 
   function isActive(to: string) {
     return (
@@ -225,7 +141,13 @@ export function CreatorLayout() {
         </header>
 
         {menuOpen && (
-          <div id="creator-mobile-panel" className={styles.mobilePanel}>
+          <div
+            id="creator-mobile-panel"
+            className={styles.mobilePanel}
+            role="dialog"
+            aria-modal="true"
+            aria-label="主导航"
+          >
             <nav className={styles.mobileNav} aria-label="主导航">
               {NAV.map(({ to, label, Icon, accent }) => (
                 <Link
@@ -245,7 +167,7 @@ export function CreatorLayout() {
           </div>
         )}
 
-        <main className={styles.main}>
+        <main className={styles.main} inert={menuOpen ? true : undefined}>
           <Outlet />
         </main>
       </div>

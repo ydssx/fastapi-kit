@@ -77,7 +77,7 @@ async def test_creator_metrics_outline_events(
       "closing_cta": "测试结尾"
     }"""
 
-    async def fake_complete(_self, _system: str, _user: str) -> str:
+    async def fake_complete(_self, _system: str, _user: str, **_kwargs: object) -> str:
         return outline_json
 
     monkeypatch.setattr("app.clients.llm.LlmClient.complete", fake_complete)

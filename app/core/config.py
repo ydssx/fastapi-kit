@@ -68,6 +68,8 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://api.openai.com/v1"
     llm_model: str = "gpt-4o-mini"
     llm_timeout_seconds: float = 60.0
+    # When True, structured Creator AI calls send response_format=json_object.
+    llm_json_output: bool = True
 
     object_storage_endpoint: str | None = None
     # Browser-facing base URL for presigned previews. Defaults to endpoint when unset.

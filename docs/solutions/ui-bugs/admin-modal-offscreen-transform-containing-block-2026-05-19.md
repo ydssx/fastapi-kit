@@ -22,6 +22,7 @@ tags:
   - logs-page
 related_components:
   - audit-logs-page
+last_refreshed: 2026-07-15
 ---
 
 # Admin log detail modal appears off-screen until page scroll
@@ -71,34 +72,21 @@ export function Modal({ title, titleId, onClose, children }: ModalProps) {
 }
 ```
 
-**Pages updated:** `LogsPage.tsx`, `AuditLogsPage.tsx` — replace inline backdrop markup with `<Modal>`.
+**Pages updated:**
+- 应用日志：`LogsPage` → `LogDetailModal`（内部仍用共享 `Modal`）
+- 审计日志：`AuditLogsPage` 直接使用 `<Modal>`
 
 ## Why This Works
 
-Page wrappers use `shared.module.css` `.page` with a `pageIn` animation:
+历史根因：`.page` 的 `pageIn` 入场动画曾带 `transform: translateY(...)`。任何祖先上的非 `none` `transform`（含 `animation-fill-mode: both` 后留下的 `translateY(0)`）都会为 `position: fixed` 后代建立**包含块**，于是弹层相对高大的 `.page` 定位，而不是视口。
 
-```css
-@keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-```
-
-Any ancestor with a non-`none` `transform` (including post-animation `translateY(0)` when `animation-fill-mode: both`) establishes a **containing block** for `position: fixed` descendants. The modal was fixed to the tall `.page` box, not the viewport.
-
-Portaling to `document.body` escapes that ancestor chain so `position: fixed; inset: 0` covers and centers within the viewport.
+当前 `admin/src/styles/shared.module.css` 的 `pageIn` 已改为 **仅 opacity**，但 portal 约定仍保留：其他祖先或子树动画（如 creator 的 `stageReveal` 仍含 `transform`）仍可能踩同一坑。`createPortal(..., document.body)` 跳出该祖先链，使 `position: fixed; inset: 0` 相对视口居中。
 
 ## Prevention
 
 - **Any overlay/dialog in admin pages** should use the shared `Modal` component (or another portal to `document.body`), not inline `position: fixed` inside `.page` or `AdminLayout` content
 - Long admin tables should use `DataTable` `scrollMaxHeight` (see [logs page layout doc](./admin-logs-page-refresh-pagination-layout-2026-05-19.md)) so filters and pagination stay on screen
-- When adding page enter animations, avoid `transform` on persistent wrappers if they will contain modals; prefer `opacity`-only animations, or portal overlays
+- When adding page enter animations, prefer `opacity`-only on persistent wrappers; even if `.page` is already opacity-only, keep overlays portaled — other ancestors may still use `transform` / `filter` / `perspective`
 - Quick check: if a fixed overlay misaligns after scroll, inspect ancestors for `transform`, `filter`, `perspective`, or `will-change: transform`
 
 ## Related Issues

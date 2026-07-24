@@ -62,7 +62,7 @@ export function TopicSeedPanel({ onSelect, onQuotaError, onRegenerate }: TopicSe
           rows={3}
         />
       </label>
-      <p className={styles.quotaHint}>消耗 1 次 Playground 额度</p>
+      <p className={styles.quotaHint}>消耗 1 次灵感实验室额度</p>
       {actionError && (
         <p className={shared.error} role="alert">
           {actionError}

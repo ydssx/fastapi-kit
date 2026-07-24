@@ -17,7 +17,7 @@ const COPY: Record<QuotaLimitKind, { title: string; body: string }> = {
     body: '本月可完成的流水线项目数已达上限。升级 Pro 可创建更多项目，或等待下月重置。',
   },
   playground: {
-    title: 'Playground 额度已用尽',
+    title: '灵感实验室额度已用尽',
     body: '本月灵感实验室调用次数已达上限。升级 Pro 可获更高额度，或等待下月重置。',
   },
 }
