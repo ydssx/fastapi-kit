@@ -34,6 +34,7 @@ export function AccountPage() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    changeMut.reset()
     if (newPassword !== confirmPassword) {
       setError('两次输入的新密码不一致')
       return
@@ -56,11 +57,6 @@ export function AccountPage() {
           {error && (
             <p className={shared.error} role="alert">
               {error}
-            </p>
-          )}
-          {changeMut.isSuccess && (
-            <p className={styles.success} role="status">
-              密码已更新，当前会话已刷新。
             </p>
           )}
           <label className={shared.fieldLabel}>

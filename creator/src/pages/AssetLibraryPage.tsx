@@ -159,15 +159,18 @@ export function AssetLibraryPage() {
 
   async function handleDelete() {
     if (!selectedAsset) return
+    const asset = selectedAsset
+    // Disarm lightbox before confirm so Escape only peels the confirm layer.
+    setSelectedAsset(null)
     const ok = await confirm({
       title: '删除素材',
-      message: `确定删除「${selectedAsset.original_filename}」？此操作不可恢复。`,
+      message: `确定删除「${asset.original_filename}」？此操作不可恢复。`,
       confirmLabel: '删除素材',
       cancelLabel: '取消',
       variant: 'danger',
     })
     if (!ok) return
-    deleteMutation.mutate(selectedAsset.id)
+    deleteMutation.mutate(asset.id)
   }
 
   return (

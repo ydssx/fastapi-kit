@@ -39,9 +39,12 @@ export function AssetLightbox({
   deleteError,
 }: AssetLightboxProps) {
   const dialogRef = useRef<HTMLElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   const titleId = 'asset-lightbox-title'
   const sourceLabel = SOURCE_BADGE_LABELS[asset.source] ?? asset.source
 
+  // Mount-once: parent often passes an unstable onClose; re-running would steal input caret.
   useEffect(() => {
     const previouslyFocused =
       document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -50,15 +53,16 @@ export function AssetLightbox({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onClose()
+        event.stopImmediatePropagation()
+        onCloseRef.current()
       }
     }
-    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('keydown', onKeyDown, true)
     return () => {
-      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('keydown', onKeyDown, true)
       previouslyFocused?.focus()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className={pageStyles.lightbox} onMouseDown={onClose} role="presentation">
