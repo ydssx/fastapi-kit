@@ -262,7 +262,7 @@ export function AssetLibraryPage() {
         <section className={styles.library} aria-live="polite">
           <div className={styles.sheetHeader}>
             <div>
-              <p className={styles.sheetKicker}>Contact sheet</p>
+              <p className={styles.sheetKicker}>素材一览</p>
               <h2 className={styles.sheetTitle}>素材台</h2>
             </div>
           </div>
@@ -275,7 +275,24 @@ export function AssetLibraryPage() {
                 <EmptyState
                   title="还没有图片素材"
                   description="上传一张图片、导入可信链接，或让 AI 为你生成第一张素材。"
-                />
+                >
+                  <div className={shared.btnRow}>
+                    <button
+                      type="button"
+                      className={shared.btnPrimary}
+                      onClick={() => setSourceMode('upload')}
+                    >
+                      上传图片
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.aiButton}
+                      onClick={() => setSourceMode('generate')}
+                    >
+                      AI 生成
+                    </button>
+                  </div>
+                </EmptyState>
               </div>
             )}
             {mediaQuery.data && mediaQuery.data.items.length > 0 && (
@@ -455,7 +472,8 @@ export function AssetLibraryPage() {
                   <input className={shared.input} value={editTags} onChange={(event) => setEditTags(event.target.value)} />
                 </label>
                 <p className={styles.assetMeta}>
-                  {selectedAsset.source} · {selectedAsset.mime_type} · {formatBytes(selectedAsset.byte_size)}
+                  {selectedBadge?.label ?? selectedAsset.source} · {selectedAsset.mime_type} ·{' '}
+                  {formatBytes(selectedAsset.byte_size)}
                   <br />
                   {selectedAsset.width ?? '?'} × {selectedAsset.height ?? '?'}
                 </p>

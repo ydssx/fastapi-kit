@@ -1,4 +1,4 @@
-/** 每步快捷调整 chip：label 展示，adjustment 传给 API */
+/** 每步快捷调整 chip：label 展示，adjustment 传给 API。key 须与流水线 step key 一致。 */
 export const STEP_AI_ADJUSTMENTS: Record<string, { label: string; adjustment: string }[]> = {
   topic: [{ label: '再给 3 个角度', adjustment: '提供 3 个不同选题角度' }],
   hook: [{ label: '再给 3 个角度', adjustment: '提供 3 个不同钩子角度' }],
@@ -11,17 +11,17 @@ export const STEP_AI_ADJUSTMENTS: Record<string, { label: string; adjustment: st
     { label: '更细', adjustment: '分镜更细致' },
     { label: '更简', adjustment: '分镜更精简' },
   ],
-  cover: [
+  cover_title: [
     { label: '更吸引点击', adjustment: '标题更吸引点击' },
     { label: '更 SEO', adjustment: '标题更利于搜索' },
   ],
-  assets: [{ label: '更简', adjustment: '素材清单更精简' }],
+  production_notes: [{ label: '更简', adjustment: '剪辑备注更精简' }],
   outline: [{ label: '更细', adjustment: '大纲更细致' }],
   body: [
     { label: '更口语', adjustment: '更口语' },
     { label: '更短', adjustment: '更简短' },
   ],
-  summary: [
+  title_summary: [
     { label: '更吸引点击', adjustment: '标题更吸引点击' },
     { label: '更 SEO', adjustment: '更利于搜索' },
   ],
@@ -29,7 +29,7 @@ export const STEP_AI_ADJUSTMENTS: Record<string, { label: string; adjustment: st
     { label: '更细', adjustment: '配图要点更细' },
     { label: '更简', adjustment: '配图要点更简' },
   ],
-  seo: [
+  seo_variants: [
     { label: '更吸引点击', adjustment: '多平台标题更吸引点击' },
     { label: '更 SEO', adjustment: '关键词与话题更利于搜索' },
   ],

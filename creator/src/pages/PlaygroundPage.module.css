@@ -172,7 +172,7 @@
   font-weight: 500;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .empty {
     padding: var(--space-xl) var(--space-lg);
   }
