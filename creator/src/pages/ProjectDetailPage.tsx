@@ -59,10 +59,11 @@ export function ProjectDetailPage() {
   const [editorSelection, setEditorSelection] = useState<TextSelection | null>(null)
   const {
     open: moreOpen,
-    setOpen: setMoreOpen,
+    toggle: toggleMore,
+    close: closeMore,
     rootRef: moreRef,
+    menuId: moreMenuId,
   } = useDismissiblePopover()
-  const moreMenuId = useId()
   const autosaveBlockedRef = useRef(false)
 
   useEffect(() => {
@@ -219,7 +220,7 @@ export function ProjectDetailPage() {
   }
 
   async function handleDelete() {
-    setMoreOpen(false)
+    closeMore()
     const ok = await confirm({
       title: '删除项目',
       message: '确定删除此项目？此操作不可恢复。',
@@ -300,20 +301,20 @@ export function ProjectDetailPage() {
   }
 
   const moreMenu = (
-    <div className={styles.moreMenu} ref={moreMenuPopover.rootRef}>
+    <div className={styles.moreMenu} ref={moreRef}>
       <button
         type="button"
         className={styles.moreTrigger}
-        aria-expanded={moreMenuPopover.open}
-        aria-controls={moreMenuPopover.menuId}
+        aria-expanded={moreOpen}
+        aria-controls={moreMenuId}
         aria-haspopup="menu"
-        onClick={moreMenuPopover.toggle}
+        onClick={toggleMore}
         aria-label="更多操作"
       >
         ⋯
       </button>
-      {moreMenuPopover.open && (
-        <div id={moreMenuPopover.menuId} className={styles.morePopover} role="menu">
+      {moreOpen && (
+        <div id={moreMenuId} className={styles.morePopover} role="menu">
           <button
             type="button"
             role="menuitem"

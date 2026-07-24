@@ -1,10 +1,9 @@
-import { useId } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { QuotaDisplay } from './QuotaDisplay'
-import { AccountIcon } from './icons/NavIcons'
 import { useDismissiblePopover } from '../hooks/useDismissiblePopover'
 import type { Usage } from '../types/api'
 import styles from '../layouts/CreatorLayout.module.css'
+import { QuotaDisplay } from './QuotaDisplay'
+import { AccountIcon } from './icons/NavIcons'
 
 interface UserMenuProps {
   email: string | undefined
@@ -22,8 +21,7 @@ export function UserMenu({
   onLogout,
   onNavigate,
 }: UserMenuProps) {
-  const { open, setOpen, rootRef } = useDismissiblePopover()
-  const menuId = useId()
+  const { open, setOpen, rootRef, menuId } = useDismissiblePopover()
   const accountActive = useLocation().pathname.startsWith('/account')
 
   return (

@@ -156,13 +156,15 @@ export function PlaygroundPage() {
         />
       ) : null}
 
-      <div className={styles.persistWarn} role="status">
-        <span className={styles.persistLabel}>提示</span>
-        关闭此标签页可能丢失未交接的内容。
-        <button type="button" className={styles.linkBtn} onClick={exportSession}>
-          导出会话 JSON
-        </button>
-      </div>
+      <details className={styles.sessionTools}>
+        <summary>会话工具</summary>
+        <p className={styles.persistWarn} role="status">
+          关闭此标签页可能丢失未交接的内容。
+          <button type="button" className={styles.linkBtn} onClick={exportSession}>
+            导出会话 JSON
+          </button>
+        </p>
+      </details>
 
       {quotaError ? <QuotaLimitNotice kind={quotaError} /> : null}
       {actionError ? <p className={shared.error}>{actionError}</p> : null}

@@ -10,12 +10,14 @@ import { PageHeader } from '../components/PageHeader'
 import { PipelineThumbnail } from '../components/PipelineThumbnail'
 import { PlatformPicker } from '../components/PlatformPicker'
 import { ProjectCard } from '../components/ProjectCard'
-import { ProjectSprintCard } from '../components/ProjectSprintCard'
 import {
   QuotaLimitNotice,
   quotaLimitKindFromCode,
   type QuotaLimitKind,
 } from '../components/QuotaLimitNotice'
+import { SprintHubSection } from '../components/SprintHubSection'
+import { TopicSeedPanel } from '../components/TopicSeedPanel'
+import { WeeklyRhythmStrip } from '../components/WeeklyRhythmStrip'
 import { useConfirmDialog } from '../hooks/useConfirmDialog'
 import { CREATOR_PLATFORMS } from '../lib/platforms'
 import {
@@ -24,8 +26,6 @@ import {
   syncPrimaryPlatform,
 } from '../lib/platformSelection'
 import { buildProjectPriorityView, type RankedProject } from '../lib/projectPriority'
-import { TopicSeedPanel } from '../components/TopicSeedPanel'
-import { WeeklyRhythmStrip } from '../components/WeeklyRhythmStrip'
 import type { PlaygroundTopic } from '../types/api'
 import { countWeeklyRhythm } from '../lib/weeklyRhythm'
 import shared from '../styles/shared.module.css'
@@ -212,49 +212,20 @@ export function ProjectsPage() {
           )}
 
           {!isLoading && hasSprintProjects && featuredSprintProject && (
-            <section className={`${styles.section} ${styles.sprintSection}`}>
-              <div className={styles.sprintHead}>
-                <div className={styles.sprintTitleRow}>
-                  <h2 className={shared.panelTitle}>发布冲刺</h2>
-                  <span className={styles.sectionCount}>{sprintProjects.length} 个</span>
-                </div>
-                <p className={styles.sectionHint}>先把最接近发布的项目推过终点线。</p>
-              </div>
-              <div
-                className={`${styles.sprintLayout} ${
-                  sprintQueue.length === 0 ? styles.sprintLayoutSingle : ''
-                }`}
-              >
-                <div className={styles.sprintSpotlight}>
-                  <ProjectSprintCard item={featuredSprintProject} featured />
-                </div>
-                {sprintQueue.length > 0 && (
-                  <div className={styles.sprintQueue}>
-                    <div className={styles.queueHead}>
-                      <h3 className={styles.queueTitle}>接下来可继续推进</h3>
-                      <span className={styles.queueMeta}>{sprintQueue.length} 个</span>
-                    </div>
-                    <div className={styles.queueList}>
-                      {sprintQueue.map((item) => (
-                        <ProjectSprintCard key={item.project.id} item={item} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
+            <SprintHubSection
+              featured={featuredSprintProject}
+              queue={sprintQueue}
+              totalCount={sprintProjects.length}
+            />
           )}
 
           {!isLoading && !hasActiveProjects && (
             <section className={styles.section}>
-              <div className={shared.sectionHead}>
-                <h2 className={shared.panelTitle}>开始你的第一个内容项目</h2>
-              </div>
               <div className={styles.listPanel}>
                 <EmptyState
                   icon={<ProjectsIcon size={22} />}
                   title="还没有项目"
-                  description="创建第一条流水线，或先去灵感实验室生成选题。"
+                  description="在右侧创建第一条流水线，或先去灵感实验室生成选题。"
                 >
                   <Link to="/playground" className={shared.btnSecondary}>
                     去灵感实验室
@@ -437,10 +408,6 @@ export function ProjectsPage() {
                 <button type="submit" className={shared.btnPrimary} disabled={!canCreate}>
                   {createMut.isPending ? '创建中…' : '开始创作 →'}
                 </button>
-                <p className={styles.playgroundHint}>
-                  还没想好主题？
-                  <Link to="/playground"> 去灵感实验室找选题</Link>
-                </p>
               </div>
             </form>
             ) : null}

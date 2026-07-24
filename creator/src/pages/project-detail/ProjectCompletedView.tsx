@@ -40,12 +40,14 @@ export function ProjectCompletedView({
   return (
     <div className={`${shared.page} ${styles.page}`}>
       {dialog}
-      <div className={styles.toolbar}>
-        <Link to="/" className={shared.backLink}>
-          ← 返回列表
-        </Link>
-        {moreMenu}
-      </div>
+      <header className={styles.heroCompact}>
+        <div className={styles.heroChrome}>
+          <Link to="/" className={shared.backLink}>
+            ← 返回列表
+          </Link>
+          {moreMenu}
+        </div>
+      </header>
       <CompletedBanner title={project.title} />
       <section className={styles.metaEdit}>
         <label className={shared.fieldLabel}>
